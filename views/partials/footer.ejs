@@ -71,6 +71,11 @@
   </div>
 </div>
 
+<!-- Data Island for recipe titles -->
+<script id="recipe-data" type="application/json">
+  <%- JSON.stringify({ recipeTitles: recipeTitles || [] }) %>
+</script>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // --- Sidebar Mobile ---
@@ -159,18 +164,44 @@ document.addEventListener('DOMContentLoaded', () => {
         scrapeForm.addEventListener("submit", (e) => { e.preventDefault(); handleFormSubmit("/api/recipes/scrape", { url: scrapeForm.url.value }); });
     }
 
-    // --- Search Functionality (now in header) ---
+    // --- Search Functionality ---
     const searchInput = document.getElementById("recipe-search");
-    const recipeList = document.getElementById("recipe-list");
-    const recipes = recipeList ? Array.from(recipeList.getElementsByTagName("li")) : [];
+    const searchResults = document.getElementById("search-results");
+    const recipeDataElement = document.getElementById('recipe-data');
+    const allRecipes = recipeDataElement ? JSON.parse(recipeDataElement.textContent).recipeTitles : [];
 
-    if (searchInput) {
-      searchInput.addEventListener("keyup", (e) => {
+    if (searchInput && searchResults) {
+      searchInput.addEventListener("input", (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        recipes.forEach((recipe) => {
-          const title = recipe.textContent.toLowerCase();
-          recipe.style.display = title.includes(searchTerm) ? "" : "none";
-        });
+        searchResults.innerHTML = "";
+
+        if (searchTerm.length < 2) {
+          searchResults.classList.add("hidden");
+          return;
+        }
+
+        const filteredRecipes = allRecipes.filter(title => title.toLowerCase().includes(searchTerm));
+
+        if (filteredRecipes.length > 0) {
+          filteredRecipes.slice(0, 10).forEach(title => { // Show max 10 results
+            const a = document.createElement("a");
+            a.href = `/?recipe=${encodeURIComponent(title)}`;
+            a.className = "block px-4 py-2 text-gray-800 hover:bg-green-100 cursor-pointer";
+            a.textContent = title;
+            searchResults.appendChild(a);
+          });
+          searchResults.classList.remove("hidden");
+        } else {
+          searchResults.classList.remove("hidden");
+          searchResults.innerHTML = `<p class="px-4 py-2 text-gray-500">No se encontraron recetas.</p>`;
+        }
+      });
+
+      // Hide results when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#recipe-search")) {
+          searchResults.classList.add("hidden");
+        }
       });
     }
 });

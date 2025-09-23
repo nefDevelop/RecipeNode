@@ -5,14 +5,8 @@ const { parseIngredient, normalizeIngredient } = require("../utils/ingredientPar
 const { extractIngredients } = require("../utils/recipeUtils");
 
 const getPlanningPage = (req, res) => {
-  db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => {
-    if (err) {
-      console.error("Error al cargar los títulos de las recetas para la planificación:", err);
-      return res.status(500).send("Error al cargar las recetas");
-    }
-    const recipeTitles = rows.map((r) => r.name);
-    res.render("planning", { title: "Planificación", recipeTitles, user: req.session });
-  });
+  // recipeTitles is now provided by middleware
+  res.render("planning", { title: "Planificación", user: req.session });
 };
 
 const getPlanningData = (req, res) => {

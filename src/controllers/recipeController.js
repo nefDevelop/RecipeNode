@@ -18,32 +18,39 @@ const slugify = (text) => {
     .replace(/-+$/, ""); // Trim - from end of text
 };
 
-const getAllRecipeTitles = () => {
-  return new Promise((resolve, reject) => {
-    db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => {
-      if (err) {
-        console.error("Error al cargar los títulos de las recetas:", err);
-        return reject("Error al cargar la lista de recetas desde la base de datos.");
-      }
-      const recipeTitles = rows.map((r) => r.name);
-      resolve(recipeTitles);
-    });
-  });
-};
-
 /**
- * Extrae la primera imagen de un contenido Markdown.
- * Soporta formatos ![alt](url) y ![[obsidian_link]].
- * @param {string} markdownContent - El contenido del archivo markdown.
+ * Extrae la primera imagen de una receta, buscando en el frontmatter y luego en el cuerpo
+ * del texto antes de la sección de "Ingredientes".
+ * Soporta formatos: frontmatter (image:), HTML (<img>), Obsidian (![[...]]) y Markdown (![]()).
+ * @param {object} attributes - El frontmatter del archivo.
+ * @param {string} body - El cuerpo del archivo markdown.
  * @returns {string|null} La URL de la imagen o null si no se encuentra.
  */
-function extractImageFromMarkdown(markdownContent) {
-  if (!markdownContent) return null;
+function extractImageFromMarkdown(attributes, body) {
+  // 1. Buscar en el frontmatter
+  if (attributes && (attributes.image || attributes.cover)) {
+    return attributes.image || attributes.cover;
+  }
 
-  // 1. Regex para el formato de Obsidian: ![[imagen.jpg]] o ![[carpeta/imagen.jpg]]
-  let match = markdownContent.match(/!\[\[(.*?)(?:\|.*)?\]\]/);
+  if (!body) return null;
+
+  // 2. Limitar la búsqueda al contenido ANTES de la sección de ingredientes
+  const ingredientsIndex = body.toLowerCase().indexOf("ingredientes");
+  const searchBody = ingredientsIndex !== -1 ? body.substring(0, ingredientsIndex) : body;
+
+  // 3. Buscar en el cuerpo del texto (en orden de prioridad)
+
+  // Formato HTML: <img src="..."
+  let match = searchBody.match(/<img[^>]+src="([^"]+)"/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+
+  // Formato Obsidian: ![[imagen.jpg]]
+  match = searchBody.match(/!\[\[(.*?)(?:\|.*)?\]\]/);
   if (match && match[1]) {
     const imageName = match[1].trim();
+    // Normalizar la ruta si es un adjunto local
     const resourcesIndex = imageName.indexOf("_resources");
     if (resourcesIndex !== -1) {
       return "/" + imageName.substring(resourcesIndex);
@@ -55,8 +62,8 @@ function extractImageFromMarkdown(markdownContent) {
     return imageName;
   }
 
-  // 2. Regex para el formato estándar de Markdown: !alt
-  match = markdownContent.match(/!\[.*?\]\((.*?)\)/);
+  // Formato Markdown estándar: ![alt](src)
+  match = searchBody.match(/!\[.*?\]\((.*?)\)/);
   if (match && match[1]) {
     return match[1].trim();
   }
@@ -67,7 +74,6 @@ function extractImageFromMarkdown(markdownContent) {
 const getHomePage = async (req, res) => {
   try {
     const recipeName = req.query.recipe;
-    const recipeTitles = await getAllRecipeTitles();
 
     if (recipeName) {
       const recipeRow = await new Promise((resolve, reject) => {
@@ -78,7 +84,6 @@ const getHomePage = async (req, res) => {
         return res.render("index", {
           title: "Receta no encontrada",
           content: `La receta "${recipeName}" no existe.`,
-          recipeTitles,
           recipes: null,
           user: req.session,
         });
@@ -87,17 +92,23 @@ const getHomePage = async (req, res) => {
       const fileContent = await fs.readFile(recipeRow.path, "utf8");
       const { attributes, body: rawBody } = fm(fileContent);
       const body = rawBody.replace(/%%.*?%%/g, "");
-      let htmlContent = marked.parse(body);
-      htmlContent = htmlContent.replace(
-        /!\[\[(.*?)\|(.*?)\]\]/g,
-        (match, p1) => `<img src="${extractImageFromMarkdown(match)}" alt="Imagen de la receta" />`
-      );
-      htmlContent = htmlContent.replace(
-        /!\[\[(.*?)\]\]/g,
-        (match, p1) => `<img src="${extractImageFromMarkdown(match)}" alt="Imagen de la receta" />`
-      );
+      // Reemplaza los enlaces de imagen de Obsidian por Markdown estándar antes de renderizar
+      const processedBody = body.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
+        const cleanName = imageName.trim();
+        const resourcesIndex = cleanName.indexOf("_resources");
+        if (resourcesIndex !== -1) {
+          return `!})`;
+        }
+        const attachmentIndex = cleanName.indexOf("attachment");
+        if (attachmentIndex !== -1) {
+          return `!})`;
+        }
+        return `!`;
+      });
 
-      res.render("index", { title: attributes.title || recipeName, content: htmlContent, recipeTitles, recipes: null, user: req.session });
+      const htmlContent = marked.parse(processedBody);
+
+      res.render("index", { title: attributes.title || recipeName, content: htmlContent, recipes: null, user: req.session });
     } else {
       const allRecipes = await new Promise((resolve, reject) => {
         db.all("SELECT name, path FROM recipes ORDER BY name", [], (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -106,16 +117,18 @@ const getHomePage = async (req, res) => {
       const recipesWithImages = await Promise.all(
         allRecipes.map(async (recipe) => {
           try {
-            const markdown = await fs.readFile(recipe.path, "utf8");
-            const image = extractImageFromMarkdown(markdown);
+            const fileContent = await fs.readFile(recipe.path, "utf8");
+            const { attributes, body } = fm(fileContent);
+            const image = extractImageFromMarkdown(attributes, body);
             return { name: recipe.name, image };
           } catch (e) {
+            console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
             return { name: recipe.name, image: null };
           }
         })
       );
 
-      res.render("index", { title: "Recetas", content: null, recipes: recipesWithImages, recipeTitles, user: req.session });
+      res.render("index", { title: "Recetas", content: null, recipes: recipesWithImages, user: req.session });
     }
   } catch (error) {
     console.error("Error al obtener la página de recetas:", error);
@@ -124,7 +137,8 @@ const getHomePage = async (req, res) => {
 };
 
 const getShoppingListPage = (req, res) => {
-  res.render("shopping-list", { recipeTitles: [] });
+  // recipeTitles is now provided by middleware
+  res.render("shopping-list", { title: "Lista de la Compra" });
 };
 
 const getAllRecipesApi = (req, res) => {
@@ -301,5 +315,4 @@ module.exports = {
   getRecipeByIdApi,
   createRecipeApi,
   scrapeRecipeApi,
-  getAllRecipeTitles,
 };

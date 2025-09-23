@@ -25,15 +25,7 @@
       <% } %>
     </div>
 
-    <h3 class="text-lg font-semibold mb-2">Recetas</h3>
-    <ul id="recipe-list" class="flex-grow">
-      <% if (recipeTitles && recipeTitles.length > 0) { %> <% recipeTitles.forEach(recipe => { %>
-      <li class="mb-2">
-        <a href="/?recipe=<%= recipe %>" class="text-green-600 hover:underline break-words"><%= recipe %></a>
-      </li>
-      <% }) %> <% } else { %>
-      <li class="text-gray-500">No hay recetas.</li>
-      <% } %>
-    </ul>
+    <!-- El espacio restante se puede usar para otras funcionalidades en el futuro -->
+    <div class="flex-grow"></div>
   </div>
 </aside>

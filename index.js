@@ -92,6 +92,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware to pass all recipe titles to all templates for search functionality
+app.use(async (req, res, next) => {
+  try {
+    const recipeRows = await new Promise((resolve, reject) =>
+      db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => (err ? reject(err) : resolve(rows)))
+    );
+    res.locals.recipeTitles = recipeRows.map((r) => r.name);
+  } catch (error) {
+    console.error("Error fetching recipe titles for layout:", error);
+    res.locals.recipeTitles = [];
+  }
+  next();
+});
+
 // Ruta para evitar el error 404 del favicon en las logs del navegador
 app.get("/favicon.ico", (req, res) => res.status(204).send());
 

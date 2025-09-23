@@ -70,5 +70,3 @@
   - [x] Añadir funciones para compartir e imprimir recetas.
   - [x] Implementar vista de lista de la compra (semanal/mensual).
   - [ ] Implementar planificación detallada de comidas.
-- [ ] Eliminar el boton hoy del calendario
-- 
