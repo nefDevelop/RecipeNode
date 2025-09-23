@@ -1,20 +1,58 @@
-    </main>
-    <footer class="bg-white">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-            &copy; 2024 RecipeNode. Todos los derechos reservados.
-        </div>
-    </footer>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const mobileMenuButton = document.getElementById("mobile-menu-button");
-            const mobileMenu = document.getElementById("mobile-menu");
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Sidebar Mobile ---
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
 
-            if (mobileMenuButton) {
-                mobileMenuButton.addEventListener("click", () => {
-                    mobileMenu.classList.toggle("hidden");
-                });
+    const toggleSidebar = () => {
+        if (sidebar) {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+    };
+
+    if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleSidebar);
+    if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+    if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleSidebar);
+
+    // --- Create Recipe Modal ---
+    const createModal = document.getElementById('create-recipe-modal');
+    if (createModal) {
+        const showCreateModalBtn = document.getElementById('show-create-modal-btn');
+        const closeCreateModalBtn = document.getElementById('close-create-modal-btn');
+
+        if (showCreateModalBtn) {
+            showCreateModalBtn.addEventListener('click', () => createModal.classList.remove('hidden'));
+        }
+        if (closeCreateModalBtn) {
+            closeCreateModalBtn.addEventListener('click', () => createModal.classList.add('hidden'));
+        }
+        // Close on outside click
+        window.addEventListener('click', (event) => {
+            if (event.target === createModal) {
+                createModal.classList.add('hidden');
             }
         });
-    </script>
+    }
+
+    // --- Search Functionality (now in header) ---
+    const searchInput = document.getElementById("recipe-search");
+    const recipeList = document.getElementById("recipe-list");
+    const recipes = recipeList ? Array.from(recipeList.getElementsByTagName("li")) : [];
+
+    if (searchInput) {
+      searchInput.addEventListener("keyup", (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        recipes.forEach((recipe) => {
+          const title = recipe.textContent.toLowerCase();
+          recipe.style.display = title.includes(searchTerm) ? "" : "none";
+        });
+      });
+    }
+});
+</script>
+
 </body>
 </html>

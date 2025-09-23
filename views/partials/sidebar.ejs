@@ -1,0 +1,39 @@
+<aside
+  id="sidebar"
+  class="fixed top-16 left-0 w-72 h-[calc(100vh-4rem)] bg-white p-4 shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out z-40 md:relative md:translate-x-0 md:top-0 md:w-1/4 md:h-auto md:shadow-none md:p-0"
+>
+  <div class="md:bg-white md:p-4 md:rounded-lg md:shadow h-full overflow-y-auto flex flex-col">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Navegación</h2>
+      <!-- Close button for mobile -->
+      <button id="close-sidebar-btn" class="md:hidden text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+    </div>
+
+    <div class="space-y-2 mb-4 pb-4 border-b">
+      <a href="/" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Recetas</a>
+      <a href="/planning" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Planificación</a>
+      <a href="/shopping-list" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Lista de la Compra</a>
+    </div>
+
+    <div class="space-y-2 mb-4 pb-4 border-b">
+      <% if (user && user.userId) { %>
+      <a href="/settings" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Ajustes</a>
+      <a href="/api/auth/logout" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Logout</a>
+      <% } else { %>
+      <a href="/login" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Login</a>
+      <a href="/register" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Registro</a>
+      <% } %>
+    </div>
+
+    <h3 class="text-lg font-semibold mb-2">Recetas</h3>
+    <ul id="recipe-list" class="flex-grow">
+      <% if (recipeTitles && recipeTitles.length > 0) { %> <% recipeTitles.forEach(recipe => { %>
+      <li class="mb-2">
+        <a href="/?recipe=<%= recipe %>" class="text-green-600 hover:underline break-words"><%= recipe %></a>
+      </li>
+      <% }) %> <% } else { %>
+      <li class="text-gray-500">No hay recetas.</li>
+      <% } %>
+    </ul>
+  </div>
+</aside>

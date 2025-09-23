@@ -11,7 +11,7 @@ const getPlanningPage = (req, res) => {
       return res.status(500).send("Error al cargar las recetas");
     }
     const recipeTitles = rows.map((r) => r.name);
-    res.render("planning", { recipeTitles });
+    res.render("planning", { title: "Planificación", recipeTitles, user: req.session });
   });
 };
 

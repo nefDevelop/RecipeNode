@@ -1,41 +1,21 @@
-<%- include('partials/header', { title: title || 'Recetas' }) %>
+<%- include('partials/header', { title: title || 'Recetas', user: user }) %>
 
 <!-- Estilos para el Modo Cocina -->
 <link rel="stylesheet" href="/css/kitchen-mode.css" />
 <link rel="stylesheet" href="/css/print.css" media="print" />
 
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-  <!-- Sidebar con lista de recetas -->
-  <div class="md:col-span-1 bg-white p-4 rounded-lg shadow">
-    <h2 class="text-xl font-bold mb-4">Recetas</h2>
-    <!-- Search Form -->
-    <div class="mb-4">
-      <input
-        type="text"
-        id="recipe-search"
-        placeholder="Buscar recetas..."
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-      />
-    </div>
-
-    <% if (user && user.userId) { %>
-    <div class="mb-4">
-      <button
-        id="show-create-form-btn"
-        class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
-      >
-        Crear Receta
+<!-- Create Recipe Modal -->
+<div id="create-recipe-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+  <div class="relative bg-white w-full max-w-lg p-5 border rounded-md shadow-lg max-h-full overflow-y-auto">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <p class="text-2xl font-bold">Añadir Receta</p>
+      <button id="close-create-modal-btn" class="text-gray-400 hover:text-gray-600">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
     </div>
-    <div class="mb-4 border-t pt-4">
-      <a
-        href="/shopping-list"
-        class="w-full text-center px-4 py-2 rounded text-white inline-block shadow-lg bg-yellow-500 hover:bg-yellow-600 focus:bg-yellow-700"
-      >
-        Lista de la Compra
-      </a>
-    </div>
-    <div id="create-recipe-container" class="hidden mb-6 border-t pt-4">
+    <div id="create-recipe-container" class="mt-4 mb-6">
       <!-- Tabs -->
       <div class="flex border-b mb-4">
         <button id="manual-tab" class="py-2 px-4 bg-white text-green-600 border-b-2 border-green-600 font-semibold">Manual</button>
@@ -94,73 +74,75 @@
       </form>
       <p id="create-error-message" class="text-red-500 text-xs mt-2 hidden"></p>
     </div>
-    <% } %>
-    <ul id="recipe-list">
-      <% recipeTitles.forEach(recipe => { %>
-      <li class="mb-2">
-        <a href="/?recipe=<%= recipe %>" class="text-green-600 hover:underline"><%= recipe %></a>
-      </li>
-      <% }) %>
-    </ul>
   </div>
+</div>
 
-  <!-- Contenido principal -->
-  <div class="md:col-span-3 bg-white p-6 rounded-lg shadow min-h-[60vh]">
-    <% if (content) { %>
-    <!-- Contenedor para el Modo Cocina -->
-    <div id="recipe-content-wrapper" class="relative">
-      <!-- Botones de Acción -->
-      <div class="flex flex-wrap justify-end gap-2 mb-4">
-        <button
-          id="enter-kitchen-mode-btn"
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-        >
-          Modo Cocina
-        </button>
-        <button
-          id="print-recipe-btn"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 -ml-1" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          Imprimir
-        </button>
-        <button
-          id="share-recipe-btn"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 -ml-1" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"
-            />
-          </svg>
-          Compartir
-        </button>
+<div class="container mx-auto p-4">
+  <div class="md:flex md:gap-6">
+    <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+
+    <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
+
+    <!-- Main Content -->
+    <main class="w-full md:w-3/4">
+      <div class="bg-white p-6 rounded-lg shadow min-h-[80vh]">
+        <% if (content) { %>
+        <!-- Contenedor para el Modo Cocina -->
+        <div id="recipe-content-wrapper" class="relative">
+          <!-- Botones de Acción -->
+          <div class="flex flex-wrap justify-end gap-2 mb-4">
+            <button
+              id="enter-kitchen-mode-btn"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Modo Cocina
+            </button>
+            <button
+              id="print-recipe-btn"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 -ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Imprimir
+            </button>
+            <button
+              id="share-recipe-btn"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 -ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"
+                />
+              </svg>
+              Compartir
+            </button>
+          </div>
+
+          <!-- Botón para salir (inicialmente oculto por CSS) -->
+          <button id="exit-kitchen-mode-btn" title="Salir del Modo Cocina (Esc)">Salir</button>
+
+          <!-- Contenido de la receta -->
+          <article class="prose lg:prose-xl max-w-none"><%- content %></article>
+        </div>
+        <% } else { %>
+        <div class="text-center text-gray-500 pt-16">
+          <h1 class="text-2xl font-bold">Bienvenido a RecipeNode</h1>
+          <p class="mt-2">Selecciona una receta de la lista para verla aquí.</p>
+        </div>
+        <% } %>
       </div>
-
-      <!-- Botón para salir (inicialmente oculto por CSS) -->
-      <button id="exit-kitchen-mode-btn" title="Salir del Modo Cocina (Esc)">Salir</button>
-
-      <!-- Contenido de la receta -->
-      <article class="prose lg:prose-xl max-w-none"><%- content %></article>
-    </div>
-    <% } else { %>
-    <div class="text-center text-gray-500 pt-16">
-      <h1 class="text-2xl font-bold">Bienvenido a RecipeNode</h1>
-      <p class="mt-2">Selecciona una receta de la lista para verla aquí.</p>
-    </div>
-    <% } %>
+    </main>
   </div>
 </div>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const showFormBtn = document.getElementById("show-create-form-btn");
     const createContainer = document.getElementById("create-recipe-container");
 
     // --- Print and Share Functionality ---
@@ -209,23 +191,7 @@
     const recipeList = document.getElementById("recipe-list");
     const recipes = recipeList ? Array.from(recipeList.getElementsByTagName("li")) : [];
 
-    if (searchInput) {
-      searchInput.addEventListener("keyup", (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        recipes.forEach((recipe) => {
-          const title = recipe.textContent.toLowerCase();
-          recipe.style.display = title.includes(searchTerm) ? "" : "none";
-        });
-      });
-    }
-
     // --- Create Recipe Form ---
-
-    if (showFormBtn) {
-      showFormBtn.addEventListener("click", () => {
-        createContainer.classList.toggle("hidden");
-      });
-    }
 
     const manualTab = document.getElementById("manual-tab");
     const scrapeTab = document.getElementById("scrape-tab");

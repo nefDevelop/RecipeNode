@@ -1,17 +1,39 @@
 const db = require("../config/database");
 
 const getSettingsPage = (req, res) => {
-  db.all("SELECT id, value FROM unit_settings", [], (err, rows) => {
-    if (err) {
-      res.status(500).send("Error al cargar los ajustes.");
-      return console.error(err.message);
-    }
-    const settings = rows.reduce((acc, row) => {
-      acc[row.id] = row.value;
-      return acc;
-    }, {});
-    res.render("settings", { settings });
+  // Promise to get recipe titles
+  const getTitles = new Promise((resolve, reject) => {
+    db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows.map((r) => r.name));
+    });
   });
+
+  // Promise to get settings
+  const getSettings = new Promise((resolve, reject) => {
+    db.all("SELECT id, value FROM unit_settings", [], (err, rows) => {
+      if (err) return reject(err);
+      const settings = rows.reduce((acc, row) => {
+        acc[row.id] = row.value;
+        return acc;
+      }, {});
+      resolve(settings);
+    });
+  });
+
+  Promise.all([getTitles, getSettings])
+    .then(([recipeTitles, settings]) => {
+      return res.render("settings", {
+        title: "Ajustes",
+        settings,
+        recipeTitles,
+        user: req.session,
+      });
+    })
+    .catch((err) => {
+      console.error("Error al cargar la página de ajustes:", err);
+      return res.status(500).send("Error al cargar la página de ajustes.");
+    });
 };
 
 const updateSettings = (req, res) => {

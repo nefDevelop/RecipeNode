@@ -36,6 +36,7 @@ const getHomePage = (req, res) => {
     if (err) {
       console.error("Error al cargar los títulos de las recetas:", err);
       return res.status(500).render("index", {
+        user: req.session,
         recipeTitles: [],
         title: "Error",
         content: "No se pudo cargar la lista de recetas desde la base de datos.",
@@ -49,6 +50,7 @@ const getHomePage = (req, res) => {
         if (err) {
           console.error(`Error al buscar la receta ${recipeName}:`, err);
           return res.status(500).render("index", {
+            user: req.session,
             recipeTitles,
             title: "Error",
             content: "Error al buscar la receta en la base de datos.",
@@ -68,10 +70,12 @@ const getHomePage = (req, res) => {
               title: attributes.title || recipeName,
               content: htmlContent,
               recipeTitles: recipeTitles,
+              user: req.session,
             });
           } catch (readErr) {
             console.error(`Error al leer el archivo de receta ${recipe.path}:`, readErr);
             return res.status(500).render("index", {
+              user: req.session,
               recipeTitles,
               title: "Error",
               content: "No se pudo leer el archivo de la receta.",
@@ -81,6 +85,7 @@ const getHomePage = (req, res) => {
           return res.render("index", {
             recipeTitles,
             title: "Receta no encontrada",
+            user: req.session,
             content: `La receta "${recipeName}" no existe. Por favor, busca otra.`,
           });
         }
@@ -90,6 +95,7 @@ const getHomePage = (req, res) => {
         title: "Bienvenido",
         recipeTitles: recipeTitles,
         content: null,
+        user: req.session,
       });
     }
   });
