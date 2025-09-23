@@ -1,295 +1,196 @@
-<!DOCTYPE html>
-<html lang="es" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RecipeNode<% if (typeof title !== 'undefined' && title) { %>: <%- title %><% } %></title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
-      :root {
-        --bg-color: #f7f7f7;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --sidebar-bg: #2c3e50;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #34495e;
-        --shadow-color: rgba(0, 0, 0, 0.08);
-      }
+<%- include('partials/header', { title: title || 'Recetas' }) %>
 
-      [data-theme="dark"] {
-        --bg-color: #1a1a1a;
-        --card-bg-color: #2b2b2b;
-        --text-color: #f0f0f0;
-        --sidebar-bg: #1f1f1f;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #333;
-        --shadow-color: rgba(0, 0, 0, 0.4);
-      }
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+  <!-- Sidebar con lista de recetas -->
+  <div class="md:col-span-1 bg-white p-4 rounded-lg shadow">
+    <h2 class="text-xl font-bold mb-4">Recetas</h2>
+    <!-- Search Form -->
+    <div class="mb-4">
+      <input
+        type="text"
+        id="recipe-search"
+        placeholder="Buscar recetas..."
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+      />
+    </div>
 
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: "Roboto", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        transition: background-color 0.3s, color 0.3s;
-      }
-
-      .menu-toggle {
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1001;
-        background: var(--card-bg-color);
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 10px var(--shadow-color);
-        font-size: 1.2rem;
-        width: 44px;
-        height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 250px;
-        height: 100%;
-        background: var(--sidebar-bg);
-        color: var(--sidebar-text);
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        padding-top: 60px;
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .sidebar nav a,
-      .sidebar .sidebar-bottom a {
-        display: block;
-        padding: 15px 20px;
-        color: var(--sidebar-text);
-        text-decoration: none;
-        transition: background 0.2s;
-      }
-
-      .sidebar nav a:hover,
-      .sidebar .sidebar-bottom a:hover {
-        background: var(--sidebar-hover);
-      }
-
-      .sidebar-bottom {
-        margin-top: auto;
-      }
-
-      .theme-switcher {
-        padding: 20px;
-        text-align: center;
-        border-top: 1px solid var(--sidebar-hover);
-      }
-
-      .main-content {
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-      }
-
-      .page-header {
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto 2rem auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 2rem;
-      }
-
-      .app-title {
-        color: var(--text-color);
-        margin-bottom: 0;
-      }
-
-      .search-container input {
-        width: 100%;
-        padding: 12px 20px;
-        font-size: 1rem;
-        border-radius: 25px;
-        border: 1px solid var(--sidebar-hover);
-        background-color: var(--card-bg-color);
-        color: var(--text-color);
-        box-shadow: 0 2px 8px var(--shadow-color);
-      }
-
-      .search-container {
-        flex-grow: 1;
-      }
-
-      .card {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        box-shadow: 0 6px 20px var(--shadow-color);
-        margin: 1rem;
-        padding: 2rem 2.5rem;
-        max-width: 800px;
-        width: 100%;
-        line-height: 1.6;
-      }
-      .card h1 {
-        margin-top: 0;
-        color: var(--text-color);
-      }
-      .card img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-      }
-
-      /* Estilos para las listas de tareas (ingredientes) */
-      .card ul:has(li > input[type="checkbox"]) {
-        padding-left: 0;
-        list-style: none;
-      }
-
-      .card li > input[type="checkbox"] {
-        margin-right: 0.5em;
-        vertical-align: middle;
-      }
-
-      .card li:has(> input[type="checkbox"]:checked) {
-        text-decoration: line-through;
-        opacity: 0.7;
-      }
-
-      /* Ocultar bloques de código de Obsidian (dataview) */
-      .card pre:has(code[class*="language-dataviewjs"]),
-      .card pre:has(code[class*="language-dataview"]) {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <button class="menu-toggle" aria-label="Abrir menú">☰</button>
-
-    <aside class="sidebar">
-      <nav>
-        <a href="/">Inicio</a>
-        <a href="/planning">Planificación</a>
-        <a href="/shopping-list">Lista de la compra</a>
-      </nav>
-      <div class="sidebar-bottom">
-        <a href="/settings">Ajustes</a>
-        <div class="theme-switcher">
-          <span>Light / Dark</span>
-          <input type="checkbox" id="theme-toggle" />
-        </div>
+    <% if (user && user.userId) { %>
+    <div class="mb-4">
+      <button
+        id="show-create-form-btn"
+        class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
+      >
+        Crear Receta
+      </button>
+    </div>
+    <div id="create-recipe-container" class="hidden mb-6 border-t pt-4">
+      <!-- Tabs -->
+      <div class="flex border-b mb-4">
+        <button id="manual-tab" class="py-2 px-4 bg-white text-green-600 border-b-2 border-green-600 font-semibold">Manual</button>
+        <button id="scrape-tab" class="py-2 px-4 bg-gray-100 text-gray-500">Importar</button>
       </div>
-    </aside>
 
-    <main class="main-content">
-      <header class="page-header">
-        <h1 class="app-title">RecipeNode</h1>
-        <div class="search-container">
-          <input type="search" id="recipe-search" list="recipe-titles" placeholder="Buscar una receta..." />
-          <datalist id="recipe-titles">
-            <% if (typeof recipeTitles !== 'undefined') { %> <% recipeTitles.forEach(recipeTitle => { %>
-            <option value="<%- recipeTitle %>"></option>
-            <% }); %> <% } %>
-          </datalist>
+      <!-- Manual Form -->
+      <form id="create-manual-form">
+        <div class="mb-4">
+          <label for="title" class="block text-sm font-medium text-gray-700">Título</label>
+          <input
+            type="text"
+            name="title"
+            id="title"
+            required
+            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+          />
         </div>
-      </header>
+        <div class="mb-4">
+          <label for="markdownContent" class="block text-sm font-medium text-gray-700">Contenido (Markdown)</label>
+          <textarea
+            name="markdownContent"
+            id="markdownContent"
+            rows="10"
+            required
+            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+        >
+          Guardar Receta
+        </button>
+      </form>
 
-      <% if (typeof title !== 'undefined' && title) { %>
-      <div class="card">
-        <h1><%- title %></h1>
-        <hr />
-        <%- content %>
-      </div>
-      <% } %>
-    </main>
+      <!-- Scrape Form -->
+      <form id="create-scrape-form" class="hidden">
+        <div class="mb-4">
+          <label for="url" class="block text-sm font-medium text-gray-700">URL de la Receta</label>
+          <input
+            type="url"
+            name="url"
+            id="url"
+            required
+            placeholder="https://ejemplo.com/receta"
+            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+        >
+          Importar Receta
+        </button>
+      </form>
+      <p id="create-error-message" class="text-red-500 text-xs mt-2 hidden"></p>
+    </div>
+    <% } %>
+    <ul id="recipe-list">
+      <% recipeTitles.forEach(recipe => { %>
+      <li class="mb-2">
+        <a href="/?recipe=<%= recipe %>" class="text-green-600 hover:underline"><%= recipe %></a>
+      </li>
+      <% }) %>
+    </ul>
+  </div>
 
-    <script>
-      const menuToggle = document.querySelector(".menu-toggle");
-      const sidebar = document.querySelector(".sidebar");
+  <!-- Contenido principal -->
+  <div class="md:col-span-3 bg-white p-6 rounded-lg shadow min-h-[60vh]">
+    <% if (content) { %>
+    <article class="prose lg:prose-xl max-w-none"><%- content %></article>
+    <% } else { %>
+    <div class="text-center text-gray-500 pt-16">
+      <h1 class="text-2xl font-bold">Bienvenido a RecipeNode</h1>
+      <p class="mt-2">Selecciona una receta de la lista para verla aquí.</p>
+    </div>
+    <% } %>
+  </div>
+</div>
 
-      menuToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
-      });
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const showFormBtn = document.getElementById("show-create-form-btn");
+    const createContainer = document.getElementById("create-recipe-container");
 
-      // --- Theme Switcher ---
-      const themeToggle = document.getElementById("theme-toggle");
-      const htmlEl = document.documentElement;
+    // --- Search Functionality ---
+    const searchInput = document.getElementById("recipe-search");
+    const recipeList = document.getElementById("recipe-list");
+    const recipes = recipeList ? Array.from(recipeList.getElementsByTagName("li")) : [];
 
-      function setTheme(theme) {
-        htmlEl.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
-        themeToggle.checked = theme === "dark";
-      }
-
-      themeToggle.addEventListener("change", () => {
-        setTheme(themeToggle.checked ? "dark" : "light");
-      });
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const savedTheme = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-        if (savedTheme) {
-          setTheme(savedTheme);
-        } else {
-          setTheme(prefersDark ? "dark" : "light");
-        }
-
-        // --- Interactive Task Lists ---
-        // Makes recipe ingredient checkboxes interactive and allows clicking the whole item.
-        const taskListItems = document.querySelectorAll('.card li:has(input[type="checkbox"])');
-        taskListItems.forEach((item) => {
-          const checkbox = item.querySelector('input[type="checkbox"]');
-          if (checkbox) {
-            // The markdown parser might add 'disabled'. We make them interactive.
-            checkbox.disabled = false;
-
-            // Add a pointer cursor to the whole item for better UX
-            item.style.cursor = "pointer";
-
-            item.addEventListener("click", (event) => {
-              // Avoid toggling the checkbox if a link inside the item is clicked
-              if (event.target.tagName === "A") return;
-
-              // Toggle checkbox state if the click was not on the checkbox itself
-              // (the browser handles that case automatically)
-              if (event.target !== checkbox) checkbox.checked = !checkbox.checked;
-            });
-          }
+    if (searchInput) {
+      searchInput.addEventListener("keyup", (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        recipes.forEach((recipe) => {
+          const title = recipe.textContent.toLowerCase();
+          recipe.style.display = title.includes(searchTerm) ? "" : "none";
         });
       });
+    }
 
-      // --- Search ---
-      const recipeSearch = document.getElementById("recipe-search");
-      recipeSearch.addEventListener("input", (e) => {
-        const selectedRecipe = e.target.value;
-        // Comprueba si el valor seleccionado está en la lista de opciones
-        const option = document.querySelector(`#recipe-titles option[value="${selectedRecipe.replace(/"/g, '\\"')}"]`);
-        if (option) {
-          // Redirige para cargar la receta seleccionada
-          window.location.href = `/?recipe=${encodeURIComponent(selectedRecipe)}`;
-        }
+    // --- Create Recipe Form ---
+
+    if (showFormBtn) {
+      showFormBtn.addEventListener("click", () => {
+        createContainer.classList.toggle("hidden");
       });
-    </script>
-  </body>
-</html>
+    }
+
+    const manualTab = document.getElementById("manual-tab");
+    const scrapeTab = document.getElementById("scrape-tab");
+    const manualForm = document.getElementById("create-manual-form");
+    const scrapeForm = document.getElementById("create-scrape-form");
+    const errorMessage = document.getElementById("create-error-message");
+
+    manualTab.addEventListener("click", () => {
+      manualForm.classList.remove("hidden");
+      scrapeForm.classList.add("hidden");
+      manualTab.classList.add("border-green-600", "font-semibold", "bg-white", "text-green-600");
+      manualTab.classList.remove("bg-gray-100", "text-gray-500");
+      scrapeTab.classList.add("bg-gray-100", "text-gray-500");
+      scrapeTab.classList.remove("border-green-600", "font-semibold", "bg-white", "text-green-600");
+    });
+
+    scrapeTab.addEventListener("click", () => {
+      scrapeForm.classList.remove("hidden");
+      manualForm.classList.add("hidden");
+      scrapeTab.classList.add("border-green-600", "font-semibold", "bg-white", "text-green-600");
+      scrapeTab.classList.remove("bg-gray-100", "text-gray-500");
+      manualTab.classList.add("bg-gray-100", "text-gray-500");
+      manualTab.classList.remove("border-green-600", "font-semibold", "bg-white", "text-green-600");
+    });
+
+    const handleFormSubmit = async (url, body) => {
+      errorMessage.classList.add("hidden");
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          errorMessage.textContent = data.error || "Ocurrió un error.";
+          errorMessage.classList.remove("hidden");
+        }
+      } catch (err) {
+        errorMessage.textContent = "Error de red. Inténtalo de nuevo.";
+        errorMessage.classList.remove("hidden");
+      }
+    };
+
+    manualForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = manualForm.title.value;
+      const markdownContent = manualForm.markdownContent.value;
+      handleFormSubmit("/api/recipes", { title, markdownContent });
+    });
+
+    scrapeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const url = scrapeForm.url.value;
+      handleFormSubmit("/api/recipes/scrape", { url });
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

@@ -1,435 +1,89 @@
-<!DOCTYPE html>
-<html lang="es" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lista de la Compra - RecipeNode</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
-      :root {
-        --bg-color: #f7f7f7;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --sidebar-bg: #2c3e50;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #34495e;
-        --shadow-color: rgba(0, 0, 0, 0.08);
+<%- include('partials/header', { title: 'Lista de la Compra' }) %>
+
+<div class="bg-white p-6 rounded-lg shadow">
+  <h1 class="text-2xl font-bold mb-6 border-b pb-4">Generar Lista de la Compra</h1>
+
+  <!-- Controles de Fecha -->
+  <div class="flex flex-wrap items-end gap-4 mb-6">
+    <div>
+      <label for="startDate" class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+      <input
+        type="date"
+        id="startDate"
+        name="startDate"
+        class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+      />
+    </div>
+    <div>
+      <label for="endDate" class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+      <input
+        type="date"
+        id="endDate"
+        name="endDate"
+        class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+      />
+    </div>
+    <button
+      id="generate-list-btn"
+      class="px-6 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+    >
+      Generar
+    </button>
+  </div>
+
+  <!-- Área de la Lista -->
+  <div id="shopping-list-container">
+    <p id="placeholder-text" class="text-gray-500">Selecciona un rango de fechas para generar tu lista de la compra.</p>
+    <ul id="shopping-list" class="list-disc pl-5 space-y-2">
+      <!-- Los ingredientes se insertarán aquí -->
+    </ul>
+    <p id="error-message" class="text-red-500 hidden"></p>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const generateBtn = document.getElementById("generate-list-btn");
+    const listContainer = document.getElementById("shopping-list");
+    const placeholder = document.getElementById("placeholder-text");
+    const errorMsg = document.getElementById("error-message");
+
+    generateBtn.addEventListener("click", async () => {
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+
+      if (!startDate || !endDate) {
+        alert("Por favor, selecciona una fecha de inicio y de fin.");
+        return;
       }
 
-      [data-theme="dark"] {
-        --bg-color: #1a1a1a;
-        --card-bg-color: #2b2b2b;
-        --text-color: #f0f0f0;
-        --sidebar-bg: #1f1f1f;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #333;
-        --shadow-color: rgba(0, 0, 0, 0.4);
-      }
+      listContainer.innerHTML = "";
+      placeholder.textContent = "Generando lista...";
+      errorMsg.classList.add("hidden");
 
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: "Roboto", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        transition: background-color 0.3s, color 0.3s;
-      }
-
-      .menu-toggle {
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1001;
-        background: var(--card-bg-color);
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 10px var(--shadow-color);
-        font-size: 1.2rem;
-        width: 44px;
-        height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 250px;
-        height: 100%;
-        background: var(--sidebar-bg);
-        color: var(--sidebar-text);
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        padding-top: 60px;
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .sidebar nav a,
-      .sidebar .sidebar-bottom a {
-        display: block;
-        padding: 15px 20px;
-        color: var(--sidebar-text);
-        text-decoration: none;
-        transition: background 0.2s;
-      }
-
-      .sidebar nav a:hover,
-      .sidebar .sidebar-bottom a:hover {
-        background-color: var(--sidebar-hover);
-      }
-
-      .sidebar-bottom {
-        margin-top: auto;
-      }
-
-      .theme-switcher {
-        padding: 20px;
-        text-align: center;
-        border-top: 1px solid var(--sidebar-hover);
-      }
-
-      .main-content {
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-      }
-
-      .calendar-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        box-shadow: 0 6px 20px var(--shadow-color);
-        padding: 2rem;
-        max-width: 900px;
-        width: 100%;
-      }
-
-      .list-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding: 0 1rem;
-      }
-
-      .list-header h2 {
-        margin: 0;
-      }
-
-      .list-header button {
-        background: none;
-        border: none;
-        color: var(--text-color);
-        font-size: 2rem;
-        cursor: pointer;
-        padding: 0 1rem;
-      }
-
-      .actions-container {
-        margin-top: 1.5rem;
-        text-align: center;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .actions-container button {
-        padding: 12px 24px;
-        border: 1px solid var(--sidebar-hover);
-        background-color: var(--card-bg-color);
-        color: var(--text-color);
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 1rem;
-      }
-
-      .display-area {
-        margin-top: 2rem;
-        padding: 1.5rem;
-        background-color: var(--bg-color);
-        border-radius: 8px;
-        border: 1px solid var(--sidebar-hover);
-        text-align: left;
-        display: none;
-      }
-      .display-area.visible {
-        display: block;
-      }
-      .display-area h3 {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      .display-area ul {
-        list-style: none;
-        padding: 0;
-      }
-      .display-area li {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--sidebar-hover);
-      }
-      .display-area li:last-child {
-        border-bottom: none;
-      }
-      .display-area ul li label {
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-      }
-      .display-area ul li input[type="checkbox"] {
-        margin-right: 0.75em;
-        min-width: 16px; /* Para alinear mejor */
-      }
-      .display-area ul li:has(input:checked) label {
-        text-decoration: line-through;
-        opacity: 0.7;
-      }
-
-      .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-      }
-
-      .modal-overlay.show {
-        display: flex;
-      }
-
-      .modal {
-        background: var(--card-bg-color);
-        padding: 2rem;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 400px;
-      }
-      .modal h3 {
-        margin-top: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <button class="menu-toggle" aria-label="Abrir menú">☰</button>
-
-    <aside class="sidebar">
-      <nav>
-        <a href="/">Inicio</a>
-        <a href="/planning">Planificación</a>
-        <a href="/shopping-list">Lista de la compra</a>
-      </nav>
-      <div class="sidebar-bottom">
-        <a href="/settings">Ajustes</a>
-        <div class="theme-switcher">
-          <span>Light / Dark</span>
-          <input type="checkbox" id="theme-toggle" />
-        </div>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <div class="card" style="text-align: center">
-        <div class="list-header">
-          <button id="prev-month">‹</button>
-          <h2 id="month-year"></h2>
-          <button id="next-month">›</button>
-        </div>
-        <p style="margin: 1rem 0 2rem 0; opacity: 0.8">
-          Selecciona una opción para generar tu lista de la compra a partir de las recetas planificadas.
-        </p>
-        <div class="actions-container">
-          <button id="weekly-list">Generar Lista Semanal</button>
-          <button id="monthly-list">Generar Lista Mensual</button>
-        </div>
-      </div>
-      <div id="display-area" class="display-area"></div>
-      <div id="week-select-modal" class="modal-overlay">
-        <div class="modal">
-          <h3>Seleccionar Semana</h3>
-          <select id="week-selector"></select>
-          <button id="confirm-week">Aceptar</button>
-          <button id="cancel-week" style="background: #888">Cancelar</button>
-        </div>
-      </div>
-    </main>
-
-    <script>
-      // --- Basic Sidebar and Theme logic ---
-      const menuToggle = document.querySelector(".menu-toggle");
-      const sidebar = document.querySelector(".sidebar");
-      menuToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
-
-      const themeToggle = document.getElementById("theme-toggle");
-      const htmlEl = document.documentElement;
-      function setTheme(theme) {
-        htmlEl.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
-        themeToggle.checked = theme === "dark";
-      }
-      themeToggle.addEventListener("change", () => setTheme(themeToggle.checked ? "dark" : "light"));
-      document.addEventListener("DOMContentLoaded", () => {
-        const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-        setTheme(savedTheme);
-      });
-
-      // --- Shopping List Logic ---
-      const monthYearEl = document.getElementById("month-year");
-      const prevMonthBtn = document.getElementById("prev-month");
-      const nextMonthBtn = document.getElementById("next-month");
-      const weeklyListBtn = document.getElementById("weekly-list");
-      const monthlyListBtn = document.getElementById("monthly-list");
-      const weekModal = document.getElementById("week-select-modal");
-      const weekSelector = document.getElementById("week-selector");
-      const confirmWeekBtn = document.getElementById("confirm-week");
-      const cancelWeekBtn = document.getElementById("cancel-week");
-      const displayArea = document.getElementById("display-area");
-
-      let currentDate = new Date();
-
-      function updateMonthDisplay() {
-        monthYearEl.textContent = `${currentDate.toLocaleString("es-ES", { month: "long" })} ${currentDate.getFullYear()}`;
-      }
-
-      function getWeeksOfMonth(year, month) {
-        const weeks = [];
-        const firstDate = new Date(year, month, 1);
-        const lastDate = new Date(year, month + 1, 0);
-        let current = new Date(firstDate);
-        current.setDate(current.getDate() - ((current.getDay() + 6) % 7));
-
-        while (current <= lastDate) {
-          const weekStart = new Date(current);
-          const weekEnd = new Date(current);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-
-          if (weekStart.getMonth() === month || weekEnd.getMonth() === month) {
-            weeks.push({
-              start: weekStart.toISOString().split("T")[0],
-              end: weekEnd.toISOString().split("T")[0],
-              label: `Semana del ${weekStart.toLocaleDateString("es-ES", {
-                day: "numeric",
-                month: "short",
-              })} al ${weekEnd.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`,
-            });
-          }
-          current.setDate(current.getDate() + 7);
-        }
-        return weeks;
-      }
-
-      async function generateList(startDate, endDate, title) {
-        const listId = `shopping-list-${startDate}-${endDate}`;
-        const checkedItems = JSON.parse(localStorage.getItem(listId)) || {};
-
-        displayArea.innerHTML = `<h3>Generando lista para ${title}...</h3>`;
-        displayArea.classList.add("visible");
-        displayArea.scrollIntoView({ behavior: "smooth" });
-
+      try {
         const response = await fetch(`/api/shopping-list?startDate=${startDate}&endDate=${endDate}`);
         const ingredients = await response.json();
 
-        let html = `<h3>${title}</h3>`;
-        if (ingredients.length > 0) {
-          html += `<ul id="shopping-list-ul" data-list-id="${listId}">`;
-          ingredients.forEach((ingredient) => {
-            const isChecked = checkedItems[ingredient.name] ? "checked" : "";
-            const escapedIngredientName = ingredient.name.replace(/"/g, "&quot;");
-            html += `<li>
-                       <label>
-                         <input type="checkbox" data-ingredient="${escapedIngredientName}" ${isChecked}>
-                         ${ingredient.display}
-                       </label>
-                     </li>`;
-          });
-          html += "</ul>";
+        placeholder.classList.add("hidden");
+
+        if (ingredients.length === 0) {
+          placeholder.textContent = "No hay recetas planificadas para este período.";
+          placeholder.classList.remove("hidden");
         } else {
-          html += "<p>No hay ingredientes en la lista para este período.</p>";
-        }
-        displayArea.innerHTML = html;
-
-        const shoppingListUL = document.getElementById("shopping-list-ul");
-        if (shoppingListUL) {
-          shoppingListUL.addEventListener("change", (event) => {
-            if (event.target.type === "checkbox") {
-              const ingredientName = event.target.dataset.ingredient;
-              checkedItems[ingredientName] = event.target.checked;
-              localStorage.setItem(listId, JSON.stringify(checkedItems));
-            }
+          ingredients.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item.display;
+            listContainer.appendChild(li);
           });
         }
+      } catch (err) {
+        placeholder.classList.add("hidden");
+        errorMsg.textContent = "Error al generar la lista. Por favor, inténtalo de nuevo.";
+        errorMsg.classList.remove("hidden");
       }
+    });
+  });
+</script>
 
-      prevMonthBtn.addEventListener("click", () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        updateMonthDisplay();
-      });
-
-      nextMonthBtn.addEventListener("click", () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        updateMonthDisplay();
-      });
-
-      weeklyListBtn.addEventListener("click", () => {
-        const weeks = getWeeksOfMonth(currentDate.getFullYear(), currentDate.getMonth());
-        weekSelector.innerHTML = "";
-        weeks.forEach((week) => {
-          const option = document.createElement("option");
-          option.value = `${week.start},${week.end}`;
-          option.textContent = week.label;
-          weekSelector.appendChild(option);
-        });
-        weekModal.classList.add("show");
-      });
-
-      monthlyListBtn.addEventListener("click", () => {
-        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split("T")[0];
-        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split("T")[0];
-        generateList(firstDay, lastDay, `Lista de Compra Mensual (${monthYearEl.textContent})`);
-      });
-
-      cancelWeekBtn.addEventListener("click", () => weekModal.classList.remove("show"));
-
-      confirmWeekBtn.addEventListener("click", () => {
-        const [startDate, endDate] = weekSelector.value.split(",");
-        const selectedLabel = weekSelector.options[weekSelector.selectedIndex].text;
-        generateList(startDate, endDate, `Lista de Compra: ${selectedLabel}`);
-        weekModal.classList.remove("show");
-      });
-
-      // --- Modal UX Improvements ---
-      weekModal.addEventListener("click", (e) => {
-        if (e.target === weekModal) {
-          weekModal.classList.remove("show");
-        }
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          weekModal.classList.remove("show");
-        }
-      });
-
-      updateMonthDisplay();
-    </script>
-  </body>
-</html>
+<%- include('partials/footer') %>

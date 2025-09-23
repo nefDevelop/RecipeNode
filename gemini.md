@@ -1,48 +1,70 @@
-# 🤖 Guía de Interacción con Gemini Code Assist
+# Roadmap del Proyecto: RecipeNode
 
-Este documento sirve como una guía para interactuar eficazmente con Gemini Code Assist en el contexto de este proyecto. El objetivo es maximizar la calidad de las respuestas y la eficiencia del desarrollo.
+## Fase 1: Configuración y Estructura Base
 
-## 📜 Contexto del Proyecto
+- [x] Tarea 1: Configuración del entorno
 
-Antes de hacer una pregunta, asegúrate de que Gemini tiene el contexto necesario.
+  - [x] Definir stack tecnológico:
+    - Backend: Node.js, Express.js
+    - Base de datos: SQLite
+    - Frontend: HTML, CSS con Tailwind CSS
+    - Librerías: `express`, `sqlite3`, `gray-matter`, `markdown-it`, `axios`, `cheerio`, `bcrypt`
+  - [x] Crear estructura de carpetas del proyecto (`server`, `public`, `recetas`).
+  - [x] Inicializar proyecto Node.js (`npm init -y`).
+  - [x] Instalar dependencias (`npm install ...`).
+  - [x] Crear carpeta `public/resources` para imágenes.
 
-- **Tecnologías Principales**: Node.js, [Express, Fastify, etc.], [Base de datos, ej: PostgreSQL, MongoDB].
-- **Tecnologías Principales**: Node.js, Express.js, SQLite. El frontend se sirve con archivos HTML.
-- **Objetivo del Proyecto**: Crear una aplicación web para gestionar y compartir recetas de cocina.
-- **Archivos Clave**:
-  - `package.json`: Define las dependencias y scripts.
-  - `index.js` / `app.js`: Punto de entrada de la aplicación.
-  - `src/routes/`: Directorio donde se definen las rutas de la API.
-  - `src/controllers/`: Lógica de negocio para cada ruta.
-  - `database.js`: Archivo de configuración y conexión para SQLite.
-  - `views/`: Directorio para los archivos HTML que se mostrarán.
+- [x] **Tarea 2: Base de Datos**
+  - [x] Crear script de inicialización (`init-db.js`).
+  - [x] Definir y crear tabla `users` (id, username, password, role).
+  - [x] Definir y crear tabla `recipes` (id, title, servings, author_id).
+  - [x] Definir y crear tabla `planning` (date, meal_type, recipe_name).
+  - [x] Insertar un usuario administrador inicial en el script.
+  - [x] Crear script para poblar la tabla `recipes` desde los archivos `.md` existentes.
 
-## ✍️ Cómo Formular Preguntas (Prompts)
+## Fase 2: API Core y Funcionalidades Principales
 
-Para obtener los mejores resultados, sigue estas pautas al crear tus prompts:
+- [x] **Tarea 3: API de Recetas y Planificación**
+  - [x] **Rutas de Recetas:**
+    - [x] `GET /api/recipes`: Obtener lista de todas las recetas.
+    - [x] `GET /api/recipes/:id`: Obtener una receta individual.
+      - [x] Implementar conversión de enlaces `![[imagen.png]]` a `<img>`.
+    - [x] `POST /api/recipes`: Crear nueva receta desde la web (genera archivo `.md`).
+    - [x] `POST /api/recipes/scrape`: Importar receta desde una URL.
+  - [x] **Rutas de Planificación:**
+    - [x] `GET /api/planning`: Obtener todas las recetas planificadas.
+    - [x] `POST /api/planning`: Asignar una receta a una fecha y tipo de comida.
+  - [x] **Ruta de Lista de la Compra:**
+    - [x] `GET /api/shopping-list`: Generar lista de la compra para un rango de fechas.
+      - [x] Crear módulo para analizar, estandarizar y sumar ingredientes.
+      - [x] Manejar convenciones de unidades (ej. `100 g`).
 
-1.  **Sé Específico**: En lugar de "ayúdame con el código", prueba con "revisa esta función en `src/controllers/userController.js` para mejorar su rendimiento y legibilidad".
-2.  **Proporciona Contexto**: Incluye los fragmentos de código relevantes o los nombres de los archivos con los que estás trabajando.
-3.  **Define el Objetivo**: Explica claramente lo que quieres lograr. ¿Es una nueva funcionalidad, una refactorización, depuración o documentación?
-4.  **Muestra lo que has Intentado**: Si estás atascado, menciona las soluciones que ya has probado. Esto ayuda a evitar sugerencias repetidas.
+## Fase 3: Usuarios y Frontend
 
----
+- [x] **Tarea 4: Sistema de Autenticación**
 
-### Ejemplos de Prompts Efectivos
+  - [x] Definir roles de usuario (Público, Usuario, Admin).
+  - [x] Implementar rutas `POST /register` y `POST /login`.
+  - [x] Proteger rutas de la API (POST, PUT, DELETE) con middleware de autenticación.
+  - [x] Implementar middleware de autorización basado en roles (user vs admin).
 
-#### Para crear código nuevo
+- [x] **Tarea 5: Interfaz de Usuario (Frontend)**
+  - [x] **Estructura y Estilo:**
+    - [x] Construir la interfaz base con HTML y Tailwind CSS.
+    - [x] Asegurar diseño responsivo para móviles.
+  - [x] **Componentes y Vistas:**
+    - [x] Vista de catálogo de recetas.
+    - [x] Vista de detalle de receta (usar `markdown-it` para renderizar).
+    - [x] Vista de planificación con calendario visual.
+      - [x] Adaptar a móvil con "Tocar para Asignar".
+      - [x] Implementar toggle para vista semanal/mensual.
+    - [x] Vista de lista de la compra.
+    - [x] Vistas y formularios de autenticación (Login/Registro).
+    - [x] Formulario para crear/importar recetas.
 
-> "En el archivo `src/routes/productRoutes.js`, crea una nueva ruta `POST /products` que utilice el controlador `createProduct` de `src/controllers/productController.js`. Asegúrate de incluir validación de entrada para los campos `name` (string, requerido) y `price` (number, requerido)."
+## Fase 4: Funcionalidades Adicionales y Pulido
 
-#### Para refactorizar o revisar código
-
-> "Revisa el siguiente código del archivo `src/services/authService.js`. Sugiere mejoras en cuanto a seguridad, manejo de errores y buenas prácticas de async/await. Quiero asegurarme de que el manejo de contraseñas sea seguro."
-
-#### Para depurar un error
-
-> "Estoy recibiendo el siguiente error al intentar iniciar el servidor: `[Pega el mensaje de error completo aquí]`. He revisado mi archivo `.env` y las variables de conexión parecen correctas. ¿Qué podría estar causando este problema en `src/config/database.js`?"
-
-#### Para generar pruebas
-
-> "Genera pruebas unitarias usando Jest para la función `calculateTotal` en `src/utils/calculations.js`. Asegúrate de cubrir los casos límite, como entradas nulas o valores negativos."
-
+- [ ] **Tarea 6: Mejoras de Experiencia de Usuario (UX)**
+  - [x] Implementar función de búsqueda (título e ingredientes).
+  - [ ] Implementar "Modo Cocina" (mantener pantalla activa, se agranda la receta quitando navbar y sidebar, boton de salir del modo cocina, o pulsando atras en el movil o escape en el pc).
+  - [ ] Añadir funciones para compartir e imprimir recetas, planificacion detallada y lista de compra.

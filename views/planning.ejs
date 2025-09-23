@@ -1,742 +1,322 @@
-<!DOCTYPE html>
-<html lang="es" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Planificación - RecipeNode</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
-      :root {
-        --bg-color: #f7f7f7;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --sidebar-bg: #2c3e50;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #34495e;
-        --shadow-color: rgba(0, 0, 0, 0.08);
-      }
+<%- include('partials/header', { title: 'Planificación Semanal' }) %>
 
-      [data-theme="dark"] {
-        --bg-color: #1a1a1a;
-        --card-bg-color: #2b2b2b;
-        --text-color: #f0f0f0;
-        --sidebar-bg: #1f1f1f;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #333;
-        --shadow-color: rgba(0, 0, 0, 0.4);
-      }
-
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: "Roboto", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        transition: background-color 0.3s, color 0.3s;
-      }
-
-      .menu-toggle {
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1001;
-        background: var(--card-bg-color);
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 10px var(--shadow-color);
-        font-size: 1.2rem;
-        width: 44px;
-        height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 250px;
-        height: 100%;
-        background: var(--sidebar-bg);
-        color: var(--sidebar-text);
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        padding-top: 60px;
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .sidebar nav a,
-      .sidebar .sidebar-bottom a {
-        display: block;
-        padding: 15px 20px;
-        color: var(--sidebar-text);
-        text-decoration: none;
-        transition: background 0.2s;
-      }
-
-      .sidebar nav a:hover,
-      .sidebar .sidebar-bottom a:hover {
-        background: var(--sidebar-hover);
-      }
-
-      .sidebar-bottom {
-        margin-top: auto;
-      }
-
-      .theme-switcher {
-        padding: 20px;
-        text-align: center;
-        border-top: 1px solid var(--sidebar-hover);
-      }
-
-      .main-content {
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-      }
-
-      .calendar-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        box-shadow: 0 6px 20px var(--shadow-color);
-        padding: 2rem;
-        max-width: 900px;
-        width: 100%;
-      }
-
-      .calendar-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-      }
-
-      .calendar-header button {
-        background: none;
-        border: none;
-        color: var(--text-color);
-        font-size: 2rem;
-        cursor: pointer;
-        padding: 0 1rem;
-      }
-
-      .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 5px;
-      }
-
-      .calendar-day,
-      .weekday {
-        text-align: center;
-        padding: 10px;
-      }
-
-      .weekday {
-        font-weight: bold;
-      }
-
-      .calendar-day {
-        border: 1px solid var(--bg-color);
-        border-radius: 8px;
-        min-height: 100px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .calendar-day:hover {
-        background-color: var(--bg-color);
-      }
-
-      .day-number {
-        font-weight: bold;
-        margin-bottom: 5px;
-      }
-
-      .day-recipe {
-        font-size: 0.8em;
-        background-color: var(--sidebar-bg);
-        color: var(--sidebar-text);
-        padding: 2px 5px 2px 2.2em;
-        border-radius: 4px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        position: relative;
-        margin-top: 3px;
-        text-align: left;
-      }
-
-      .day-recipes-wrapper {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        overflow: hidden;
-      }
-
-      .day-recipe::before {
-        content: attr(data-meal);
-        position: absolute;
-        left: 4px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-weight: bold;
-        font-size: 0.9em;
-        color: var(--card-bg-color);
-        background-color: #555;
-        border-radius: 3px;
-        padding: 1px 4px;
-      }
-
-      .actions-container {
-        margin-top: 1.5rem;
-        text-align: center;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-      }
-
-      .actions-container button {
-        padding: 8px 12px;
-        border: 1px solid var(--sidebar-hover);
-        background-color: var(--card-bg-color);
-        color: var(--text-color);
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9em;
-        transition: background-color 0.2s;
-      }
-
-      .display-area {
-        margin-top: 2rem;
-        padding: 1.5rem;
-        background-color: var(--bg-color);
-        border-radius: 8px;
-        border: 1px solid var(--sidebar-hover);
-        display: none;
-      }
-      .display-area.visible {
-        display: block;
-      }
-      .display-area h3 {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      .display-area ul {
-        list-style: none;
-        padding: 0;
-      }
-      .display-area li {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--sidebar-hover);
-      }
-      .display-area li:last-child {
-        border-bottom: none;
-      }
-      .display-area .close-button {
-        display: none;
-      }
-
-      .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-      }
-
-      .modal-overlay.show {
-        display: flex;
-      }
-
-      .modal {
-        background: var(--card-bg-color);
-        padding: 2rem;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 400px;
-      }
-
-      .modal h3 {
-        margin-top: 0;
-      }
-
-      .modal select,
-      .modal button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 1rem;
-        border-radius: 5px;
-      }
-
-      .meal-planner {
-        margin-bottom: 1rem;
-      }
-
-      .meal-planner label {
-        display: block;
-        margin-bottom: 0.5rem;
-      }
-
-      /* Responsive Calendar */
-      @media (max-width: 768px) {
-        .main-content {
-          display: block;
-        }
-
-        .weekday {
-          display: none;
-        }
-
-        #calendar-body {
-          display: block;
-          gap: 0;
-        }
-
-        .calendar-day {
-          flex-direction: row;
-          align-items: flex-start;
-          min-height: auto;
-          padding: 1rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .day-number {
-          margin: 0.2rem 1rem 0 0;
-          font-size: 1.1em;
-        }
-
-        .display-area {
-          position: fixed;
-          top: 0;
-          right: 0;
-          width: 85%;
-          max-width: 350px;
-          height: 100%;
-          background-color: var(--card-bg-color);
-          box-shadow: -5px 0 15px var(--shadow-color);
-          transform: translateX(100%);
-          transition: transform 0.3s ease-in-out;
-          z-index: 2001;
-          overflow-y: auto;
-          margin-top: 0;
-          padding: 2rem;
-          border: none;
-          border-radius: 0;
-          display: block;
-        }
-        .display-area.show {
-          transform: translateX(0);
-        }
-        .display-area .close-button {
-          display: block;
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          font-size: 1.5rem;
-          font-weight: bold;
-          cursor: pointer;
-          color: var(--text-color);
-          border: none;
-          background: none;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <button class="menu-toggle" aria-label="Abrir menú">☰</button>
-
-    <aside class="sidebar">
-      <nav>
-        <a href="/">Inicio</a>
-        <a href="/planning">Planificación</a>
-        <a href="/shopping-list">Lista de la compra</a>
-      </nav>
-      <div class="sidebar-bottom">
-        <a href="/settings">Ajustes</a>
-        <div class="theme-switcher">
-          <span>Light / Dark</span>
-          <input type="checkbox" id="theme-toggle" />
-        </div>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <div class="calendar-container">
-        <div class="calendar-header">
-          <button id="prev-month">‹</button>
-          <h2 id="month-year"></h2>
-          <button id="next-month">›</button>
-        </div>
-        <div class="calendar-grid" id="calendar-body"></div>
-        <div class="actions-container">
-          <button id="weekly-plan-view">Mostrar planificacion Semanal</button>
-          <button id="monthly-plan-view">Mostrar planificacion mensual</button>
-        </div>
-      </div>
-      <div id="display-area" class="display-area"></div>
-    </main>
-
-    <div id="display-overlay" class="modal-overlay"></div>
-
-    <div id="week-select-modal" class="modal-overlay">
-      <div class="modal">
-        <h3 id="week-modal-title">Seleccionar Semana</h3>
-        <select id="week-selector"></select>
-        <button id="confirm-week">Aceptar</button>
-        <button id="cancel-week" style="background: #888">Cancelar</button>
+<div class="max-w-7xl mx-auto">
+  <!-- Calendario -->
+  <div class="bg-white p-6 rounded-lg shadow">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Calendario</h2>
+      <div class="flex space-x-2">
+        <button
+          id="week-view-btn"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none"
+        >
+          Semana
+        </button>
+        <button
+          id="month-view-btn"
+          class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none"
+        >
+          Mes
+        </button>
       </div>
     </div>
-
-    <div id="planning-modal" class="modal-overlay">
-      <div class="modal">
-        <h3 id="modal-title">Planificar comida</h3>
-        <div class="meal-planner">
-          <label for="breakfast-select">Desayuno</label>
-          <select id="breakfast-select" data-meal="breakfast">
-            <option value="">-- Ninguno --</option>
-            <% recipeTitles.forEach(recipe => { %>
-            <option value="<%- recipe %>"><%- recipe %></option>
-            <% }); %>
-          </select>
-        </div>
-        <div class="meal-planner">
-          <label for="lunch-select">Almuerzo</label>
-          <select id="lunch-select" data-meal="lunch">
-            <option value="">-- Ninguno --</option>
-            <% recipeTitles.forEach(recipe => { %>
-            <option value="<%- recipe %>"><%- recipe %></option>
-            <% }); %>
-          </select>
-        </div>
-        <div class="meal-planner">
-          <label for="dinner-select">Cena</label>
-          <select id="dinner-select" data-meal="dinner">
-            <option value="">-- Ninguno --</option>
-            <% recipeTitles.forEach(recipe => { %>
-            <option value="<%- recipe %>"><%- recipe %></option>
-            <% }); %>
-          </select>
-        </div>
-
-        <button id="save-plan">Guardar Cambios</button>
-        <button id="cancel-plan" style="background: #888">Cancelar</button>
+    <div id="calendar"></div>
+    <!-- Text planning view -->
+    <div class="mt-8">
+      <h2 class="text-xl font-bold mb-4">Planificación Detallada</h2>
+      <div id="text-planning-content" class="bg-gray-50 p-6 rounded-lg border border-gray-200 min-h-[100px]">
+        <!-- Text planning will be rendered here -->
       </div>
     </div>
+  </div>
+</div>
 
-    <script>
-      // --- Basic Sidebar and Theme logic ---
-      const menuToggle = document.querySelector(".menu-toggle");
-      const sidebar = document.querySelector(".sidebar");
-      menuToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
+<!-- Modal para Asignar Comidas -->
+<div id="meal-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg leading-6 font-medium text-gray-900 text-center" id="modal-title">Planificar Comidas</h3>
+      <div class="mt-4 px-2 py-3">
+        <form id="meal-form">
+          <input type="hidden" id="modal-date" />
+          <div class="mb-4">
+            <label for="breakfast-select" class="block text-sm font-medium text-gray-700">Desayuno</label>
+            <select
+              id="breakfast-select"
+              data-meal-type="breakfast"
+              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
+            >
+              <option value="">-- Sin Asignar --</option>
+              <% recipeTitles.forEach(recipe => { %>
+              <option value="<%= recipe %>"><%= recipe %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label for="lunch-select" class="block text-sm font-medium text-gray-700">Almuerzo</label>
+            <select
+              id="lunch-select"
+              data-meal-type="lunch"
+              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
+            >
+              <option value="">-- Sin Asignar --</option>
+              <% recipeTitles.forEach(recipe => { %>
+              <option value="<%= recipe %>"><%= recipe %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label for="dinner-select" class="block text-sm font-medium text-gray-700">Cena</label>
+            <select
+              id="dinner-select"
+              data-meal-type="dinner"
+              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
+            >
+              <option value="">-- Sin Asignar --</option>
+              <% recipeTitles.forEach(recipe => { %>
+              <option value="<%= recipe %>"><%= recipe %></option>
+              <% }) %>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="items-center px-4 py-3">
+        <button
+          id="modal-close-btn"
+          class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-600 focus:outline-none"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
-      const themeToggle = document.getElementById("theme-toggle");
-      const htmlEl = document.documentElement;
-      function setTheme(theme) {
-        htmlEl.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
-        themeToggle.checked = theme === "dark";
-      }
-      themeToggle.addEventListener("change", () => setTheme(themeToggle.checked ? "dark" : "light"));
-      document.addEventListener("DOMContentLoaded", () => {
-        const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-        setTheme(savedTheme);
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const weekViewBtn = document.getElementById("week-view-btn");
+    const monthViewBtn = document.getElementById("month-view-btn");
+    const calendarEl = document.getElementById("calendar");
+    const modal = document.getElementById("meal-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalDateInput = document.getElementById("modal-date");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+    const breakfastSelect = document.getElementById("breakfast-select");
+    const lunchSelect = document.getElementById("lunch-select");
+    const dinnerSelect = document.getElementById("dinner-select");
+
+    const textPlanningContent = document.getElementById("text-planning-content");
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      headerToolbar: {
+        left: "prev,next",
+        center: "title",
+        right: "", // We'll use custom buttons
+      },
+      locale: "es",
+      firstDay: 1, // Start week on Monday
+      height: "auto",
+      fixedWeekCount: false,
+      editable: true,
+      events: "/api/planning", // Cargar eventos desde la API
+
+      // Abre el modal al hacer clic en una fecha
+      dateClick: function (info) {
+        openMealModal(info.dateStr);
+      },
+
+      eventContent: function (arg) {
+        let mealInitial = "";
+        const mealType = arg.event.extendedProps.meal_type;
+        if (mealType === "breakfast") mealInitial = "D";
+        if (mealType === "lunch") mealInitial = "A";
+        if (mealType === "dinner") mealInitial = "C";
+
+        const indicator = `<div style="background-color: rgba(0,0,0,0.2); border-radius: 3px; padding: 0 5px; margin-right: 6px; font-size: 0.8em; font-weight: bold; color: white;">${mealInitial}</div>`;
+        const title = `<div>${arg.event.title}</div>`;
+
+        return { html: `<div class="flex items-center">${indicator}${title}</div>` };
+      },
+
+      // Cuando se mueve un evento ya existente
+      eventDrop: function (info) {
+        const newDate = info.event.startStr;
+        const recipe_name = info.event.title;
+        const meal_type = info.event.extendedProps.meal_type;
+
+        // Borrar el plan de la fecha antigua
+        const oldDate = info.oldEvent.startStr;
+        savePlan(oldDate, meal_type, null);
+
+        // Guardar el nuevo plan
+        savePlan(newDate, meal_type, recipe_name).then(() => {
+          calendar.refetchEvents();
+        });
+      },
+
+      // Abre el modal al hacer clic en un evento existente
+      eventClick: function (info) {
+        openMealModal(info.event.startStr);
+      },
+
+      // Render text view when events are loaded/changed
+      eventsSet: function (events) {
+        renderTextPlanning(events);
+      },
+    });
+
+    calendar.render();
+
+    // --- Lógica del Modal ---
+    function openMealModal(date) {
+      modalDateInput.value = date;
+      modalTitle.textContent = `Planificar para ${new Date(date + "T00:00:00").toLocaleDateString("es-ES", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}`;
+
+      // Reset selects
+      breakfastSelect.value = "";
+      lunchSelect.value = "";
+      dinnerSelect.value = "";
+
+      // Populate with existing events for that day
+      const eventsOnDay = calendar.getEvents().filter((event) => event.startStr === date);
+      eventsOnDay.forEach((event) => {
+        const mealType = event.extendedProps.meal_type;
+        if (mealType === "breakfast") breakfastSelect.value = event.title;
+        if (mealType === "lunch") lunchSelect.value = event.title;
+        if (mealType === "dinner") dinnerSelect.value = event.title;
       });
 
-      // --- Calendar Logic ---
-      const calendarBody = document.getElementById("calendar-body");
-      const monthYearEl = document.getElementById("month-year");
-      const prevMonthBtn = document.getElementById("prev-month");
-      const nextMonthBtn = document.getElementById("next-month");
-      const modal = document.getElementById("planning-modal");
-      const savePlanBtn = document.getElementById("save-plan");
-      const cancelPlanBtn = document.getElementById("cancel-plan");
-      const weeklyPlanBtn = document.getElementById("weekly-plan-view");
-      const monthlyPlanBtn = document.getElementById("monthly-plan-view");
-      const weekModal = document.getElementById("week-select-modal");
-      const weekSelector = document.getElementById("week-selector");
-      const confirmWeekBtn = document.getElementById("confirm-week");
-      const cancelWeekBtn = document.getElementById("cancel-week");
-      const displayArea = document.getElementById("display-area");
-      const displayOverlay = document.getElementById("display-overlay");
+      modal.classList.remove("hidden");
+    }
 
-      let currentDate = new Date();
-      let selectedDate = null;
+    function closeMealModal() {
+      modal.classList.add("hidden");
+    }
 
-      function hideDisplay() {
-        displayArea.classList.remove("show", "visible");
-        displayOverlay.classList.remove("show");
+    modalCloseBtn.addEventListener("click", closeMealModal);
+
+    // Close modal on outside click
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        closeMealModal();
+      }
+    });
+
+    // Close modal on Escape key
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeMealModal();
+      }
+    });
+
+    [breakfastSelect, lunchSelect, dinnerSelect].forEach((select) => {
+      select.addEventListener("change", (e) => {
+        const date = modalDateInput.value;
+        const meal_type = e.target.dataset.mealType;
+        const recipe_name = e.target.value || null; // Enviar null para borrar
+        savePlan(date, meal_type, recipe_name).then(() => {
+          calendar.refetchEvents();
+        });
+      });
+    });
+
+    // --- Lógica de los botones de vista ---
+    weekViewBtn.addEventListener("click", () => {
+      calendar.changeView("dayGridWeek");
+      weekViewBtn.classList.remove("bg-white", "text-gray-700");
+      weekViewBtn.classList.add("bg-green-600", "text-white");
+      monthViewBtn.classList.add("bg-white", "text-gray-700");
+      monthViewBtn.classList.remove("bg-green-600", "text-white");
+    });
+
+    monthViewBtn.addEventListener("click", () => {
+      calendar.changeView("dayGridMonth");
+      monthViewBtn.classList.remove("bg-white", "text-gray-700");
+      monthViewBtn.classList.add("bg-green-600", "text-white");
+      weekViewBtn.classList.add("bg-white", "text-gray-700");
+      weekViewBtn.classList.remove("bg-green-600", "text-white");
+    });
+
+    // --- Función para guardar en la API ---
+    async function savePlan(date, meal_type, recipe_name) {
+      await fetch("/api/planning", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, meal_type, recipe_name }),
+      });
+    }
+
+    function renderTextPlanning(events) {
+      textPlanningContent.innerHTML = ""; // Clear previous content
+
+      if (events.length === 0) {
+        textPlanningContent.innerHTML = '<p class="text-gray-500">No hay comidas planificadas para este período.</p>';
+        return;
       }
 
-      async function renderCalendar() {
-        calendarBody.innerHTML = "";
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        monthYearEl.textContent = `${currentDate.toLocaleString("es-ES", { month: "long" })} ${year}`;
-        const firstDay = (new Date(year, month, 1).getDay() + 6) % 7; // 0=Lunes, 6=Domingo
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+      // Filter events to only include those within the current visible range of the calendar
+      let view = calendar.view;
+      let visibleEvents = events.filter((event) => {
+        const eventDate = event.start; // This is a Date object
+        // view.activeEnd is exclusive, so we use '<'
+        return eventDate >= view.activeStart && eventDate < view.activeEnd;
+      });
 
-        const response = await fetch("/api/planning");
-        const plans = await response.json();
+      // If it's a month view, further filter to only include events from that specific month
+      if (view.type === "dayGridMonth") {
+        const currentMonth = calendar.getDate().getMonth();
+        visibleEvents = visibleEvents.filter((event) => event.start.getMonth() === currentMonth);
+      }
 
-        const weekdays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-        weekdays.forEach((day) => {
-          const weekdayEl = document.createElement("div");
-          weekdayEl.classList.add("weekday");
-          weekdayEl.textContent = day;
-          calendarBody.appendChild(weekdayEl);
+      if (visibleEvents.length === 0) {
+        textPlanningContent.innerHTML = '<p class="text-gray-500">No hay comidas planificadas para este período.</p>';
+        return;
+      }
+
+      const groupedByDate = visibleEvents.reduce((acc, event) => {
+        const date = event.startStr;
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(event);
+        return acc;
+      }, {});
+
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(a) - new Date(b));
+
+      let html = '<div class="space-y-4">';
+
+      sortedDates.forEach((date) => {
+        const dayEvents = groupedByDate[date];
+        const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+        html += `<div><h3 class="font-semibold text-lg">${formattedDate}</h3><ul class="list-disc pl-5 mt-1">`;
+
+        // Sort meals for consistent order: Breakfast, Lunch, Dinner
+        dayEvents.sort((a, b) => {
+          const order = { breakfast: 1, lunch: 2, dinner: 3 };
+          return (order[a.extendedProps.meal_type] || 99) - (order[b.extendedProps.meal_type] || 99);
         });
 
-        for (let i = 0; i < firstDay; i++) {
-          calendarBody.appendChild(document.createElement("div"));
-        }
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          const dayEl = document.createElement("div");
-          dayEl.classList.add("calendar-day");
-          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          dayEl.dataset.date = dateStr;
-
-          const dayNumber = document.createElement("span");
-          dayNumber.classList.add("day-number");
-          dayNumber.textContent = day;
-          dayEl.appendChild(dayNumber);
-
-          if (plans[dateStr]) {
-            const meals = plans[dateStr];
-            const mealOrder = { breakfast: "D", lunch: "A", dinner: "C" };
-
-            const recipesWrapper = document.createElement("div");
-            recipesWrapper.classList.add("day-recipes-wrapper");
-
-            Object.keys(mealOrder).forEach((mealType) => {
-              if (meals[mealType]) {
-                const recipeEl = document.createElement("div");
-                recipeEl.classList.add("day-recipe");
-                let recipeName = meals[mealType];
-                if (recipeName.length > 20) {
-                  recipeName = recipeName.substring(0, 20) + "…";
-                }
-                recipeEl.textContent = recipeName;
-                recipeEl.dataset.meal = mealOrder[mealType];
-                recipesWrapper.appendChild(recipeEl);
-              }
-            });
-
-            if (recipesWrapper.hasChildNodes()) {
-              dayEl.appendChild(recipesWrapper);
-            }
-          }
-
-          dayEl.addEventListener("click", () => {
-            selectedDate = dateStr;
-            modal.querySelector("#modal-title").textContent = `Planificar para el ${day}/${month + 1}/${year}`;
-            const dayPlan = plans[dateStr] || {};
-            modal.querySelectorAll("select[data-meal]").forEach((select) => (select.value = dayPlan[select.dataset.meal] || ""));
-            modal.classList.add("show");
-          });
-
-          calendarBody.appendChild(dayEl);
-        }
-
-        // Fill remaining space at the end of the month to keep grid alignment
-        const totalSlots = firstDay + daysInMonth;
-        const remainingSlots = (7 - (totalSlots % 7)) % 7;
-        if (remainingSlots > 0) {
-          for (let i = 0; i < remainingSlots; i++) {
-            calendarBody.appendChild(document.createElement("div"));
-          }
-        }
-      }
-
-      prevMonthBtn.addEventListener("click", () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-      });
-
-      nextMonthBtn.addEventListener("click", () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-      });
-
-      cancelPlanBtn.addEventListener("click", () => modal.classList.remove("show"));
-
-      savePlanBtn.addEventListener("click", async () => {
-        if (!selectedDate) return;
-
-        const selects = modal.querySelectorAll("select[data-meal]");
-        const promises = [];
-
-        selects.forEach((select) => {
-          promises.push(
-            fetch("/api/planning", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ date: selectedDate, meal_type: select.dataset.meal, recipe_name: select.value }),
-            })
-          );
-        });
-        await Promise.all(promises);
-        modal.classList.remove("show");
-        renderCalendar();
-      });
-
-      // --- Weekly/Monthly Plan Display ---
-
-      function getWeeksOfMonth(year, month) {
-        const weeks = [];
-        const firstDate = new Date(year, month, 1);
-        const lastDate = new Date(year, month + 1, 0);
-        let current = new Date(firstDate);
-
-        // Go back to the previous Monday
-        current.setDate(current.getDate() - ((current.getDay() + 6) % 7));
-
-        while (current <= lastDate) {
-          const weekStart = new Date(current);
-          const weekEnd = new Date(current);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-
-          if (weekStart.getMonth() === month || weekEnd.getMonth() === month) {
-            weeks.push({
-              start: weekStart.toISOString().split("T")[0],
-              end: weekEnd.toISOString().split("T")[0],
-              label: `Semana del ${weekStart.toLocaleDateString("es-ES", {
-                day: "numeric",
-                month: "short",
-              })} al ${weekEnd.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`,
-            });
-          }
-          current.setDate(current.getDate() + 7);
-        }
-        return weeks;
-      }
-
-      async function displayPlan(title, plans) {
-        let closeButtonHtml = `<button class="close-button" aria-label="Cerrar">&times;</button>`;
-        let html = `${closeButtonHtml}<h3>${title}</h3>`;
-        if (plans.length > 0) {
-          plans.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-          const groupedByDate = plans.reduce((acc, plan) => {
-            if (!acc[plan.date]) acc[plan.date] = [];
-            acc[plan.date].push(plan);
-            return acc;
-          }, {});
-
-          html += "<ul>";
-          Object.keys(groupedByDate).forEach((date) => {
-            const dayPlans = groupedByDate[date];
-            const dayTitle = new Date(date + "T00:00:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric" });
-            html += `<li style="margin-bottom: 1rem;"><strong>${dayTitle}</strong>`;
-            html += `<ul style="padding-left: 20px; list-style-type: circle; margin-top: 0.5rem;">`;
-            dayPlans.forEach((plan) => {
-              const recipeUrl = `/?recipe=${encodeURIComponent(plan.recipe_name)}`;
-              html += `<li style="padding: 0.25rem 0;">(${plan.meal_type}): <a href="${recipeUrl}">${plan.recipe_name}</a></li>`;
-            });
-            html += `</ul></li>`;
-          });
-          html += "</ul>";
-        } else {
-          html += "<p>No hay nada planificado para este período.</p>";
-        }
-        displayArea.innerHTML = html;
-
-        displayArea.querySelector(".close-button").addEventListener("click", hideDisplay);
-        displayOverlay.addEventListener("click", hideDisplay);
-
-        if (window.innerWidth <= 768) {
-          displayArea.classList.add("show");
-          displayOverlay.classList.add("show");
-        } else {
-          displayArea.classList.add("visible");
-          displayArea.scrollIntoView({ behavior: "smooth" });
-        }
-      }
-
-      weeklyPlanBtn.addEventListener("click", () => {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const weeks = getWeeksOfMonth(year, month);
-
-        weekSelector.innerHTML = "";
-        weeks.forEach((week) => {
-          const option = document.createElement("option");
-          option.value = `${week.start},${week.end}`;
-          option.textContent = week.label;
-          weekSelector.appendChild(option);
+        dayEvents.forEach((event) => {
+          const mealType = event.extendedProps.meal_type;
+          let mealName = "";
+          if (mealType === "breakfast") mealName = "Desayuno";
+          if (mealType === "lunch") mealName = "Almuerzo";
+          if (mealType === "dinner") mealName = "Cena";
+          html += `<li><strong>${mealName}:</strong> ${event.title}</li>`;
         });
 
-        weekModal.classList.add("show");
+        html += "</ul></div>";
       });
 
-      cancelWeekBtn.addEventListener("click", () => weekModal.classList.remove("show"));
+      html += "</div>";
+      textPlanningContent.innerHTML = html;
+    }
+  });
+</script>
 
-      confirmWeekBtn.addEventListener("click", async () => {
-        const [startDate, endDate] = weekSelector.value.split(",");
-        const response = await fetch("/api/planning");
-        const plans = await response.json();
-        const weeklyPlans = Object.entries(plans).flatMap(([date, meals]) =>
-          date >= startDate && date <= endDate
-            ? Object.entries(meals).map(([meal_type, recipe_name]) => ({ date, meal_type, recipe_name }))
-            : []
-        );
-        displayPlan(`Planificación para la semana seleccionada`, weeklyPlans);
-        weekModal.classList.remove("show");
-      });
-
-      monthlyPlanBtn.addEventListener("click", async () => {
-        const response = await fetch("/api/planning");
-        const plans = await response.json();
-        const monthlyPlans = Object.entries(plans).flatMap(([date, meals]) =>
-          new Date(date).getMonth() === currentDate.getMonth()
-            ? Object.entries(meals).map(([meal_type, recipe_name]) => ({ date, meal_type, recipe_name }))
-            : []
-        );
-        displayPlan(`Planificación para ${currentDate.toLocaleString("es-ES", { month: "long" })}`, monthlyPlans);
-      });
-
-      // --- Modal UX Improvements ---
-      [modal, weekModal].forEach((modalInstance) => {
-        if (modalInstance) {
-          modalInstance.addEventListener("click", (e) => {
-            if (e.target === modalInstance) {
-              modalInstance.classList.remove("show");
-            }
-          });
-        }
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          modal.classList.remove("show");
-          weekModal.classList.remove("show");
-          hideDisplay();
-        }
-      });
-
-      renderCalendar();
-    </script>
-  </body>
-</html>
+<%- include('partials/footer') %>
