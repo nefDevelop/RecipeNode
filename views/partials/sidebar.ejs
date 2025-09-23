@@ -1,8 +1,8 @@
 <aside
   id="sidebar"
-  class="fixed top-16 left-0 w-72 h-[calc(100vh-4rem)] bg-white p-4 shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out z-40 md:relative md:translate-x-0 md:top-0 md:w-1/4 md:h-auto md:shadow-none md:p-0"
+  class="fixed top-16 left-0 w-72 h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 p-4 shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out z-40 md:relative md:translate-x-0 md:top-0 md:w-1/4 md:h-auto md:shadow-none md:p-0"
 >
-  <div class="md:bg-white md:p-4 md:rounded-lg md:shadow h-full overflow-y-auto flex flex-col">
+  <div class="md:bg-white md:dark:bg-gray-800 md:p-4 md:rounded-lg md:shadow h-full overflow-y-auto flex flex-col">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-bold">Navegación</h2>
       <!-- Close button for mobile -->
@@ -10,22 +10,61 @@
     </div>
 
     <div class="space-y-2 mb-4 pb-4 border-b">
-      <a href="/" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Recetas</a>
-      <a href="/planning" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Planificación</a>
-      <a href="/shopping-list" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Lista de la Compra</a>
+      <a href="/" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Recetas</a
+      >
+      <a
+        href="/planning"
+        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Planificación</a
+      >
+      <a
+        href="/shopping-list"
+        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Lista de la Compra</a
+      >
     </div>
 
     <div class="space-y-2 mb-4 pb-4 border-b">
       <% if (user && user.userId) { %>
-      <a href="/settings" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Ajustes</a>
-      <a href="/api/auth/logout" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Logout</a>
+      <a
+        href="/settings"
+        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Ajustes</a
+      >
+      <a
+        href="/api/auth/logout"
+        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Logout</a
+      >
       <% } else { %>
-      <a href="/login" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Login</a>
-      <a href="/register" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-md">Registro</a>
+      <a
+        href="/login"
+        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Login</a
+      >
+      <a
+        href="/register"
+        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Registro</a
+      >
       <% } %>
     </div>
 
     <!-- El espacio restante se puede usar para otras funcionalidades en el futuro -->
     <div class="flex-grow"></div>
+
+    <!-- Theme switcher -->
+    <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Modo Oscuro</span>
+        <label for="theme-toggle" class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="theme-toggle" class="sr-only peer" />
+          <div
+            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"
+          ></div>
+        </label>
+      </div>
+    </div>
   </div>
 </aside>

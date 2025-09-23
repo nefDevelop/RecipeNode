@@ -86,6 +86,21 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
   }
 });
 
+// Nueva ruta para limpiar un día completo de la planificación
+app.delete("/api/planning/day", (req, res) => {
+  const { date } = req.body;
+  if (!date) {
+    return res.status(400).json({ error: "La fecha es requerida." });
+  }
+  db.run("DELETE FROM planning WHERE date = ?", [date], function (err) {
+    if (err) {
+      console.error(`Error al limpiar el día ${date}:`, err);
+      return res.status(500).json({ error: "Error de base de datos al limpiar el día." });
+    }
+    res.status(200).json({ message: "Día limpiado correctamente." });
+  });
+});
+
 // Middleware to pass session user to all templates
 app.use((req, res, next) => {
   res.locals.user = req.session;

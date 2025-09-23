@@ -13,7 +13,7 @@
 
     <!-- Main Content -->
     <main class="w-full md:w-3/4">
-      <div class="bg-white p-6 rounded-lg shadow min-h-[80vh]">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow min-h-[80vh]">
         <% if (content) { %>
         <!-- Si se ha seleccionado una receta, se muestra su contenido -->
         <!-- Contenedor para el Modo Cocina -->
@@ -56,7 +56,7 @@
           <button id="exit-kitchen-mode-btn" title="Salir del Modo Cocina (Esc)">Salir</button>
 
           <!-- Contenido de la receta -->
-          <article class="prose lg:prose-xl max-w-none"><%- content %></article>
+          <article class="prose dark:prose-invert lg:prose-xl max-w-none"><%- content %></article>
         </div>
         <% } else if (recipes) { %>
         <!-- Si estamos en la página principal, mostramos la galería -->
@@ -65,7 +65,7 @@
           <% recipes.forEach(recipe => { %>
           <a
             href="/?recipe=<%= encodeURIComponent(recipe.name) %>"
-            class="group block bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            class="group block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
           >
             <div class="relative pb-[75%] bg-green-100">
               <!-- Ratio de aspecto 4:3 -->
@@ -76,7 +76,10 @@
                 class="absolute h-full w-full object-cover"
                 onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"
               />
-              <div class="placeholder absolute h-full w-full bg-green-100 items-center justify-center" style="display: none">
+              <div
+                class="placeholder absolute h-full w-full bg-green-100 dark:bg-green-900 items-center justify-center"
+                style="display: none"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="w-12 h-12 text-green-300"
@@ -93,7 +96,7 @@
                 </svg>
               </div>
               <% } else { %>
-              <div class="absolute h-full w-full bg-green-100 flex items-center justify-center">
+              <div class="absolute h-full w-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="w-12 h-12 text-green-300"
@@ -112,7 +115,10 @@
               <% } %>
             </div>
             <div class="p-4">
-              <h3 class="font-semibold text-lg text-gray-800 group-hover:text-green-600 truncate" title="<%= recipe.name %>">
+              <h3
+                class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
+                title="<%= recipe.name %>"
+              >
                 <%= recipe.name %>
               </h3>
             </div>

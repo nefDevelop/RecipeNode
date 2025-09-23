@@ -71,13 +71,32 @@
   </div>
 </div>
 
-<!-- Data Island for recipe titles -->
 <script id="recipe-data" type="application/json">
   <%- JSON.stringify({ recipeTitles: recipeTitles || [] }) %>
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
+    // --- Theme Switcher ---
+    const themeToggle = document.getElementById("theme-toggle");
+
+    // Sincroniza el toggle con el estado actual al cargar la página
+    if (localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      if (themeToggle) themeToggle.checked = true;
+    }
+
+    if (themeToggle) {
+      themeToggle.addEventListener("change", function () {
+        if (this.checked) {
+          document.documentElement.classList.add("dark");
+          localStorage.theme = "dark";
+        } else {
+          document.documentElement.classList.remove("dark");
+          localStorage.theme = "light";
+        }
+      });
+    }
+
     // --- Sidebar Mobile ---
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const sidebar = document.getElementById('sidebar');

@@ -8,7 +8,7 @@
     <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
 
     <main class="w-full md:w-3/4">
-      <div class="bg-white p-6 rounded-lg shadow">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h1 class="text-3xl font-bold mb-6">Ajustes</h1>
 
         <p class="text-gray-600">Aquí podrás gestionar la configuración de tu cuenta.</p>
@@ -22,7 +22,7 @@
               <select
                 id="recipe-to-delete"
                 name="title"
-                class="flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 focus:ring-red-500 focus:border-red-500"
+                class="flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-red-500 focus:border-red-500"
               >
                 <option value="">-- Selecciona una receta para eliminar --</option>
                 <% recipeTitles.forEach(function(title) { %>

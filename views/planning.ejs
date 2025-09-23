@@ -22,14 +22,14 @@
 
     <main class="w-full md:w-3/4">
       <h1 class="text-3xl font-bold mb-6">Planificación de Comidas</h1>
-      <div id="calendar" class="bg-white p-4 rounded-lg shadow"></div>
+      <div id="calendar" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow"></div>
     </main>
   </div>
 </div>
 
 <!-- Modal para asignar comida -->
-<div id="meal-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-  <div class="relative p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+<div id="meal-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
+  <div class="relative p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
     <div class="mt-3 text-center">
       <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Asignar Comida</h3>
       <p class="text-sm text-gray-500" id="modal-date"></p>
@@ -37,7 +37,7 @@
         <label for="recipe-select" class="block text-sm font-medium text-gray-700 text-left">Selecciona una receta:</label>
         <select
           id="recipe-select"
-          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
         >
           <option value="">-- Sin Asignar --</option>
           <% recipeTitles.forEach(function(title) { %>
@@ -74,7 +74,7 @@
         </button>
         <button
           id="close-modal-btn"
-          class="px-4 py-2 bg-white text-gray-700 border border-gray-300 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          class="px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           Cerrar
         </button>
@@ -185,23 +185,24 @@
     });
 
     clearDayBtn.addEventListener("click", async () => {
-      const mealTypes = ["breakfast", "lunch", "dinner"];
-      const promises = mealTypes.map((mealType) => {
-        return fetch("/api/planning", {
-          method: "POST",
+      try {
+        const res = await fetch(`/api/planning/day`, {
+          method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date: selectedDateStr,
-            meal_type: mealType,
-            recipe_name: "", // Empty string triggers deletion
-          }),
+          body: JSON.stringify({ date: selectedDateStr }),
         });
-      });
 
-      await Promise.all(promises);
-
-      calendar.refetchEvents();
-      modal.classList.add("hidden");
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "La respuesta del servidor no fue OK");
+        }
+      } catch (error) {
+        console.error("Error al limpiar el día:", error);
+        alert(`Ocurrió un error al limpiar el día: ${error.message}`);
+      } finally {
+        calendar.refetchEvents();
+        modal.classList.add("hidden");
+      }
     });
 
     // Close modal on outside click
