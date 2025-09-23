@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ajustes - RecipeNode</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+      :root {
+        --bg-color: #f7f7f7;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --sidebar-bg: #2c3e50;
+        --sidebar-text: #ecf0f1;
+        --sidebar-hover: #34495e;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+      }
+
+      [data-theme="dark"] {
+        --bg-color: #1a1a1a;
+        --card-bg-color: #2b2b2b;
+        --text-color: #f0f0f0;
+        --sidebar-bg: #1f1f1f;
+        --sidebar-text: #ecf0f1;
+        --sidebar-hover: #333;
+        --shadow-color: rgba(0, 0, 0, 0.4);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .menu-toggle {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1001;
+        background: var(--card-bg-color);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 10px var(--shadow-color);
+        font-size: 1.2rem;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px;
+        height: 100%;
+        background: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        padding-top: 60px;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar nav a,
+      .sidebar .sidebar-bottom a {
+        display: block;
+        padding: 15px 20px;
+        color: var(--sidebar-text);
+        text-decoration: none;
+        transition: background 0.2s;
+      }
+
+      .sidebar nav a:hover,
+      .sidebar .sidebar-bottom a:hover {
+        background: var(--sidebar-hover);
+      }
+
+      .sidebar-bottom {
+        margin-top: auto;
+      }
+
+      .theme-switcher {
+        padding: 20px;
+        text-align: center;
+        border-top: 1px solid var(--sidebar-hover);
+      }
+
+      .main-content {
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .card {
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        box-shadow: 0 6px 20px var(--shadow-color);
+        margin: 1rem;
+        padding: 2rem 2.5rem;
+        max-width: 800px;
+        width: 100%;
+        line-height: 1.6;
+      }
+
+      .card h2,
+      .card h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--text-color);
+      }
+
+      .unit-conversion {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .unit-conversion label {
+        flex-basis: 80px;
+        text-align: right;
+        font-weight: bold;
+      }
+      .unit-conversion input {
+        width: 80px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid var(--sidebar-hover);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        text-align: center;
+      }
+
+      .save-button {
+        background-color: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="menu-toggle" aria-label="Abrir menú">☰</button>
+
+    <aside class="sidebar">
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/planning">Planificación</a>
+        <a href="/shopping-list">Lista de la compra</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="/settings">Ajustes</a>
+        <div class="theme-switcher">
+          <span>Light / Dark</span>
+          <input type="checkbox" id="theme-toggle" />
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="card">
+        <h2>Ajustes</h2>
+        <hr style="margin-bottom: 2rem" />
+        <form method="POST" action="/settings">
+          <section>
+            <h3>Relación de Unidades</h3>
+            <p style="font-size: 0.9em; opacity: 0.8; margin-bottom: 1.5rem">
+              Define las equivalencias para las conversiones. Estos valores se guardarán en la base de datos.
+            </p>
+
+            <div class="unit-conversion">
+              <label for="kg-to-g">1 kg</label>
+              <span>=</span>
+              <input
+                type="number"
+                value="<%= locals.settings && settings['kg-to-g'] ? settings['kg-to-g'] : 1000 %>"
+                id="kg-to-g"
+                name="kg-to-g"
+              />
+              <span>g</span>
+            </div>
+            <div class="unit-conversion">
+              <label for="l-to-ml">1 l</label>
+              <span>=</span>
+              <input
+                type="number"
+                value="<%= locals.settings && settings['l-to-ml'] ? settings['l-to-ml'] : 1000 %>"
+                id="l-to-ml"
+                name="l-to-ml"
+              />
+              <span>ml</span>
+            </div>
+            <div class="unit-conversion">
+              <label for="cup-to-ml">1 taza</label>
+              <span>=</span>
+              <input
+                type="number"
+                value="<%= locals.settings && settings['cup-to-ml'] ? settings['cup-to-ml'] : 240 %>"
+                id="cup-to-ml"
+                name="cup-to-ml"
+              />
+              <span>ml</span>
+            </div>
+            <div class="unit-conversion">
+              <label for="tbsp-to-ml">1 cda.</label>
+              <span>=</span>
+              <input
+                type="number"
+                value="<%= locals.settings && settings['tbsp-to-ml'] ? settings['tbsp-to-ml'] : 15 %>"
+                id="tbsp-to-ml"
+                name="tbsp-to-ml"
+              />
+              <span>ml</span>
+            </div>
+            <div class="unit-conversion">
+              <label for="tsp-to-ml">1 cdta.</label>
+              <span>=</span>
+              <input
+                type="number"
+                value="<%= locals.settings && settings['tsp-to-ml'] ? settings['tsp-to-ml'] : 5 %>"
+                id="tsp-to-ml"
+                name="tsp-to-ml"
+              />
+              <span>ml</span>
+            </div>
+            <button type="submit" class="save-button">Guardar Cambios</button>
+          </section>
+        </form>
+      </div>
+    </main>
+
+    <script>
+      const menuToggle = document.querySelector(".menu-toggle");
+      const sidebar = document.querySelector(".sidebar");
+
+      menuToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+      });
+
+      // --- Theme Switcher ---
+      const themeToggle = document.getElementById("theme-toggle");
+      const htmlEl = document.documentElement;
+
+      function setTheme(theme) {
+        htmlEl.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        themeToggle.checked = theme === "dark";
+      }
+
+      themeToggle.addEventListener("change", () => {
+        setTheme(themeToggle.checked ? "dark" : "light");
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+        if (savedTheme) {
+          setTheme(savedTheme);
+        } else {
+          setTheme(prefersDark ? "dark" : "light");
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "recipenode",
+  "version": "1.0.0",
+  "description": "Una aplicación web construida con Node.js, Express y SQLite para gestionar y compartir recetas de cocina.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "sqlite",
+    "recipes"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.18.2",
+    "front-matter": "^4.0.2",
+    "marked": "^12.0.2",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

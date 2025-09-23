@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RecipeNode<% if (typeof title !== 'undefined' && title) { %>: <%- title %><% } %></title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+      :root {
+        --bg-color: #f7f7f7;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --sidebar-bg: #2c3e50;
+        --sidebar-text: #ecf0f1;
+        --sidebar-hover: #34495e;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+      }
+
+      [data-theme="dark"] {
+        --bg-color: #1a1a1a;
+        --card-bg-color: #2b2b2b;
+        --text-color: #f0f0f0;
+        --sidebar-bg: #1f1f1f;
+        --sidebar-text: #ecf0f1;
+        --sidebar-hover: #333;
+        --shadow-color: rgba(0, 0, 0, 0.4);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .menu-toggle {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1001;
+        background: var(--card-bg-color);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 10px var(--shadow-color);
+        font-size: 1.2rem;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px;
+        height: 100%;
+        background: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        padding-top: 60px;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar nav a,
+      .sidebar .sidebar-bottom a {
+        display: block;
+        padding: 15px 20px;
+        color: var(--sidebar-text);
+        text-decoration: none;
+        transition: background 0.2s;
+      }
+
+      .sidebar nav a:hover,
+      .sidebar .sidebar-bottom a:hover {
+        background: var(--sidebar-hover);
+      }
+
+      .sidebar-bottom {
+        margin-top: auto;
+      }
+
+      .theme-switcher {
+        padding: 20px;
+        text-align: center;
+        border-top: 1px solid var(--sidebar-hover);
+      }
+
+      .main-content {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      .page-header {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto 2rem auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .app-title {
+        color: var(--text-color);
+        margin-bottom: 0;
+      }
+
+      .search-container input {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 25px;
+        border: 1px solid var(--sidebar-hover);
+        background-color: var(--card-bg-color);
+        color: var(--text-color);
+        box-shadow: 0 2px 8px var(--shadow-color);
+      }
+
+      .search-container {
+        flex-grow: 1;
+      }
+
+      .card {
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        box-shadow: 0 6px 20px var(--shadow-color);
+        margin: 1rem;
+        padding: 2rem 2.5rem;
+        max-width: 800px;
+        width: 100%;
+        line-height: 1.6;
+      }
+      .card h1 {
+        margin-top: 0;
+        color: var(--text-color);
+      }
+      .card img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+      }
+
+      /* Estilos para las listas de tareas (ingredientes) */
+      .card ul:has(li > input[type="checkbox"]) {
+        padding-left: 0;
+        list-style: none;
+      }
+
+      .card li > input[type="checkbox"] {
+        margin-right: 0.5em;
+        vertical-align: middle;
+      }
+
+      .card li:has(> input[type="checkbox"]:checked) {
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+
+      /* Ocultar bloques de código de Obsidian (dataview) */
+      .card pre:has(code[class*="language-dataviewjs"]),
+      .card pre:has(code[class*="language-dataview"]) {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="menu-toggle" aria-label="Abrir menú">☰</button>
+
+    <aside class="sidebar">
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/planning">Planificación</a>
+        <a href="/shopping-list">Lista de la compra</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="/settings">Ajustes</a>
+        <div class="theme-switcher">
+          <span>Light / Dark</span>
+          <input type="checkbox" id="theme-toggle" />
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="page-header">
+        <h1 class="app-title">RecipeNode</h1>
+        <div class="search-container">
+          <input type="search" id="recipe-search" list="recipe-titles" placeholder="Buscar una receta..." />
+          <datalist id="recipe-titles">
+            <% if (typeof recipeTitles !== 'undefined') { %> <% recipeTitles.forEach(recipeTitle => { %>
+            <option value="<%- recipeTitle %>"></option>
+            <% }); %> <% } %>
+          </datalist>
+        </div>
+      </header>
+
+      <% if (typeof title !== 'undefined' && title) { %>
+      <div class="card">
+        <h1><%- title %></h1>
+        <hr />
+        <%- content %>
+      </div>
+      <% } %>
+    </main>
+
+    <script>
+      const menuToggle = document.querySelector(".menu-toggle");
+      const sidebar = document.querySelector(".sidebar");
+
+      menuToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+      });
+
+      // --- Theme Switcher ---
+      const themeToggle = document.getElementById("theme-toggle");
+      const htmlEl = document.documentElement;
+
+      function setTheme(theme) {
+        htmlEl.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        themeToggle.checked = theme === "dark";
+      }
+
+      themeToggle.addEventListener("change", () => {
+        setTheme(themeToggle.checked ? "dark" : "light");
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+        if (savedTheme) {
+          setTheme(savedTheme);
+        } else {
+          setTheme(prefersDark ? "dark" : "light");
+        }
+
+        // --- Interactive Task Lists ---
+        // Makes recipe ingredient checkboxes interactive and allows clicking the whole item.
+        const taskListItems = document.querySelectorAll('.card li:has(input[type="checkbox"])');
+        taskListItems.forEach((item) => {
+          const checkbox = item.querySelector('input[type="checkbox"]');
+          if (checkbox) {
+            // The markdown parser might add 'disabled'. We make them interactive.
+            checkbox.disabled = false;
+
+            // Add a pointer cursor to the whole item for better UX
+            item.style.cursor = "pointer";
+
+            item.addEventListener("click", (event) => {
+              // Avoid toggling the checkbox if a link inside the item is clicked
+              if (event.target.tagName === "A") return;
+
+              // Toggle checkbox state if the click was not on the checkbox itself
+              // (the browser handles that case automatically)
+              if (event.target !== checkbox) checkbox.checked = !checkbox.checked;
+            });
+          }
+        });
+      });
+
+      // --- Search ---
+      const recipeSearch = document.getElementById("recipe-search");
+      recipeSearch.addEventListener("input", (e) => {
+        const selectedRecipe = e.target.value;
+        // Comprueba si el valor seleccionado está en la lista de opciones
+        const option = document.querySelector(`#recipe-titles option[value="${selectedRecipe.replace(/"/g, '\\"')}"]`);
+        if (option) {
+          // Redirige para cargar la receta seleccionada
+          window.location.href = `/?recipe=${encodeURIComponent(selectedRecipe)}`;
+        }
+      });
+    </script>
+  </body>
+</html>

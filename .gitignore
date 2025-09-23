@@ -1,0 +1,24 @@
+# Dependencias
+# La carpeta node_modules se regenera al ejecutar `npm install`
+/node_modules
+
+
+/recetas
+
+# Archivos de entorno
+# Contienen secretos y configuraciones locales. NUNCA deben subirse.
+.env
+
+# Base de datos
+# Ignoramos los archivos de la base de datos de SQLite para no subir datos de desarrollo.
+*.db
+*.db-journal
+
+# Logs
+# Archivos de registro generados por Node/npm o la aplicación.
+*.log
+npm-debug.log*
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
