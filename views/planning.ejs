@@ -1,5 +1,15 @@
 <%- include('partials/header', { title: 'Planificación', user: user }) %>
 
+<style>
+  #calendar {
+    --fc-button-bg-color: #10b981;
+    --fc-button-border-color: #10b981;
+    --fc-button-hover-bg-color: #059669;
+    --fc-button-hover-border-color: #059669;
+    --fc-button-active-bg-color: #047857;
+    --fc-button-active-border-color: #047857;
+  }
+</style>
 <!-- FullCalendar CSS -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
 
@@ -90,12 +100,40 @@
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: "dayGridMonth",
       locale: "es",
+      fixedWeekCount: false,
       headerToolbar: {
         left: "prev,next",
         center: "title",
-        right: "dayGridMonth,timeGridWeek",
+        right: "dayGridMonth,dayGridWeek",
       },
+      height: "auto", // Ajusta la altura para que no se estire innecesariamente
+      dayMaxEventRows: 3, // Limita el número de filas de eventos por día
       events: "/api/planning",
+      eventContent: function (arg) {
+        let mealType = arg.event.extendedProps.meal_type;
+        let mealInitial = "";
+        let mealColor = "bg-gray-400";
+
+        if (mealType === "breakfast") {
+          mealInitial = "D";
+          mealColor = "bg-yellow-500";
+        } else if (mealType === "lunch") {
+          mealInitial = "A";
+          mealColor = "bg-green-500";
+        } else if (mealType === "dinner") {
+          mealInitial = "C";
+          mealColor = "bg-red-500";
+        }
+
+        let eventHtml = `
+          <div class="fc-event-main-frame">
+            <div class="fc-event-title-container">
+              <div class="fc-event-title fc-sticky"><span class="inline-block text-xs font-bold text-white ${mealColor} rounded-sm px-1 mr-1">${mealInitial}</span>${arg.event.title}</div>
+            </div>
+          </div>`;
+
+        return { html: eventHtml };
+      },
       dateClick: function (info) {
         selectedDateStr = info.dateStr;
         modalDateEl.textContent = new Date(info.dateStr + "T00:00:00").toLocaleDateString("es-ES", {

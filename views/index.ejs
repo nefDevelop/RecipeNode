@@ -4,79 +4,6 @@
 <link rel="stylesheet" href="/css/kitchen-mode.css" />
 <link rel="stylesheet" href="/css/print.css" media="print" />
 
-<!-- Create Recipe Modal -->
-<div id="create-recipe-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-  <div class="relative bg-white w-full max-w-lg p-5 border rounded-md shadow-lg max-h-full overflow-y-auto">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <p class="text-2xl font-bold">Añadir Receta</p>
-      <button id="close-create-modal-btn" class="text-gray-400 hover:text-gray-600">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <div id="create-recipe-container" class="mt-4 mb-6">
-      <!-- Tabs -->
-      <div class="flex border-b mb-4">
-        <button id="manual-tab" class="py-2 px-4 bg-white text-green-600 border-b-2 border-green-600 font-semibold">Manual</button>
-        <button id="scrape-tab" class="py-2 px-4 bg-gray-100 text-gray-500">Importar</button>
-      </div>
-
-      <!-- Manual Form -->
-      <form id="create-manual-form">
-        <div class="mb-4">
-          <label for="title" class="block text-sm font-medium text-gray-700">Título</label>
-          <input
-            type="text"
-            name="title"
-            id="title"
-            required
-            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-          />
-        </div>
-        <div class="mb-4">
-          <label for="markdownContent" class="block text-sm font-medium text-gray-700">Contenido (Markdown)</label>
-          <textarea
-            name="markdownContent"
-            id="markdownContent"
-            rows="10"
-            required
-            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-          ></textarea>
-        </div>
-        <button
-          type="submit"
-          class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
-        >
-          Guardar Receta
-        </button>
-      </form>
-
-      <!-- Scrape Form -->
-      <form id="create-scrape-form" class="hidden">
-        <div class="mb-4">
-          <label for="url" class="block text-sm font-medium text-gray-700">URL de la Receta</label>
-          <input
-            type="url"
-            name="url"
-            id="url"
-            required
-            placeholder="https://ejemplo.com/receta"
-            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
-        >
-          Importar Receta
-        </button>
-      </form>
-      <p id="create-error-message" class="text-red-500 text-xs mt-2 hidden"></p>
-    </div>
-  </div>
-</div>
-
 <div class="container mx-auto p-4">
   <div class="md:flex md:gap-6">
     <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
@@ -88,6 +15,7 @@
     <main class="w-full md:w-3/4">
       <div class="bg-white p-6 rounded-lg shadow min-h-[80vh]">
         <% if (content) { %>
+        <!-- Si se ha seleccionado una receta, se muestra su contenido -->
         <!-- Contenedor para el Modo Cocina -->
         <div id="recipe-content-wrapper" class="relative">
           <!-- Botones de Acción -->
@@ -130,10 +58,72 @@
           <!-- Contenido de la receta -->
           <article class="prose lg:prose-xl max-w-none"><%- content %></article>
         </div>
+        <% } else if (recipes) { %>
+        <!-- Si estamos en la página principal, mostramos la galería -->
+        <h1 class="text-3xl font-bold mb-6">Todas las Recetas</h1>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <% recipes.forEach(recipe => { %>
+          <a
+            href="/?recipe=<%= encodeURIComponent(recipe.name) %>"
+            class="group block bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+          >
+            <div class="relative pb-[75%] bg-green-100">
+              <!-- Ratio de aspecto 4:3 -->
+              <% if (recipe.image) { %>
+              <img
+                src="<%- recipe.image %>"
+                alt="<%= recipe.name %>"
+                class="absolute h-full w-full object-cover"
+                onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"
+              />
+              <div class="placeholder absolute h-full w-full bg-green-100 items-center justify-center" style="display: none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-12 h-12 text-green-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <% } else { %>
+              <div class="absolute h-full w-full bg-green-100 flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-12 h-12 text-green-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <% } %>
+            </div>
+            <div class="p-4">
+              <h3 class="font-semibold text-lg text-gray-800 group-hover:text-green-600 truncate" title="<%= recipe.name %>">
+                <%= recipe.name %>
+              </h3>
+            </div>
+          </a>
+          <% }) %>
+        </div>
         <% } else { %>
+        <!-- Mensaje por si algo falla -->
         <div class="text-center text-gray-500 pt-16">
           <h1 class="text-2xl font-bold">Bienvenido a RecipeNode</h1>
-          <p class="mt-2">Selecciona una receta de la lista para verla aquí.</p>
+          <p class="mt-2">No hay recetas para mostrar. ¡Añade alguna!</p>
         </div>
         <% } %>
       </div>
@@ -143,8 +133,6 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const createContainer = document.getElementById("create-recipe-container");
-
     // --- Print and Share Functionality ---
     const printBtn = document.getElementById("print-recipe-btn");
     if (printBtn) {
@@ -190,66 +178,6 @@
     const searchInput = document.getElementById("recipe-search");
     const recipeList = document.getElementById("recipe-list");
     const recipes = recipeList ? Array.from(recipeList.getElementsByTagName("li")) : [];
-
-    // --- Create Recipe Form ---
-
-    const manualTab = document.getElementById("manual-tab");
-    const scrapeTab = document.getElementById("scrape-tab");
-    const manualForm = document.getElementById("create-manual-form");
-    const scrapeForm = document.getElementById("create-scrape-form");
-    const errorMessage = document.getElementById("create-error-message");
-
-    manualTab.addEventListener("click", () => {
-      manualForm.classList.remove("hidden");
-      scrapeForm.classList.add("hidden");
-      manualTab.classList.add("border-green-600", "font-semibold", "bg-white", "text-green-600");
-      manualTab.classList.remove("bg-gray-100", "text-gray-500");
-      scrapeTab.classList.add("bg-gray-100", "text-gray-500");
-      scrapeTab.classList.remove("border-green-600", "font-semibold", "bg-white", "text-green-600");
-    });
-
-    scrapeTab.addEventListener("click", () => {
-      scrapeForm.classList.remove("hidden");
-      manualForm.classList.add("hidden");
-      scrapeTab.classList.add("border-green-600", "font-semibold", "bg-white", "text-green-600");
-      scrapeTab.classList.remove("bg-gray-100", "text-gray-500");
-      manualTab.classList.add("bg-gray-100", "text-gray-500");
-      manualTab.classList.remove("border-green-600", "font-semibold", "bg-white", "text-green-600");
-    });
-
-    const handleFormSubmit = async (url, body) => {
-      errorMessage.classList.add("hidden");
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          window.location.reload();
-        } else {
-          errorMessage.textContent = data.error || "Ocurrió un error.";
-          errorMessage.classList.remove("hidden");
-        }
-      } catch (err) {
-        errorMessage.textContent = "Error de red. Inténtalo de nuevo.";
-        errorMessage.classList.remove("hidden");
-      }
-    };
-
-    manualForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const title = manualForm.title.value;
-      const markdownContent = manualForm.markdownContent.value;
-      handleFormSubmit("/api/recipes", { title, markdownContent });
-    });
-
-    scrapeForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const url = scrapeForm.url.value;
-      handleFormSubmit("/api/recipes/scrape", { url });
-    });
   });
 </script>
 

@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const marked = require("marked");
 const fm = require("front-matter");
@@ -31,74 +31,96 @@ const getAllRecipeTitles = () => {
   });
 };
 
-const getHomePage = (req, res) => {
-  db.all("SELECT name FROM recipes ORDER BY name", [], (err, recipeRows) => {
-    if (err) {
-      console.error("Error al cargar los títulos de las recetas:", err);
-      return res.status(500).render("index", {
-        user: req.session,
-        recipeTitles: [],
-        title: "Error",
-        content: "No se pudo cargar la lista de recetas desde la base de datos.",
-      });
+/**
+ * Extrae la primera imagen de un contenido Markdown.
+ * Soporta formatos ![alt](url) y ![[obsidian_link]].
+ * @param {string} markdownContent - El contenido del archivo markdown.
+ * @returns {string|null} La URL de la imagen o null si no se encuentra.
+ */
+function extractImageFromMarkdown(markdownContent) {
+  if (!markdownContent) return null;
+
+  // 1. Regex para el formato de Obsidian: ![[imagen.jpg]] o ![[carpeta/imagen.jpg]]
+  let match = markdownContent.match(/!\[\[(.*?)(?:\|.*)?\]\]/);
+  if (match && match[1]) {
+    const imageName = match[1].trim();
+    const resourcesIndex = imageName.indexOf("_resources");
+    if (resourcesIndex !== -1) {
+      return "/" + imageName.substring(resourcesIndex);
     }
-    const recipeTitles = recipeRows.map((r) => r.name);
+    const attachmentIndex = imageName.indexOf("attachment");
+    if (attachmentIndex !== -1) {
+      return "/" + imageName.substring(attachmentIndex);
+    }
+    return imageName;
+  }
 
-    if (req.query.recipe) {
-      const recipeName = req.query.recipe;
-      db.get("SELECT path FROM recipes WHERE name = ?", [recipeName], (err, recipe) => {
-        if (err) {
-          console.error(`Error al buscar la receta ${recipeName}:`, err);
-          return res.status(500).render("index", {
-            user: req.session,
-            recipeTitles,
-            title: "Error",
-            content: "Error al buscar la receta en la base de datos.",
-          });
-        }
+  // 2. Regex para el formato estándar de Markdown: !alt
+  match = markdownContent.match(/!\[.*?\]\((.*?)\)/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
 
-        if (recipe) {
-          try {
-            const fileContent = fs.readFileSync(recipe.path, "utf8");
-            const { attributes, body: rawBody } = fm(fileContent);
-            const body = rawBody.replace(/%%.*?%%/g, "");
-            let htmlContent = marked.parse(body);
-            htmlContent = htmlContent.replace(/!\[\[(.*?)\|(.*?)\]\]/g, '<img src="/$1" alt="Imagen de la receta" />');
-            htmlContent = htmlContent.replace(/!\[\[(.*?)\]\]/g, '<img src="/$1" alt="Imagen de la receta" />');
+  return null;
+}
 
-            return res.render("index", {
-              title: attributes.title || recipeName,
-              content: htmlContent,
-              recipeTitles: recipeTitles,
-              user: req.session,
-            });
-          } catch (readErr) {
-            console.error(`Error al leer el archivo de receta ${recipe.path}:`, readErr);
-            return res.status(500).render("index", {
-              user: req.session,
-              recipeTitles,
-              title: "Error",
-              content: "No se pudo leer el archivo de la receta.",
-            });
-          }
-        } else {
-          return res.render("index", {
-            recipeTitles,
-            title: "Receta no encontrada",
-            user: req.session,
-            content: `La receta "${recipeName}" no existe. Por favor, busca otra.`,
-          });
-        }
+const getHomePage = async (req, res) => {
+  try {
+    const recipeName = req.query.recipe;
+    const recipeTitles = await getAllRecipeTitles();
+
+    if (recipeName) {
+      const recipeRow = await new Promise((resolve, reject) => {
+        db.get("SELECT path FROM recipes WHERE name = ?", [recipeName], (err, row) => (err ? reject(err) : resolve(row)));
       });
+
+      if (!recipeRow) {
+        return res.render("index", {
+          title: "Receta no encontrada",
+          content: `La receta "${recipeName}" no existe.`,
+          recipeTitles,
+          recipes: null,
+          user: req.session,
+        });
+      }
+
+      const fileContent = await fs.readFile(recipeRow.path, "utf8");
+      const { attributes, body: rawBody } = fm(fileContent);
+      const body = rawBody.replace(/%%.*?%%/g, "");
+      let htmlContent = marked.parse(body);
+      htmlContent = htmlContent.replace(
+        /!\[\[(.*?)\|(.*?)\]\]/g,
+        (match, p1) => `<img src="${extractImageFromMarkdown(match)}" alt="Imagen de la receta" />`
+      );
+      htmlContent = htmlContent.replace(
+        /!\[\[(.*?)\]\]/g,
+        (match, p1) => `<img src="${extractImageFromMarkdown(match)}" alt="Imagen de la receta" />`
+      );
+
+      res.render("index", { title: attributes.title || recipeName, content: htmlContent, recipeTitles, recipes: null, user: req.session });
     } else {
-      res.render("index", {
-        title: "Bienvenido",
-        recipeTitles: recipeTitles,
-        content: null,
-        user: req.session,
+      const allRecipes = await new Promise((resolve, reject) => {
+        db.all("SELECT name, path FROM recipes ORDER BY name", [], (err, rows) => (err ? reject(err) : resolve(rows)));
       });
+
+      const recipesWithImages = await Promise.all(
+        allRecipes.map(async (recipe) => {
+          try {
+            const markdown = await fs.readFile(recipe.path, "utf8");
+            const image = extractImageFromMarkdown(markdown);
+            return { name: recipe.name, image };
+          } catch (e) {
+            return { name: recipe.name, image: null };
+          }
+        })
+      );
+
+      res.render("index", { title: "Recetas", content: null, recipes: recipesWithImages, recipeTitles, user: req.session });
     }
-  });
+  } catch (error) {
+    console.error("Error al obtener la página de recetas:", error);
+    res.status(500).send("Error interno del servidor");
+  }
 };
 
 const getShoppingListPage = (req, res) => {

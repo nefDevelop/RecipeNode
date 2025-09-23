@@ -23,10 +23,8 @@ const getPlanningData = (req, res) => {
     // Transform the rows into the format FullCalendar expects: an array of event objects.
     const events = rows.map((row) => {
       let backgroundColor = "#3498db"; // Default color
-      if (row.meal_type === "breakfast") backgroundColor = "#f39c12"; // Orange for breakfast
-      if (row.meal_type === "lunch") backgroundColor = "#2ecc71"; // Green for lunch
-      if (row.meal_type === "dinner") backgroundColor = "#e74c3c"; // Red for dinner
-
+      // Establecer un color de fondo uniforme para todos los eventos del calendario
+      backgroundColor = "#d1fae5"; // Tailwind green-100
       return {
         title: row.recipe_name,
         start: row.date,
@@ -36,6 +34,7 @@ const getPlanningData = (req, res) => {
         },
         backgroundColor: backgroundColor,
         borderColor: backgroundColor,
+        textColor: "#064e3b", // Tailwind green-900 para un buen contraste
       };
     });
     res.json(events);

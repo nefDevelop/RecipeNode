@@ -1,3 +1,76 @@
+<!-- Create Recipe Modal (Global) -->
+<div id="create-recipe-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+  <div class="relative bg-white w-full max-w-lg p-5 border rounded-md shadow-lg max-h-full overflow-y-auto">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <p class="text-2xl font-bold">Añadir Receta</p>
+      <button id="close-create-modal-btn" class="text-gray-400 hover:text-gray-600">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div id="create-recipe-container" class="mt-4 mb-6">
+      <!-- Tabs -->
+      <div class="flex border-b mb-4">
+        <button id="manual-tab" class="py-2 px-4 bg-white text-green-600 border-b-2 border-green-600 font-semibold">Manual</button>
+        <button id="scrape-tab" class="py-2 px-4 bg-gray-100 text-gray-500">Importar</button>
+      </div>
+
+      <!-- Manual Form -->
+      <form id="create-manual-form">
+        <div class="mb-4">
+          <label for="title" class="block text-sm font-medium text-gray-700">Título</label>
+          <input
+            type="text"
+            name="title"
+            id="title"
+            required
+            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+          />
+        </div>
+        <div class="mb-4">
+          <label for="markdownContent" class="block text-sm font-medium text-gray-700">Contenido (Markdown)</label>
+          <textarea
+            name="markdownContent"
+            id="markdownContent"
+            rows="10"
+            required
+            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+        >
+          Guardar Receta
+        </button>
+      </form>
+
+      <!-- Scrape Form -->
+      <form id="create-scrape-form" class="hidden">
+        <div class="mb-4">
+          <label for="url" class="block text-sm font-medium text-gray-700">URL de la Receta</label>
+          <input
+            type="url"
+            name="url"
+            id="url"
+            required
+            placeholder="https://ejemplo.com/receta"
+            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full px-4 py-2 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+        >
+          Importar Receta
+        </button>
+      </form>
+      <p id="create-error-message" class="text-red-500 text-xs mt-2 hidden"></p>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // --- Sidebar Mobile ---
@@ -35,6 +108,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 createModal.classList.add('hidden');
             }
         });
+
+        // --- Create Recipe Form Logic ---
+        const manualTab = document.getElementById("manual-tab");
+        const scrapeTab = document.getElementById("scrape-tab");
+        const manualForm = document.getElementById("create-manual-form");
+        const scrapeForm = document.getElementById("create-scrape-form");
+        const errorMessage = document.getElementById("create-error-message");
+
+        manualTab.addEventListener("click", () => {
+          manualForm.classList.remove("hidden");
+          scrapeForm.classList.add("hidden");
+          manualTab.classList.add("border-green-600", "font-semibold", "bg-white", "text-green-600");
+          manualTab.classList.remove("bg-gray-100", "text-gray-500");
+          scrapeTab.classList.add("bg-gray-100", "text-gray-500");
+          scrapeTab.classList.remove("border-green-600", "font-semibold", "bg-white", "text-green-600");
+        });
+
+        scrapeTab.addEventListener("click", () => {
+          scrapeForm.classList.remove("hidden");
+          manualForm.classList.add("hidden");
+          scrapeTab.classList.add("border-green-600", "font-semibold", "bg-white", "text-green-600");
+          scrapeTab.classList.remove("bg-gray-100", "text-gray-500");
+          manualTab.classList.add("bg-gray-100", "text-gray-500");
+          manualTab.classList.remove("border-green-600", "font-semibold", "bg-white", "text-green-600");
+        });
+
+        const handleFormSubmit = async (url, body) => {
+          errorMessage.classList.add("hidden");
+          try {
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok) {
+              window.location.reload();
+            } else {
+              errorMessage.textContent = data.error || "Ocurrió un error.";
+              errorMessage.classList.remove("hidden");
+            }
+          } catch (err) {
+            errorMessage.textContent = "Error de red. Inténtalo de nuevo.";
+            errorMessage.classList.remove("hidden");
+          }
+        };
+
+        manualForm.addEventListener("submit", (e) => { e.preventDefault(); handleFormSubmit("/api/recipes", { title: manualForm.title.value, markdownContent: manualForm.markdownContent.value }); });
+        scrapeForm.addEventListener("submit", (e) => { e.preventDefault(); handleFormSubmit("/api/recipes/scrape", { url: scrapeForm.url.value }); });
     }
 
     // --- Search Functionality (now in header) ---

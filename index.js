@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const db = require("./src/config/database");
+const fs = require("fs").promises;
 const { setupDatabase } = require("./src/config/databaseSetup");
 const routes = require("./src/routes");
 const session = require("express-session");
@@ -37,6 +38,53 @@ app.use(
     },
   })
 );
+
+// Middleware para comprobar si el usuario es administrador
+const isAdmin = (req, res, next) => {
+  if (req.session && req.session.role === "admin") {
+    return next();
+  }
+  res.status(403).json({ error: "Acceso denegado. Se requiere rol de administrador." });
+};
+
+// Ruta para eliminar una receta
+app.delete("/api/recipes", isAdmin, async (req, res) => {
+  const { title } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ error: "El título de la receta es requerido." });
+  }
+
+  try {
+    // 1. Eliminar de la base de datos
+    const dbDelete = new Promise((resolve, reject) => {
+      db.run("DELETE FROM recipes WHERE name = ?", [title], function (err) {
+        if (err) return reject(err);
+        resolve(this.changes);
+      });
+    });
+    const changes = await dbDelete;
+
+    // 2. Eliminar el archivo .md
+    const recipeFilePath = path.join(__dirname, "recetas", `${title}.md`);
+    let fileDeleted = false;
+    try {
+      await fs.unlink(recipeFilePath);
+      fileDeleted = true;
+    } catch (fileErr) {
+      if (fileErr.code !== "ENOENT") throw fileErr; // Volver a lanzar si es un error diferente a "no encontrado"
+    }
+
+    if (changes === 0 && !fileDeleted) {
+      return res.status(404).json({ error: `La receta "${title}" no fue encontrada.` });
+    }
+
+    res.status(200).json({ message: "Receta eliminada correctamente." });
+  } catch (err) {
+    console.error(`Error al eliminar la receta "${title}":`, err);
+    res.status(500).json({ error: "Error interno del servidor al eliminar la receta." });
+  }
+});
 
 // Middleware to pass session user to all templates
 app.use((req, res, next) => {
