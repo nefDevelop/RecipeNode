@@ -77,11 +77,11 @@ const getShoppingListApi = (req, res) => {
 
   db.all(sql, [startDate, endDate], (err, plannedMeals) => {
     if (err) return res.status(500).json({ error: err.message });
-    if (plannedMeals.length === 0) return res.json([]);
+    if (plannedMeals.length === 0) return res.json({ ingredients: {} });
 
     const recipeNames = plannedMeals.map((r) => r.recipe_name);
     const uniqueRecipeNames = [...new Set(recipeNames)];
-    if (uniqueRecipeNames.length === 0) return res.json([]);
+    if (uniqueRecipeNames.length === 0) return res.json({ ingredients: {} });
 
     const placeholders = uniqueRecipeNames.map(() => "?").join(",");
     const pathSql = `SELECT name, path FROM recipes WHERE name IN (${placeholders})`;
@@ -154,10 +154,17 @@ const getShoppingListApi = (req, res) => {
             displayString = `${displayQuantity} ${displayUnit} de ${ing.name}`;
           }
 
-          return { name: ing.name, display: displayString };
+          return displayString;
         });
 
-        res.json(formattedList);
+        // Agrupamos todos los ingredientes bajo una única categoría para que coincida
+        // con el formato que espera el frontend.
+        const categorizedIngredients = {};
+        if (formattedList.length > 0) {
+          categorizedIngredients["Ingredientes"] = formattedList;
+        }
+
+        res.json({ ingredients: categorizedIngredients });
       });
     });
   });

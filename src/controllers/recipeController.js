@@ -18,6 +18,19 @@ const slugify = (text) => {
     .replace(/-+$/, ""); // Trim - from end of text
 };
 
+const getAllRecipeTitles = () => {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => {
+      if (err) {
+        console.error("Error al cargar los títulos de las recetas:", err);
+        return reject("Error al cargar la lista de recetas desde la base de datos.");
+      }
+      const recipeTitles = rows.map((r) => r.name);
+      resolve(recipeTitles);
+    });
+  });
+};
+
 const getHomePage = (req, res) => {
   db.all("SELECT name FROM recipes ORDER BY name", [], (err, recipeRows) => {
     if (err) {
@@ -260,4 +273,5 @@ module.exports = {
   getRecipeByIdApi,
   createRecipeApi,
   scrapeRecipeApi,
+  getAllRecipeTitles,
 };

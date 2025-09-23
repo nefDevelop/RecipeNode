@@ -68,4 +68,5 @@
   - [x] Implementar función de búsqueda (título e ingredientes).
   - [x] Implementar "Modo Cocina" (mantener pantalla activa, se agranda la receta quitando navbar y sidebar, boton de salir del modo cocina, o pulsando atras en el movil o escape en el pc).
   - [x] Añadir funciones para compartir e imprimir recetas.
-  - [ ] Implementar planificación detallada y vista de lista de la compra.
+  - [x] Implementar vista de lista de la compra (semanal/mensual).
+  - [ ] Implementar planificación detallada de comidas.

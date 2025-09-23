@@ -1,89 +1,61 @@
-<%- include('partials/header', { title: 'Planificación Semanal' }) %>
+<%- include('partials/header', { title: 'Planificación' }) %>
 
-<div class="max-w-7xl mx-auto">
-  <!-- Calendario -->
-  <div class="bg-white p-6 rounded-lg shadow">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-bold">Calendario</h2>
-      <div class="flex space-x-2">
-        <button
-          id="week-view-btn"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none"
-        >
-          Semana
-        </button>
-        <button
-          id="month-view-btn"
-          class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none"
-        >
-          Mes
-        </button>
-      </div>
-    </div>
-    <div id="calendar"></div>
-    <!-- Text planning view -->
-    <div class="mt-8">
-      <h2 class="text-xl font-bold mb-4">Planificación Detallada</h2>
-      <div id="text-planning-content" class="bg-gray-50 p-6 rounded-lg border border-gray-200 min-h-[100px]">
-        <!-- Text planning will be rendered here -->
-      </div>
-    </div>
-  </div>
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+
+<div class="container mx-auto p-4">
+  <h1 class="text-3xl font-bold mb-6">Planificación de Comidas</h1>
+  <div id="calendar" class="bg-white p-4 rounded-lg shadow"></div>
 </div>
 
-<!-- Modal para Asignar Comidas -->
+<!-- Modal para asignar comida -->
 <div id="meal-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
   <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-    <div class="mt-3">
-      <h3 class="text-lg leading-6 font-medium text-gray-900 text-center" id="modal-title">Planificar Comidas</h3>
-      <div class="mt-4 px-2 py-3">
-        <form id="meal-form">
-          <input type="hidden" id="modal-date" />
-          <div class="mb-4">
-            <label for="breakfast-select" class="block text-sm font-medium text-gray-700">Desayuno</label>
-            <select
-              id="breakfast-select"
-              data-meal-type="breakfast"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
-            >
-              <option value="">-- Sin Asignar --</option>
-              <% recipeTitles.forEach(recipe => { %>
-              <option value="<%= recipe %>"><%= recipe %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label for="lunch-select" class="block text-sm font-medium text-gray-700">Almuerzo</label>
-            <select
-              id="lunch-select"
-              data-meal-type="lunch"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
-            >
-              <option value="">-- Sin Asignar --</option>
-              <% recipeTitles.forEach(recipe => { %>
-              <option value="<%= recipe %>"><%= recipe %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label for="dinner-select" class="block text-sm font-medium text-gray-700">Cena</label>
-            <select
-              id="dinner-select"
-              data-meal-type="dinner"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
-            >
-              <option value="">-- Sin Asignar --</option>
-              <% recipeTitles.forEach(recipe => { %>
-              <option value="<%= recipe %>"><%= recipe %></option>
-              <% }) %>
-            </select>
-          </div>
-        </form>
+    <div class="mt-3 text-center">
+      <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Asignar Comida</h3>
+      <p class="text-sm text-gray-500" id="modal-date"></p>
+      <div class="mt-4">
+        <label for="recipe-select" class="block text-sm font-medium text-gray-700 text-left">Selecciona una receta:</label>
+        <select
+          id="recipe-select"
+          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+        >
+          <option value="">-- Sin Asignar --</option>
+          <% recipeTitles.forEach(function(title) { %>
+          <option value="<%= title %>"><%= title %></option>
+          <% }); %>
+        </select>
       </div>
-      <div class="items-center px-4 py-3">
+      <div class="mt-4 grid grid-cols-3 gap-2">
         <button
-          id="modal-close-btn"
-          class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-600 focus:outline-none"
+          data-meal="breakfast"
+          class="assign-btn px-4 py-2 bg-yellow-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+        >
+          Desayuno
+        </button>
+        <button
+          data-meal="lunch"
+          class="assign-btn px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300"
+        >
+          Almuerzo
+        </button>
+        <button
+          data-meal="dinner"
+          class="assign-btn px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+        >
+          Cena
+        </button>
+      </div>
+      <div class="items-center px-4 py-3 mt-4 border-t">
+        <button
+          id="clear-day-btn"
+          class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 mb-2"
+        >
+          Limpiar Día
+        </button>
+        <button
+          id="close-modal-btn"
+          class="px-4 py-2 bg-white text-gray-700 border border-gray-300 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           Cerrar
         </button>
@@ -92,230 +64,105 @@
   </div>
 </div>
 
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const weekViewBtn = document.getElementById("week-view-btn");
-    const monthViewBtn = document.getElementById("month-view-btn");
     const calendarEl = document.getElementById("calendar");
     const modal = document.getElementById("meal-modal");
-    const modalTitle = document.getElementById("modal-title");
-    const modalDateInput = document.getElementById("modal-date");
-    const modalCloseBtn = document.getElementById("modal-close-btn");
-    const breakfastSelect = document.getElementById("breakfast-select");
-    const lunchSelect = document.getElementById("lunch-select");
-    const dinnerSelect = document.getElementById("dinner-select");
+    const closeModalBtn = document.getElementById("close-modal-btn");
+    const recipeSelect = document.getElementById("recipe-select");
+    const modalDateEl = document.getElementById("modal-date");
+    const clearDayBtn = document.getElementById("clear-day-btn");
+    let selectedDateStr = "";
 
-    const textPlanningContent = document.getElementById("text-planning-content");
     const calendar = new FullCalendar.Calendar(calendarEl, {
-      headerToolbar: {
-        left: "prev,next",
-        center: "title",
-        right: "", // We'll use custom buttons
-      },
+      initialView: "dayGridMonth",
       locale: "es",
-      firstDay: 1, // Start week on Monday
-      height: "auto",
-      fixedWeekCount: false,
-      editable: true,
-      events: "/api/planning", // Cargar eventos desde la API
-
-      // Abre el modal al hacer clic en una fecha
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek",
+      },
+      events: "/api/planning",
       dateClick: function (info) {
-        openMealModal(info.dateStr);
-      },
-
-      eventContent: function (arg) {
-        let mealInitial = "";
-        const mealType = arg.event.extendedProps.meal_type;
-        if (mealType === "breakfast") mealInitial = "D";
-        if (mealType === "lunch") mealInitial = "A";
-        if (mealType === "dinner") mealInitial = "C";
-
-        const indicator = `<div style="background-color: rgba(0,0,0,0.2); border-radius: 3px; padding: 0 5px; margin-right: 6px; font-size: 0.8em; font-weight: bold; color: white;">${mealInitial}</div>`;
-        const title = `<div>${arg.event.title}</div>`;
-
-        return { html: `<div class="flex items-center">${indicator}${title}</div>` };
-      },
-
-      // Cuando se mueve un evento ya existente
-      eventDrop: function (info) {
-        const newDate = info.event.startStr;
-        const recipe_name = info.event.title;
-        const meal_type = info.event.extendedProps.meal_type;
-
-        // Borrar el plan de la fecha antigua
-        const oldDate = info.oldEvent.startStr;
-        savePlan(oldDate, meal_type, null);
-
-        // Guardar el nuevo plan
-        savePlan(newDate, meal_type, recipe_name).then(() => {
-          calendar.refetchEvents();
+        selectedDateStr = info.dateStr;
+        modalDateEl.textContent = new Date(info.dateStr + "T00:00:00").toLocaleDateString("es-ES", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
+        recipeSelect.value = "";
+        modal.classList.remove("hidden");
       },
-
-      // Abre el modal al hacer clic en un evento existente
       eventClick: function (info) {
-        openMealModal(info.event.startStr);
-      },
-
-      // Render text view when events are loaded/changed
-      eventsSet: function (events) {
-        renderTextPlanning(events);
+        selectedDateStr = info.event.startStr.split("T")[0];
+        modalDateEl.textContent = info.event.start.toLocaleDateString("es-ES", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        recipeSelect.value = info.event.title;
+        modal.classList.remove("hidden");
       },
     });
 
     calendar.render();
 
-    // --- Lógica del Modal ---
-    function openMealModal(date) {
-      modalDateInput.value = date;
-      modalTitle.textContent = `Planificar para ${new Date(date + "T00:00:00").toLocaleDateString("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })}`;
+    closeModalBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
 
-      // Reset selects
-      breakfastSelect.value = "";
-      lunchSelect.value = "";
-      dinnerSelect.value = "";
+    document.querySelectorAll(".assign-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const mealType = button.dataset.meal;
+        const recipeName = recipeSelect.value;
 
-      // Populate with existing events for that day
-      const eventsOnDay = calendar.getEvents().filter((event) => event.startStr === date);
-      eventsOnDay.forEach((event) => {
-        const mealType = event.extendedProps.meal_type;
-        if (mealType === "breakfast") breakfastSelect.value = event.title;
-        if (mealType === "lunch") lunchSelect.value = event.title;
-        if (mealType === "dinner") dinnerSelect.value = event.title;
+        await fetch("/api/planning", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: selectedDateStr,
+            meal_type: mealType,
+            recipe_name: recipeName, // Empty string will clear the assignment
+          }),
+        });
+
+        calendar.refetchEvents();
+        modal.classList.add("hidden");
+      });
+    });
+
+    clearDayBtn.addEventListener("click", async () => {
+      const mealTypes = ["breakfast", "lunch", "dinner"];
+      const promises = mealTypes.map((mealType) => {
+        return fetch("/api/planning", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: selectedDateStr,
+            meal_type: mealType,
+            recipe_name: "", // Empty string triggers deletion
+          }),
+        });
       });
 
-      modal.classList.remove("hidden");
-    }
+      await Promise.all(promises);
 
-    function closeMealModal() {
+      calendar.refetchEvents();
       modal.classList.add("hidden");
-    }
-
-    modalCloseBtn.addEventListener("click", closeMealModal);
+    });
 
     // Close modal on outside click
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        closeMealModal();
+    window.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        modal.classList.add("hidden");
       }
     });
-
-    // Close modal on Escape key
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
-        closeMealModal();
-      }
-    });
-
-    [breakfastSelect, lunchSelect, dinnerSelect].forEach((select) => {
-      select.addEventListener("change", (e) => {
-        const date = modalDateInput.value;
-        const meal_type = e.target.dataset.mealType;
-        const recipe_name = e.target.value || null; // Enviar null para borrar
-        savePlan(date, meal_type, recipe_name).then(() => {
-          calendar.refetchEvents();
-        });
-      });
-    });
-
-    // --- Lógica de los botones de vista ---
-    weekViewBtn.addEventListener("click", () => {
-      calendar.changeView("dayGridWeek");
-      weekViewBtn.classList.remove("bg-white", "text-gray-700");
-      weekViewBtn.classList.add("bg-green-600", "text-white");
-      monthViewBtn.classList.add("bg-white", "text-gray-700");
-      monthViewBtn.classList.remove("bg-green-600", "text-white");
-    });
-
-    monthViewBtn.addEventListener("click", () => {
-      calendar.changeView("dayGridMonth");
-      monthViewBtn.classList.remove("bg-white", "text-gray-700");
-      monthViewBtn.classList.add("bg-green-600", "text-white");
-      weekViewBtn.classList.add("bg-white", "text-gray-700");
-      weekViewBtn.classList.remove("bg-green-600", "text-white");
-    });
-
-    // --- Función para guardar en la API ---
-    async function savePlan(date, meal_type, recipe_name) {
-      await fetch("/api/planning", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, meal_type, recipe_name }),
-      });
-    }
-
-    function renderTextPlanning(events) {
-      textPlanningContent.innerHTML = ""; // Clear previous content
-
-      if (events.length === 0) {
-        textPlanningContent.innerHTML = '<p class="text-gray-500">No hay comidas planificadas para este período.</p>';
-        return;
-      }
-
-      // Filter events to only include those within the current visible range of the calendar
-      let view = calendar.view;
-      let visibleEvents = events.filter((event) => {
-        const eventDate = event.start; // This is a Date object
-        // view.activeEnd is exclusive, so we use '<'
-        return eventDate >= view.activeStart && eventDate < view.activeEnd;
-      });
-
-      // If it's a month view, further filter to only include events from that specific month
-      if (view.type === "dayGridMonth") {
-        const currentMonth = calendar.getDate().getMonth();
-        visibleEvents = visibleEvents.filter((event) => event.start.getMonth() === currentMonth);
-      }
-
-      if (visibleEvents.length === 0) {
-        textPlanningContent.innerHTML = '<p class="text-gray-500">No hay comidas planificadas para este período.</p>';
-        return;
-      }
-
-      const groupedByDate = visibleEvents.reduce((acc, event) => {
-        const date = event.startStr;
-        if (!acc[date]) {
-          acc[date] = [];
-        }
-        acc[date].push(event);
-        return acc;
-      }, {});
-
-      const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(a) - new Date(b));
-
-      let html = '<div class="space-y-4">';
-
-      sortedDates.forEach((date) => {
-        const dayEvents = groupedByDate[date];
-        const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
-        html += `<div><h3 class="font-semibold text-lg">${formattedDate}</h3><ul class="list-disc pl-5 mt-1">`;
-
-        // Sort meals for consistent order: Breakfast, Lunch, Dinner
-        dayEvents.sort((a, b) => {
-          const order = { breakfast: 1, lunch: 2, dinner: 3 };
-          return (order[a.extendedProps.meal_type] || 99) - (order[b.extendedProps.meal_type] || 99);
-        });
-
-        dayEvents.forEach((event) => {
-          const mealType = event.extendedProps.meal_type;
-          let mealName = "";
-          if (mealType === "breakfast") mealName = "Desayuno";
-          if (mealType === "lunch") mealName = "Almuerzo";
-          if (mealType === "dinner") mealName = "Cena";
-          html += `<li><strong>${mealName}:</strong> ${event.title}</li>`;
-        });
-
-        html += "</ul></div>";
-      });
-
-      html += "</div>";
-      textPlanningContent.innerHTML = html;
-    }
   });
 </script>
 
