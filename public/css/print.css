@@ -1,0 +1,33 @@
+/* --- Print Styles --- */
+@media print {
+  /* Oculta los elementos de la interfaz que no deben imprimirse */
+  .md\:col-span-1, /* Sidebar */
+  body > footer,
+  body > header,
+  #recipe-content-wrapper .flex /* Contenedor de botones de acción */ {
+    display: none;
+  }
+
+  /* Ajusta el layout para que el contenido de la receta ocupe toda la página */
+  body > .grid {
+    display: block;
+  }
+
+  .md\:col-span-3 {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  #recipe-content-wrapper {
+    padding: 0;
+  }
+
+  /* Mejora la legibilidad del texto impreso */
+  body {
+    font-size: 12pt;
+    background-color: #fff;
+  }
+}

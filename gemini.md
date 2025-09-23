@@ -66,5 +66,6 @@
 
 - [ ] **Tarea 6: Mejoras de Experiencia de Usuario (UX)**
   - [x] Implementar función de búsqueda (título e ingredientes).
-  - [ ] Implementar "Modo Cocina" (mantener pantalla activa, se agranda la receta quitando navbar y sidebar, boton de salir del modo cocina, o pulsando atras en el movil o escape en el pc).
-  - [ ] Añadir funciones para compartir e imprimir recetas, planificacion detallada y lista de compra.
+  - [x] Implementar "Modo Cocina" (mantener pantalla activa, se agranda la receta quitando navbar y sidebar, boton de salir del modo cocina, o pulsando atras en el movil o escape en el pc).
+  - [x] Añadir funciones para compartir e imprimir recetas.
+  - [ ] Implementar planificación detallada y vista de lista de la compra.

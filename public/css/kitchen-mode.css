@@ -1,0 +1,57 @@
+/* --- Kitchen Mode Styles --- */
+
+/* Esta clase se añadirá a la etiqueta <body> */
+.kitchen-mode {
+  /* Opcional: oculta las barras de desplazamiento del body */
+  overflow: hidden;
+}
+
+/* Oculta elementos que no son parte del contenido de la receta */
+.kitchen-mode #navbar,
+.kitchen-mode #sidebar,
+.kitchen-mode #enter-kitchen-mode-btn {
+  display: none !important;
+}
+
+/* Hace que el contenedor del contenido de la receta ocupe toda la pantalla.
+   Asegúrate de que tu contenido de receta esté dentro de un div con id="recipe-content-wrapper". */
+.kitchen-mode #recipe-content-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: white; /* O el color de fondo de tu app */
+  z-index: 1000;
+  padding: 1.5rem;
+  font-size: 1.1rem; /* Fuente ligeramente más grande para legibilidad */
+  line-height: 1.7;
+}
+
+/* Estilo y posición del botón de salida */
+.kitchen-mode #exit-kitchen-mode-btn {
+  display: inline-flex; /* Flex para alinear fácilmente */
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001;
+  padding: 0.5rem 1rem;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.kitchen-mode #exit-kitchen-mode-btn:hover {
+  background-color: #555;
+}
+
+/* Oculta inicialmente el botón de salida */
+#exit-kitchen-mode-btn {
+  display: none;
+}
