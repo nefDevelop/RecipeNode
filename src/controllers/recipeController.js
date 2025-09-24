@@ -96,6 +96,7 @@ const getHomePage = async (req, res) => {
       let markdownContent = rawBody
         .replace(/%%.*?%%/g, "") // Eliminar comentarios de Obsidian %%...%%
         .replace(/`\$=.*?`/g, ""); // Eliminar scripts inline de Dataview
+      //.replace(/^#\s*`\$= dv\.current\(\)\.title`\s*$/gm, ""); // Eliminar la línea del título si es de Dataview
 
       // 2. Pre-procesar el markdown para estandarizar la sintaxis de imágenes ![[...]]
       // a etiquetas <img> de HTML. Esto asegura que se rendericen correctamente.
@@ -114,6 +115,14 @@ const getHomePage = async (req, res) => {
       // 4. Post-procesar el HTML para corregir rutas de imágenes que no eran de tipo ![[...]]
       // Esto arregla rutas como <img src="../_resources/..."> o !alt
       htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
+
+      // --- LOGS DE ESTILOS ---
+      console.log(`\n--- [RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
+      const classMatches = htmlContent.match(/class="[^"]+"/g) || [];
+      const styleMatches = htmlContent.match(/style="[^"]+"/g) || [];
+      console.log(`[Estilos] Clases CSS encontradas (${classMatches.length}):`, classMatches);
+      console.log(`[Estilos] Estilos en línea encontrados (${styleMatches.length}):`, styleMatches);
+      console.log(`--- Fin del análisis ---\n`);
 
       res.render("index", { title: attributes.title || recipeName, content: htmlContent, recipes: null, user: req.session });
     } else {
@@ -159,45 +168,52 @@ const getAllRecipesApi = (req, res) => {
   });
 };
 
-const getRecipeByIdApi = (req, res) => {
+const getRecipeByIdApi = async (req, res) => {
   const recipeName = req.params.id;
-  db.get("SELECT path FROM recipes WHERE name = ?", [recipeName], (err, recipe) => {
-    if (err) {
-      console.error(`API Error fetching recipe ${recipeName}:`, err);
-      return res.status(500).json({ error: "Database error while fetching recipe." });
-    }
 
-    if (!recipe) {
+  try {
+    const recipeRow = await new Promise((resolve, reject) => {
+      db.get("SELECT path FROM recipes WHERE name = ?", [recipeName], (err, row) => (err ? reject(err) : resolve(row)));
+    });
+
+    if (!recipeRow) {
       return res.status(404).json({ error: `Recipe "${recipeName}" not found.` });
     }
 
-    try {
-      const fileContent = fs.readFileSync(recipe.path, "utf8");
-      const { attributes, body: rawBody } = fm(fileContent);
+    const fileContent = await fs.readFile(recipeRow.path, "utf8");
+    const { attributes, body: rawBody } = fm(fileContent);
 
-      // Lógica de renderizado consistente con getHomePage
-      let markdownContent = rawBody.replace(/%%.*?%%/g, "").replace(/`\$=.*?`/g, "");
+    // Lógica de renderizado consistente con getHomePage
+    let markdownContent = rawBody
+      .replace(/%%.*?%%/g, "")
+      .replace(/`\$=.*?`/g, "")
+      .replace(/^#\s*`\$= dv\.current\(\)\.title`\s*$/gm, "");
 
-      const processedMarkdown = markdownContent.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
-        const cleanName = imageName.trim();
-        const finalImageName = cleanName.split("/").pop();
-        return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
-      });
+    const processedMarkdown = markdownContent.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
+      const cleanName = imageName.trim();
+      const finalImageName = cleanName.split("/").pop();
+      return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+    });
 
-      let htmlContent = marked.parse(processedMarkdown);
-      htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
+    let htmlContent = marked.parse(processedMarkdown);
+    htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
 
-      res.json({
-        id: recipeName,
-        title: attributes.title || recipeName,
-        attributes: attributes,
-        contentHtml: htmlContent,
-      });
-    } catch (readErr) {
-      console.error(`API Error reading recipe file ${recipe.path}:`, readErr);
-      return res.status(500).json({ error: "Failed to read recipe file." });
-    }
-  });
+    // --- LOGS DE ESTILOS ---
+    console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
+    console.log(`[Estilos] Clases CSS encontradas:`, htmlContent.match(/class="[^"]+"/g) || []);
+    console.log(`[Estilos] Estilos en línea encontrados:`, htmlContent.match(/style="[^"]+"/g) || []);
+    console.log(`--- Fin del análisis ---\n`);
+
+    res.json({
+      id: recipeName,
+      title: attributes.title || recipeName,
+      attributes: attributes,
+      contentHtml: htmlContent,
+    });
+  } catch (error) {
+    console.error(`API Error processing recipe ${recipeName}:`, error);
+    res.status(500).json({ error: "Internal server error while processing the recipe." });
+  }
 };
 
 const createRecipeApi = (req, res) => {
