@@ -86,6 +86,45 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
   }
 });
 
+// Nueva ruta para guardar el plan de un día completo (Desayuno, Almuerzo, Cena)
+app.post("/api/planning/day", isAdmin, (req, res) => {
+  const { date, meals } = req.body;
+
+  if (!date || !meals) {
+    return res.status(400).json({ error: "Se requieren la fecha y las comidas." });
+  }
+
+  // Usamos una transacción para asegurar que todas las operaciones se completen o ninguna lo haga.
+  db.serialize(() => {
+    db.run("BEGIN TRANSACTION;");
+
+    // Primero, borramos las entradas existentes para ese día para evitar conflictos.
+    db.run("DELETE FROM planning WHERE date = ?", [date]);
+
+    const stmt = db.prepare("INSERT INTO planning (date, meal_type, recipe_name) VALUES (?, ?, ?)");
+
+    // Iteramos sobre las comidas enviadas (breakfast, lunch, dinner)
+    for (const mealType in meals) {
+      const recipeName = meals[mealType];
+      // Solo insertamos si se ha seleccionado una receta para ese tipo de comida.
+      if (recipeName && recipeName !== "") {
+        stmt.run(date, mealType, recipeName);
+      }
+    }
+
+    stmt.finalize((err) => {
+      if (err) {
+        db.run("ROLLBACK;");
+        return res.status(500).json({ error: "Error al finalizar la inserción." });
+      }
+      db.run("COMMIT;", (commitErr) => {
+        if (commitErr) return res.status(500).json({ error: "Error al guardar la planificación." });
+        res.status(200).json({ message: "Planificación guardada correctamente." });
+      });
+    });
+  });
+});
+
 // Nueva ruta para limpiar un día completo de la planificación
 app.delete("/api/planning/day", (req, res) => {
   const { date } = req.body;
