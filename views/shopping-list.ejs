@@ -21,18 +21,22 @@
       <!-- Controles -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
         <!-- Toggle Semanal/Mensual -->
-        <div class="flex justify-center mb-4 border-b">
-          <button id="weekly-tab" class="py-2 px-6 bg-white text-green-600 border-b-2 border-green-600 font-semibold">Semanal</button>
-          <button id="monthly-tab" class="py-2 px-6 bg-gray-100 text-gray-500">Mensual</button>
+        <div class="flex justify-center mb-4 border-b border-gray-200 dark:border-gray-700">
+          <button id="weekly-tab" class="py-2 px-6 font-semibold">Semanal</button>
+          <button id="monthly-tab" class="py-2 px-6 font-semibold">Mensual</button>
         </div>
 
         <!-- Selector Semanal -->
         <div id="weekly-selector" class="text-center">
           <p class="mb-2">Selecciona una semana:</p>
           <div class="flex items-center justify-center gap-4">
-            <button id="prev-week" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&lt;</button>
+            <button id="prev-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &lt;
+            </button>
             <span id="week-range-display" class="font-semibold text-lg w-72 text-center"></span>
-            <button id="next-week" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&gt;</button>
+            <button id="next-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &gt;
+            </button>
           </div>
         </div>
 
@@ -40,9 +44,13 @@
         <div id="monthly-selector" class="hidden text-center">
           <p class="mb-2">Selecciona un mes:</p>
           <div class="flex items-center justify-center gap-4">
-            <button id="prev-month" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&lt;</button>
+            <button id="prev-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &lt;
+            </button>
             <span id="month-display" class="font-semibold text-lg w-48 text-center"></span>
-            <button id="next-month" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&gt;</button>
+            <button id="next-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &gt;
+            </button>
           </div>
         </div>
 
@@ -177,10 +185,16 @@
       monthlySelector.classList.toggle("hidden", mode !== "monthly");
       [weeklyTab, monthlyTab].forEach((tab) => {
         const isActive = tab.id.startsWith(mode);
+        // Clases para el tab activo
         tab.classList.toggle("border-green-600", isActive);
         tab.classList.toggle("text-green-600", isActive);
+        tab.classList.toggle("bg-white", isActive);
+        tab.classList.toggle("dark:bg-gray-800", isActive);
+        // Clases para el tab inactivo
         tab.classList.toggle("bg-gray-100", !isActive);
+        tab.classList.toggle("dark:bg-gray-700", !isActive);
         tab.classList.toggle("text-gray-500", !isActive);
+        tab.classList.toggle("dark:text-gray-400", !isActive);
       });
     };
 

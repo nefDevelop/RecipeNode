@@ -9,6 +9,22 @@
     --fc-button-active-bg-color: #047857;
     --fc-button-active-border-color: #047857;
   }
+  /* Dark mode styles for FullCalendar */
+  .dark #calendar {
+    --fc-border-color: #4a5568; /* gray-700 */
+  }
+  .dark .fc-col-header-cell {
+    background-color: transparent !important;
+  }
+  .dark .fc-col-header-cell-cushion {
+    /* Nombres de los días de la semana */
+    color: #a0aec0; /* gray-500 */
+    text-decoration: none;
+  }
+  .dark .fc-daygrid-day-number {
+    /* Números de los días */
+    color: #cbd5e0; /* gray-400 */
+  }
 </style>
 <!-- FullCalendar CSS -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />

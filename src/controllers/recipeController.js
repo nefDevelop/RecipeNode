@@ -91,22 +91,29 @@ const getHomePage = async (req, res) => {
 
       const fileContent = await fs.readFile(recipeRow.path, "utf8");
       const { attributes, body: rawBody } = fm(fileContent);
-      const body = rawBody.replace(/%%.*?%%/g, "");
-      // Reemplaza los enlaces de imagen de Obsidian por Markdown estándar antes de renderizar
-      const processedBody = body.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
+
+      // 1. Limpiar el contenido de Markdown de sintaxis no estándar (Dataview, comentarios)
+      let markdownContent = rawBody
+        .replace(/%%.*?%%/g, "") // Eliminar comentarios de Obsidian %%...%%
+        .replace(/`\$=.*?`/g, ""); // Eliminar scripts inline de Dataview
+
+      // 2. Pre-procesar el markdown para estandarizar la sintaxis de imágenes ![[...]]
+      // a etiquetas <img> de HTML. Esto asegura que se rendericen correctamente.
+      const processedMarkdown = markdownContent.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
         const cleanName = imageName.trim();
-        const resourcesIndex = cleanName.indexOf("_resources");
-        if (resourcesIndex !== -1) {
-          return `!})`;
-        }
-        const attachmentIndex = cleanName.indexOf("attachment");
-        if (attachmentIndex !== -1) {
-          return `!})`;
-        }
-        return `!`;
+        // Extraer solo el nombre del archivo, sin rutas como '_resources/'
+        const finalImageName = cleanName.split("/").pop();
+        // Asumimos que todas las imágenes se sirven desde la carpeta pública /resources/
+        return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
       });
 
-      const htmlContent = marked.parse(processedBody);
+      // 3. Convertir el Markdown (que ahora puede contener HTML) a HTML final.
+      // `marked` procesará la sintaxis de markdown y dejará intactas las etiquetas <img> que hemos insertado.
+      let htmlContent = marked.parse(processedMarkdown);
+
+      // 4. Post-procesar el HTML para corregir rutas de imágenes que no eran de tipo ![[...]]
+      // Esto arregla rutas como <img src="../_resources/..."> o !alt
+      htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
 
       res.render("index", { title: attributes.title || recipeName, content: htmlContent, recipes: null, user: req.session });
     } else {
@@ -168,10 +175,17 @@ const getRecipeByIdApi = (req, res) => {
       const fileContent = fs.readFileSync(recipe.path, "utf8");
       const { attributes, body: rawBody } = fm(fileContent);
 
-      const body = rawBody.replace(/%%.*?%%/g, "");
-      let htmlContent = marked.parse(body);
-      htmlContent = htmlContent.replace(/!\[\[(.*?)\|(.*?)\]\]/g, '<img src="/$1" alt="Imagen de la receta" />');
-      htmlContent = htmlContent.replace(/!\[\[(.*?)\]\]/g, '<img src="/$1" alt="Imagen de la receta" />');
+      // Lógica de renderizado consistente con getHomePage
+      let markdownContent = rawBody.replace(/%%.*?%%/g, "").replace(/`\$=.*?`/g, "");
+
+      const processedMarkdown = markdownContent.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
+        const cleanName = imageName.trim();
+        const finalImageName = cleanName.split("/").pop();
+        return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+      });
+
+      let htmlContent = marked.parse(processedMarkdown);
+      htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
 
       res.json({
         id: recipeName,

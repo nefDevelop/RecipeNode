@@ -9,18 +9,12 @@ router.get("/", recipeController.getHomePage);
 
 // Ruta para la nueva página de la lista de la compra
 router.get("/shopping-list", async (req, res) => {
-  try {
-    // Necesitamos los títulos de las recetas para la barra lateral
-    const recipeTitles = await recipeController.getAllRecipeTitles();
-    res.render("shopping-list", {
-      title: "Lista de la Compra",
-      recipeTitles: recipeTitles,
-      user: req.session,
-    });
-  } catch (error) {
-    console.error("Error al renderizar la página de la lista de la compra:", error);
-    res.status(500).send("Error al cargar la página.");
-  }
+  // La variable 'recipeTitles' ahora es proporcionada por un middleware global.
+  // Simplemente renderizamos la vista.
+  res.render("shopping-list", {
+    title: "Lista de la Compra",
+    user: req.session,
+  });
 });
 
 // Ruta para la página de planificación
