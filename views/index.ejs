@@ -12,43 +12,61 @@
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow min-h-[80vh]">
         <% if (content) { %>
         <!-- Estilos específicos para la vista de receta -->
-        <!-- <link rel="stylesheet" href="/css/kitchen-mode.css" /> -->
-        <!-- <link rel="stylesheet" href="/css/print.css" media="print" /> -->
+        <link rel="stylesheet" href="/css/kitchen-mode.css" />
+        <link rel="stylesheet" href="/css/print.css" media="print" />
 
         <!-- Si se ha seleccionado una receta, se muestra su contenido -->
         <!-- Contenedor para el Modo Cocina -->
         <div id="recipe-content-wrapper" class="relative">
           <!-- Botones de Acción -->
           <div class="flex flex-wrap justify-end gap-2 mb-4">
+            <!-- Modo Cocina -->
             <button
               id="enter-kitchen-mode-btn"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              title="Modo Cocina"
+              class="inline-flex items-center justify-center w-10 h-10 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
-              Modo Cocina
+              <!-- Icono de libro abierto -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
             </button>
+            <!-- Imprimir -->
             <button
               id="print-recipe-btn"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+              title="Imprimir"
+              class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 -ml-1" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fill-rule="evenodd"
                   d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
                   clip-rule="evenodd"
                 />
               </svg>
-              Imprimir
             </button>
+            <!-- Compartir -->
             <button
               id="share-recipe-btn"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+              title="Compartir"
+              class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 -ml-1" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path
                   d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"
                 />
               </svg>
-              Compartir
             </button>
           </div>
 
@@ -179,10 +197,31 @@
         }
       });
     }
+
+    // --- Ingredient Checkbox Usability ---
+    const recipeArticle = document.querySelector(".prose");
+    if (recipeArticle) {
+      recipeArticle.addEventListener("click", (event) => {
+        // Encuentra el elemento de lista (`li`) más cercano al que se hizo clic
+        const li = event.target.closest("li");
+
+        // Si el `li` existe y contiene un checkbox...
+        if (li && li.querySelector('input[type="checkbox"]')) {
+          // ...y el clic no fue directamente en el checkbox (para evitar doble toggle)...
+          if (event.target.tagName !== "INPUT") {
+            const checkbox = li.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked; // ...invierte su estado.
+          }
+        }
+      });
+    }
   });
 </script>
 
 <!-- Script para el Modo Cocina -->
 <script src="/js/kitchen-mode.js"></script>
+
+<!-- Cargar los modales y sus scripts -->
+<%- include('modals') %>
 
 <%- include('partials/footer') %>

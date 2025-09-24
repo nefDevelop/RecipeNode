@@ -11,6 +11,73 @@
       // Configura Tailwind para usar el modo oscuro basado en clases
       tailwind.config = {
         darkMode: "class",
+        theme: {
+          extend: {
+            typography: ({ theme }) => ({
+              DEFAULT: {
+                css: {
+                  "--tw-prose-links": theme("colors.green[600]"),
+                  "--tw-prose-headings": theme("colors.gray[900]"),
+                  "--tw-prose-bold": theme("colors.gray[900]"),
+                  "--tw-prose-bullets": theme("colors.green[500]"),
+                  // Ocultar la viñeta (marker) de los `li` que contienen un checkbox.
+                  'li:has(input[type="checkbox"])::marker': {
+                    content: "none",
+                  },
+                  // Estilos personalizados para los checkboxes
+                  'input[type="checkbox"]': {
+                    appearance: "none",
+                    width: "1.25em",
+                    height: "1.25em",
+                    border: `2px solid ${theme("colors.gray.300")}`,
+                    borderRadius: theme("borderRadius.md"),
+                    display: "inline-block",
+                    verticalAlign: "middle",
+                    position: "relative",
+                    cursor: "pointer",
+                    marginRight: "0.5em",
+                  },
+                  'input[type="checkbox"]:checked': {
+                    borderColor: theme("colors.green.500"),
+                    backgroundColor: theme("colors.green.500"),
+                    backgroundImage: `url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e")`,
+                    backgroundSize: "100% 100%",
+                    backgroundPosition: "center",
+                  },
+                  // Estilos para las imágenes dentro del contenido
+                  img: {
+                    borderRadius: theme("borderRadius.lg"),
+                    boxShadow: theme("boxShadow.md"),
+                  },
+                },
+              },
+              // Estilos para el modo oscuro (cuando se usa `dark:prose-invert`)
+              invert: {
+                css: {
+                  "--tw-prose-links": theme("colors.green[400]"),
+                  "--tw-prose-headings": theme("colors.white"),
+                  "--tw-prose-bold": theme("colors.white"),
+                  "--tw-prose-bullets": theme("colors.green[400]"),
+                  'li:has(input[type="checkbox"])::marker': {
+                    content: "none",
+                  },
+                  // Estilos de checkbox para modo oscuro
+                  'input[type="checkbox"]': {
+                    borderColor: theme("colors.gray.600"),
+                  },
+                  'input[type="checkbox"]:checked': {
+                    borderColor: theme("colors.green.400"),
+                    backgroundColor: theme("colors.green.400"),
+                  },
+                  img: {
+                    borderRadius: theme("borderRadius.lg"),
+                    boxShadow: theme("boxShadow.md"),
+                  },
+                },
+              },
+            }),
+          },
+        },
       };
     </script>
     <script>
@@ -53,16 +120,34 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex items-center">
+        <div class="relative flex items-center">
           <% if (user && user.userId) { %>
           <button
-            id="show-create-modal-btn"
-            class="flex items-center justify-center w-10 h-10 bg-green-500 text-white rounded-full hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            id="add-recipe-dropdown-btn"
+            class="flex items-center justify-center w-10 h-10 bg-green-600 text-white rounded-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
           </button>
+          <!-- Dropdown Menu -->
+          <div
+            id="add-recipe-dropdown"
+            class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-50 hidden"
+          >
+            <a
+              href="#"
+              id="open-create-modal-btn"
+              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >Crear Manualmente</a
+            >
+            <a
+              href="#"
+              id="open-scrape-modal-btn"
+              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >Importar desde URL</a
+            >
+          </div>
           <% } %>
         </div>
       </div>

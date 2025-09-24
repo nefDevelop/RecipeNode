@@ -1,4 +1,4 @@
-const fs = require("fs").promises;
+const fs = require("fs");
 const path = require("path");
 const marked = require("marked");
 const fm = require("front-matter");
@@ -89,7 +89,7 @@ const getHomePage = async (req, res) => {
         });
       }
 
-      const fileContent = await fs.readFile(recipeRow.path, "utf8");
+      const fileContent = await fs.promises.readFile(recipeRow.path, "utf8");
       const { attributes, body: rawBody } = fm(fileContent);
 
       // 1. Limpiar el contenido de Markdown de sintaxis no estándar (Dataview, comentarios)
@@ -110,11 +110,19 @@ const getHomePage = async (req, res) => {
 
       // 3. Convertir el Markdown (que ahora puede contener HTML) a HTML final.
       // `marked` procesará la sintaxis de markdown y dejará intactas las etiquetas <img> que hemos insertado.
-      let htmlContent = marked.parse(processedMarkdown);
+      const markedOptions = {
+        gfm: true, // Habilitar GitHub Flavored Markdown para reconocer las task lists
+        pedantic: false,
+        breaks: false,
+      };
+      let htmlContent = marked.parse(processedMarkdown, markedOptions);
 
       // 4. Post-procesar el HTML para corregir rutas de imágenes que no eran de tipo ![[...]]
       // Esto arregla rutas como <img src="../_resources/..."> o !alt
       htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
+      // 5. Habilitar los checkboxes de las listas de tareas eliminando el atributo 'disabled'.
+      // Esto permite que los usuarios los marquen mientras cocinan.
+      htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
       // --- LOGS DE ESTILOS ---
       console.log(`\n--- [RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
@@ -133,7 +141,7 @@ const getHomePage = async (req, res) => {
       const recipesWithImages = await Promise.all(
         allRecipes.map(async (recipe) => {
           try {
-            const fileContent = await fs.readFile(recipe.path, "utf8");
+            const fileContent = await fs.promises.readFile(recipe.path, "utf8");
             const { attributes, body } = fm(fileContent);
             const image = extractImageFromMarkdown(attributes, body);
             return { name: recipe.name, image };
@@ -180,7 +188,7 @@ const getRecipeByIdApi = async (req, res) => {
       return res.status(404).json({ error: `Recipe "${recipeName}" not found.` });
     }
 
-    const fileContent = await fs.readFile(recipeRow.path, "utf8");
+    const fileContent = await fs.promises.readFile(recipeRow.path, "utf8");
     const { attributes, body: rawBody } = fm(fileContent);
 
     // Lógica de renderizado consistente con getHomePage
@@ -195,8 +203,15 @@ const getRecipeByIdApi = async (req, res) => {
       return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
     });
 
-    let htmlContent = marked.parse(processedMarkdown);
+    const markedOptions = {
+      gfm: true, // Habilitar GitHub Flavored Markdown para reconocer las task lists
+      pedantic: false,
+      breaks: false,
+    };
+    let htmlContent = marked.parse(processedMarkdown, markedOptions);
     htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
+    // Habilitar los checkboxes de las listas de tareas eliminando el atributo 'disabled'.
+    htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
     // --- LOGS DE ESTILOS ---
     console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
@@ -217,7 +232,7 @@ const getRecipeByIdApi = async (req, res) => {
 };
 
 const createRecipeApi = (req, res) => {
-  const { title, markdownContent } = req.body;
+  const { title, markdownContent, source, image } = req.body;
 
   if (!title || !markdownContent) {
     return res.status(400).json({ error: "Title and markdownContent are required." });
@@ -234,11 +249,14 @@ const createRecipeApi = (req, res) => {
   }
 
   const now = new Date().toISOString();
-  const frontmatter = `---
-title: ${title}
-created: ${now}
-updated: ${now}
----
+  let frontmatter = `---
+title: "${title.replace(/"/g, '\\"')}"
+`;
+  if (source) frontmatter += `source: ${source}\n`;
+  if (image) frontmatter += `image: ${image}\n`;
+  frontmatter += `created: ${now}\n`;
+  frontmatter += `updated: ${now}\n`;
+  frontmatter += `---
 
 `;
   const fileContent = frontmatter + markdownContent;
@@ -252,7 +270,12 @@ updated: ${now}
         fs.unlinkSync(filePath); // Rollback file creation
         return res.status(500).json({ error: "Failed to save recipe to the database." });
       }
-      res.status(201).json({ message: "Recipe created successfully", id: slug, title: title });
+      // Añadimos una URL de redirección a la respuesta.
+      // El cliente usará esta URL para recargar la página y ver la nueva receta.
+      res.status(201).json({
+        message: "Recipe created successfully",
+        redirectUrl: `/?recipe=${slug}`,
+      });
     });
   } catch (writeErr) {
     console.error("Error writing recipe file:", writeErr);
@@ -271,67 +294,76 @@ const scrapeRecipeApi = async (req, res) => {
     const $ = cheerio.load(data);
 
     // --- Data Extraction (this is heuristic and may need adjustment per site) ---
+    // 1. Extraer TODAS las imágenes relevantes
+    const imageSet = new Set();
+    // Prioridad 1: Meta tags (og:image, twitter:image)
+    $('meta[property="og:image"]').each((i, el) => $(el).attr("content") && imageSet.add($(el).attr("content")));
+    $('meta[name="twitter:image"]').each((i, el) => $(el).attr("content") && imageSet.add($(el).attr("content")));
+
+    // Prioridad 2: Imágenes dentro del contenido principal del artículo
+    $("article img, .recipe-content img, .post-content img").each((i, el) => {
+      const src = $(el).attr("src");
+      // Ignorar imágenes en base64 o placeholders
+      if (src && !src.startsWith("data:")) {
+        imageSet.add(src);
+      }
+    });
+
+    // Convertir a URLs absolutas y eliminar duplicados
+    const images = [...imageSet].map((img) => new URL(img, url).href);
+
     const title = $("h1").first().text().trim();
     if (!title) {
       return res.status(400).json({ error: "Could not automatically find a title on the page." });
     }
 
-    let markdownContent = `## Ingredientes\n\n`;
-    // Try to find an ingredients list
-    $("h2, h3")
-      .filter((i, el) => $(el).text().toLowerCase().includes("ingrediente"))
-      .first()
-      .next("ul")
-      .find("li")
-      .each((i, el) => {
-        markdownContent += `- ${$(el).text().trim()}\n`;
-      });
+    // --- Heurística mejorada para separar ingredientes y pasos ---
+    // --- Nueva Estrategia para Ingredientes: Encontrar todos los bloques <ul> candidatos ---
+    const potentialIngredients = new Set();
+    // Buscar todas las listas no ordenadas con al menos 2 items
+    $("ul").each((i, list) => {
+      const $list = $(list);
+      if ($list.find("li").length > 1) {
+        // Añadir el HTML de la lista como un candidato
+        potentialIngredients.add($list.prop("outerHTML"));
+      }
+    });
 
-    markdownContent += `\n## Instrucciones\n\n`;
-    // Try to find an instructions list
-    $("h2, h3")
-      .filter((i, el) => $(el).text().toLowerCase().includes("preparaci") || $(el).text().toLowerCase().includes("instruccione"))
-      .first()
-      .nextAll()
-      .each((i, el) => {
-        if ($(el).is("h2, h3")) return false; // Stop if we hit the next section
-        if ($(el).is("p, ol, ul")) {
-          $(el)
-            .find("li")
-            .each((li_idx, li_el) => {
-              markdownContent += `${li_idx + 1}. ${$(li_el).text().trim()}\n`;
-            });
-          if ($(el).is("p")) {
-            markdownContent += `${$(el).text().trim()}\n\n`;
-          }
+    // --- Nueva Estrategia para Pasos: Capturar contenido entre encabezados relevantes ---
+    const potentialSteps = new Set();
+
+    // Estrategia definitiva: de un header al siguiente, sin importar la estructura.
+    const allElements = $("body").find("*");
+    let currentBlock = null;
+
+    allElements.each((index, element) => {
+      const $el = $(element);
+
+      // Si es un encabezado, empezamos un nuevo bloque.
+      if ($el.is("h2, h3, h4")) {
+        // Si ya teníamos un bloque, lo guardamos antes de empezar el nuevo.
+        if (currentBlock) {
+          potentialSteps.add(currentBlock.html());
         }
-      });
+        // Creamos el nuevo bloque y le añadimos el encabezado actual.
+        currentBlock = $("<div></div>").append($el.clone());
+      } else if (currentBlock) {
+        // Si no es un encabezado pero estamos dentro de un bloque, añadimos el elemento.
+        currentBlock.append($el.clone());
+      }
+    });
+    // No olvides guardar el último bloque encontrado.
+    if (currentBlock) potentialSteps.add(currentBlock.html());
 
-    // --- File and DB Creation (similar to createRecipeApi) ---
-    const slug = slugify(title);
-    const filename = `${slug}.md`;
-    const recipesPath = path.join(__dirname, "../../recetas");
-    const filePath = path.join(recipesPath, filename);
-
-    if (fs.existsSync(filePath)) {
-      return res.status(409).json({ error: `A recipe with the title "${title}" already exists.` });
-    }
-
-    const now = new Date().toISOString();
-    const frontmatter = `---
-title: ${title}
-source: ${url}
-created: ${now}
-updated: ${now}
----
-
-`;
-    const fileContent = frontmatter + markdownContent;
-
-    fs.writeFileSync(filePath, fileContent, "utf8");
-    db.run("INSERT INTO recipes (name, path) VALUES (?, ?)", [slug, filePath]);
-
-    res.status(201).json({ message: "Recipe scraped and created successfully", id: slug, title: title });
+    // En lugar de crear el archivo, devolvemos el contenido para que el usuario lo verifique.
+    // El frontend se encargará de llamar a 'createRecipeApi' con estos datos.
+    res.status(200).json({
+      title: title,
+      images: images,
+      potentialIngredients: [...potentialIngredients],
+      potentialSteps: [...potentialSteps],
+      source: url, // Devolvemos también la URL de origen
+    });
   } catch (error) {
     console.error("Error scraping recipe:", error);
     res.status(500).json({ error: "Failed to scrape or process the recipe." });

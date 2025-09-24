@@ -1,0 +1,507 @@
+<!-- Modal para Crear Receta Manualmente -->
+<div id="create-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center" style="display: none">
+  <div class="modal-content bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+    <button id="close-create-modal-btn" class="absolute top-3 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-2xl">
+      &times;
+    </button>
+    <h2 class="text-2xl font-bold mb-4">Crear Nueva Receta</h2>
+    <form id="create-recipe-form">
+      <div class="mb-4">
+        <label for="recipe-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Título</label>
+        <input
+          type="text"
+          id="recipe-title"
+          name="title"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="recipe-content" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contenido (Markdown)</label>
+        <textarea
+          id="recipe-content"
+          name="markdownContent"
+          rows="10"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          required
+        ></textarea>
+      </div>
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          Guardar Receta
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de Importación desde URL -->
+<div id="scrape-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center" style="display: none">
+  <div class="modal-content bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+    <button
+      id="close-scrape-modal-btn"
+      class="absolute top-3 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-2xl"
+      type="button"
+    >
+      &times;
+    </button>
+    <h2 class="text-2xl font-bold mb-4">Importar Receta desde URL</h2>
+
+    <!-- Paso 1: Introducir URL y Cargar -->
+    <div class="input-group mb-4">
+      <label for="scrape-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL de la receta:</label>
+      <div class="flex gap-2">
+        <input
+          type="url"
+          id="scrape-url"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          placeholder="https://www.ejemplo.com/receta..."
+        />
+        <button
+          id="load-scraped-data-btn"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 whitespace-nowrap"
+        >
+          Cargar
+        </button>
+      </div>
+    </div>
+    <div id="scrape-status" class="status-message mb-4 text-sm"></div>
+
+    <!-- Paso 2: Verificar y Editar Contenido (inicialmente oculto) -->
+    <div id="scraped-content-wrapper" style="display: none">
+      <div class="input-group mb-4">
+        <label for="scraped-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título:</label>
+        <input
+          type="text"
+          id="scraped-title"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <!-- Visor de Imágenes (si se encuentran) -->
+      <div id="image-viewer" class="input-group mb-4" style="display: none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imagen de la Receta:</label>
+        <div class="relative">
+          <img
+            id="scraped-image"
+            src=""
+            alt="Imagen de la receta"
+            class="w-full h-64 object-contain rounded-md bg-gray-200 dark:bg-gray-700"
+          />
+          <div class="absolute inset-0 flex items-center justify-between p-2">
+            <button id="prev-image-btn" type="button" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75">
+              &lt;
+            </button>
+            <button id="next-image-btn" type="button" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75">
+              &gt;
+            </button>
+          </div>
+          <div id="image-counter" class="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">1 / 1</div>
+        </div>
+      </div>
+
+      <!-- Visor de Ingredientes -->
+      <div id="ingredients-viewer" class="input-group mb-4" style="display: none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bloque de Ingredientes Sugerido:</label>
+        <div class="relative border border-gray-300 dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700 min-h-[10rem]">
+          <div id="scraped-ingredients-preview" class="prose dark:prose-invert max-w-none text-sm"></div>
+          <div class="absolute inset-x-0 top-0 flex items-center justify-between p-2">
+            <button id="prev-ingredient-btn" type="button" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75">
+              &lt;
+            </button>
+            <button id="next-ingredient-btn" type="button" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75">
+              &gt;
+            </button>
+          </div>
+          <div id="ingredient-counter" class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+            1 / 1
+          </div>
+        </div>
+        <button
+          id="select-ingredient-block-btn"
+          type="button"
+          class="mt-2 w-full text-sm text-white bg-green-600 hover:bg-green-700 rounded-md py-1"
+        >
+          Usar este bloque de ingredientes
+        </button>
+      </div>
+
+      <div class="input-group mb-4">
+        <label for="scraped-ingredients" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ingredientes:</label>
+        <textarea
+          id="scraped-ingredients"
+          rows="8"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          placeholder="Aquí aparecerán los ingredientes..."
+        ></textarea>
+      </div>
+
+      <!-- Visor de Pasos -->
+      <div id="steps-viewer" class="input-group mb-4" style="display: none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bloque de Pasos Sugerido:</label>
+        <div class="relative border border-gray-300 dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700 min-h-[10rem]">
+          <div id="scraped-steps-preview" class="prose dark:prose-invert max-w-none text-sm"></div>
+          <div class="absolute inset-x-0 top-0 flex items-center justify-between p-2">
+            <button id="prev-step-btn" type="button" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75">
+              &lt;
+            </button>
+            <button id="next-step-btn" type="button" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75">
+              &gt;
+            </button>
+          </div>
+          <div id="step-counter" class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">1 / 1</div>
+        </div>
+        <button
+          id="select-step-block-btn"
+          type="button"
+          class="mt-2 w-full text-sm text-white bg-green-600 hover:bg-green-700 rounded-md py-1"
+        >
+          Usar este bloque de pasos
+        </button>
+      </div>
+
+      <div class="input-group mb-4">
+        <label for="scraped-steps" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pasos:</label>
+        <textarea
+          id="scraped-steps"
+          rows="8"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          placeholder="Aquí aparecerán los pasos de la preparación..."
+        ></textarea>
+      </div>
+
+      <!-- Paso 3: Crear la receta -->
+      <div class="flex justify-end">
+        <button
+          id="create-from-scraped-btn"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Importar Receta
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // --- Lógica para abrir/cerrar modales y dropdown ---
+    const addRecipeDropdownBtn = document.getElementById("add-recipe-dropdown-btn");
+    const addRecipeDropdown = document.getElementById("add-recipe-dropdown");
+    const createModal = document.getElementById("create-modal");
+    const scrapeModal = document.getElementById("scrape-modal");
+    const openCreateBtn = document.getElementById("open-create-modal-btn");
+    const openScrapeBtn = document.getElementById("open-scrape-modal-btn");
+    const closeCreateBtn = document.getElementById("close-create-modal-btn");
+    const closeScrapeBtn = document.getElementById("close-scrape-modal-btn");
+
+    // Abrir/cerrar el menú desplegable
+    addRecipeDropdownBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      addRecipeDropdown?.classList.toggle("hidden");
+    });
+
+    // Cerrar el menú si se hace clic fuera
+    document.addEventListener("click", (e) => {
+      if (!addRecipeDropdown?.contains(e.target) && !addRecipeDropdownBtn?.contains(e.target)) {
+        addRecipeDropdown?.classList.add("hidden");
+      }
+    });
+
+    // --- Lógica para abrir los modales desde el menú desplegable ---
+    openCreateBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (createModal) createModal.style.display = "flex";
+      addRecipeDropdown?.classList.add("hidden");
+    });
+
+    openScrapeBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (scrapeModal) scrapeModal.style.display = "flex";
+      addRecipeDropdown?.classList.add("hidden");
+    });
+
+    // --- Lógica para cerrar los modales ---
+    closeCreateBtn?.addEventListener("click", () => (createModal.style.display = "none"));
+    closeScrapeBtn?.addEventListener("click", () => {
+      scrapeModal.style.display = "none";
+      // Resetear modal de importación al cerrar
+      document.getElementById("scraped-content-wrapper").style.display = "none";
+      document.getElementById("scrape-url").value = "";
+      document.getElementById("scrape-status").textContent = "";
+    });
+
+    // --- Lógica del Formulario de Crear Receta ---
+    const createForm = document.getElementById("create-recipe-form");
+    createForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(createForm);
+      const data = Object.fromEntries(formData.entries());
+
+      const response = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        window.location.href = result.redirectUrl;
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    });
+
+    // --- Lógica del Modal de Importación ---
+    const loadBtn = document.getElementById("load-scraped-data-btn");
+    const createFromScrapeBtn = document.getElementById("create-from-scraped-btn");
+    const urlInput = document.getElementById("scrape-url");
+    const statusDiv = document.getElementById("scrape-status");
+    const titleInput = document.getElementById("scraped-title");
+    const ingredientsTextarea = document.getElementById("scraped-ingredients");
+    const stepsTextarea = document.getElementById("scraped-steps");
+    const contentWrapper = document.getElementById("scraped-content-wrapper");
+    let sourceUrl = "",
+      selectedImageUrl = "";
+    let allImages = [],
+      currentImageIndex = 0;
+    let allPotentialSteps = [],
+      currentStepIndex = 0;
+    let allPotentialIngredients = [],
+      currentIngredientIndex = 0;
+
+    loadBtn?.addEventListener("click", async () => {
+      const url = urlInput.value.trim();
+      if (!url) {
+        statusDiv.textContent = "Por favor, introduce una URL.";
+        statusDiv.className = "status-message text-red-500";
+        return;
+      }
+      loadBtn.disabled = true;
+      loadBtn.textContent = "Cargando...";
+      statusDiv.textContent = "";
+
+      try {
+        const response = await fetch("/api/recipes/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Error al cargar.");
+
+        titleInput.value = data.title;
+        sourceUrl = data.source;
+        contentWrapper.style.display = "block";
+
+        // Lógica del visor de imágenes
+        allImages = data.images || [];
+        const imageViewer = document.getElementById("image-viewer");
+        if (allImages.length > 0) {
+          currentImageIndex = 0;
+          updateImageViewer();
+          imageViewer.style.display = "block";
+        } else {
+          imageViewer.style.display = "none";
+          selectedImageUrl = "";
+        }
+
+        document.getElementById("prev-image-btn").onclick = () => {
+          if (allImages.length > 1) {
+            currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+            updateImageViewer();
+          }
+        };
+
+        document.getElementById("next-image-btn").onclick = () => {
+          if (allImages.length > 1) {
+            currentImageIndex = (currentImageIndex + 1) % allImages.length;
+            updateImageViewer();
+          }
+        };
+
+        // Lógica del visor de ingredientes
+        allPotentialIngredients = data.potentialIngredients || [];
+        const ingredientsViewer = document.getElementById("ingredients-viewer");
+        if (allPotentialIngredients.length > 0) {
+          currentIngredientIndex = 0;
+          updateIngredientsViewer();
+          ingredientsViewer.style.display = "block";
+        } else {
+          ingredientsViewer.style.display = "none";
+          ingredientsTextarea.value = "";
+        }
+
+        document.getElementById("prev-ingredient-btn").onclick = () => {
+          if (allPotentialIngredients.length > 1) {
+            currentIngredientIndex = (currentIngredientIndex - 1 + allPotentialIngredients.length) % allPotentialIngredients.length;
+            updateIngredientsViewer();
+          }
+        };
+
+        document.getElementById("next-ingredient-btn").onclick = () => {
+          if (allPotentialIngredients.length > 1) {
+            currentIngredientIndex = (currentIngredientIndex + 1) % allPotentialIngredients.length;
+            updateIngredientsViewer();
+          }
+        };
+
+        document.getElementById("select-ingredient-block-btn").onclick = () => {
+          const selectedHtml = allPotentialIngredients[currentIngredientIndex];
+          const markdown = htmlToMarkdown(selectedHtml, "ingredients");
+          ingredientsTextarea.value = markdown;
+        };
+
+        // Lógica del visor de pasos
+        allPotentialSteps = data.potentialSteps || [];
+        const stepsViewer = document.getElementById("steps-viewer");
+        if (allPotentialSteps.length > 0) {
+          currentStepIndex = 0;
+          updateStepsViewer();
+          stepsViewer.style.display = "block";
+        } else {
+          stepsViewer.style.display = "none";
+          stepsTextarea.value = ""; // Limpiar por si acaso
+        }
+
+        document.getElementById("prev-step-btn").onclick = () => {
+          if (allPotentialSteps.length > 1) {
+            currentStepIndex = (currentStepIndex - 1 + allPotentialSteps.length) % allPotentialSteps.length;
+            updateStepsViewer();
+          }
+        };
+
+        document.getElementById("next-step-btn").onclick = () => {
+          if (allPotentialSteps.length > 1) {
+            currentStepIndex = (currentStepIndex + 1) % allPotentialSteps.length;
+            updateStepsViewer();
+          }
+        };
+
+        document.getElementById("select-step-block-btn").onclick = () => {
+          const selectedHtml = allPotentialSteps[currentStepIndex];
+          const markdown = htmlToMarkdown(selectedHtml, "steps");
+          stepsTextarea.value = markdown;
+        };
+
+        statusDiv.textContent = "Datos cargados. Verifica y edita si es necesario.";
+        statusDiv.className = "status-message text-green-600";
+      } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.className = "status-message text-red-500";
+        contentWrapper.style.display = "none";
+      } finally {
+        loadBtn.disabled = false;
+        loadBtn.textContent = "Cargar";
+      }
+    });
+
+    function updateImageViewer() {
+      selectedImageUrl = allImages[currentImageIndex];
+      document.getElementById("scraped-image").src = selectedImageUrl;
+      document.getElementById("image-counter").textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+      document.getElementById("prev-image-btn").style.display = allImages.length > 1 ? "block" : "none";
+      document.getElementById("next-image-btn").style.display = allImages.length > 1 ? "block" : "none";
+    }
+
+    function updateIngredientsViewer() {
+      const previewHtml = allPotentialIngredients[currentIngredientIndex];
+      document.getElementById("scraped-ingredients-preview").innerHTML = previewHtml;
+      document.getElementById("ingredient-counter").textContent = `${currentIngredientIndex + 1} / ${allPotentialIngredients.length}`;
+      document.getElementById("prev-ingredient-btn").style.display = allPotentialIngredients.length > 1 ? "block" : "none";
+      document.getElementById("next-ingredient-btn").style.display = allPotentialIngredients.length > 1 ? "block" : "none";
+    }
+
+    function updateStepsViewer() {
+      const previewHtml = allPotentialSteps[currentStepIndex];
+      document.getElementById("scraped-steps-preview").innerHTML = previewHtml;
+      document.getElementById("step-counter").textContent = `${currentStepIndex + 1} / ${allPotentialSteps.length}`;
+      document.getElementById("prev-step-btn").style.display = allPotentialSteps.length > 1 ? "block" : "none";
+      document.getElementById("next-step-btn").style.display = allPotentialSteps.length > 1 ? "block" : "none";
+    }
+
+    /**
+     * Convierte un fragmento de HTML a Markdown, preservando el formato básico.
+     * @param {string} html - El string HTML a convertir.
+     * @param {'ingredients'|'steps'} type - El tipo de contenido a procesar.
+     * @returns {string} El contenido convertido a Markdown.
+     */
+    function htmlToMarkdown(html, type) {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+      let markdown = "";
+
+      if (type === "ingredients") {
+        // Para ingredientes, simplemente creamos una lista de tareas.
+        tempDiv.querySelectorAll("li").forEach((li) => {
+          // Limpiamos espacios extra y saltos de línea dentro del texto.
+          const text = li.textContent.trim().replace(/\s+/g, " ");
+          if (text) markdown += `- [ ] ${text}\n`;
+        });
+      } else if (type === "steps") {
+        // Para los pasos, procesamos cada elemento para mantener el formato.
+        let stepCounter = 1;
+        // Usamos querySelectorAll para obtener todos los elementos de bloque relevantes en orden.
+        tempDiv.querySelectorAll("p, ol, ul, h2, h3, h4").forEach((el) => {
+          let elementHtml = el.innerHTML;
+
+          // Convertir etiquetas de formato HTML a Markdown
+          elementHtml = elementHtml
+            .replace(/<strong>(.*?)<\/strong>/gi, "**$1**")
+            .replace(/<b>(.*?)<\/b>/gi, "**$1**")
+            .replace(/<em>(.*?)<\/em>/gi, "*$1*")
+            .replace(/<i>(.*?)<\/i>/gi, "*$1*")
+            .replace(/<a href="(.*?)">(.*?)<\/a>/gi, "$2"); // Convertir enlaces
+
+          // Limpiar etiquetas HTML restantes y espacios extra
+          const cleanText = elementHtml.replace(/<[^>]+>/g, "").trim();
+
+          if (cleanText) {
+            if (el.tagName === "P") {
+              markdown += cleanText + "\n\n";
+            } else if (el.tagName === "LI") {
+              markdown += `${stepCounter++}. ${cleanText}\n`;
+            }
+          }
+        });
+      }
+      return markdown.trim();
+    }
+
+    createFromScrapeBtn?.addEventListener("click", async () => {
+      const title = titleInput.value.trim();
+      const ingredients = ingredientsTextarea.value.trim();
+      const steps = stepsTextarea.value.trim();
+
+      // Unimos los ingredientes y los pasos en un solo bloque de Markdown para guardarlo
+      const markdownContent = `## Ingredientes\n\n${ingredients}\n\n## Pasos\n\n${steps}`;
+
+      if (!title || !markdownContent) {
+        statusDiv.textContent = "El título y el contenido no pueden estar vacíos.";
+        statusDiv.className = "status-message text-red-500";
+        return;
+      }
+      createFromScrapeBtn.disabled = true;
+      createFromScrapeBtn.textContent = "Importando...";
+
+      try {
+        const response = await fetch("/api/recipes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, markdownContent, source: sourceUrl, image: selectedImageUrl }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Error al crear.");
+        window.location.href = result.redirectUrl;
+      } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.className = "status-message text-red-500";
+        createFromScrapeBtn.disabled = false;
+        createFromScrapeBtn.textContent = "Importar Receta";
+      }
+    });
+  });
+</script>

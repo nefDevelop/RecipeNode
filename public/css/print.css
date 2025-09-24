@@ -1,33 +1,24 @@
-/* --- Print Styles --- */
+/* --- Estilos de Impresión --- */
+
 @media print {
-  /* Oculta los elementos de la interfaz que no deben imprimirse */
-  .md\:col-span-1, /* Sidebar */
-  body > footer,
-  body > header,
-  #recipe-content-wrapper .flex /* Contenedor de botones de acción */ {
-    display: none;
+  /* 1. Ocultar la cabecera y la barra lateral de forma contundente */
+  header,
+  #sidebar {
+    display: none !important;
   }
 
-  /* Ajusta el layout para que el contenido de la receta ocupe toda la página */
-  body > .grid {
-    display: block;
+  /* 2. Hacer que el contenedor principal de la receta ocupe toda la página */
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
-  .md\:col-span-3 {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
-    border: none;
-  }
-
+  /* 3. Asegurarse de que el contenido principal y su wrapper se expandan */
+  main,
   #recipe-content-wrapper {
-    padding: 0;
-  }
-
-  /* Mejora la legibilidad del texto impreso */
-  body {
-    font-size: 12pt;
-    background-color: #fff;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
