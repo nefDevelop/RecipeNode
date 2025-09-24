@@ -152,5 +152,29 @@
         </div>
       </div>
     </header>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const addRecipeDropdownBtn = document.getElementById("add-recipe-dropdown-btn");
+        const addRecipeDropdown = document.getElementById("add-recipe-dropdown");
+
+        // Abrir/cerrar el menú desplegable
+        addRecipeDropdownBtn?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          addRecipeDropdown?.classList.toggle("hidden");
+        });
+
+        // Cerrar el menú si se hace clic fuera
+        document.addEventListener("click", (e) => {
+          if (!addRecipeDropdown?.contains(e.target) && !addRecipeDropdownBtn?.contains(e.target)) {
+            addRecipeDropdown?.classList.add("hidden");
+          }
+        });
+
+        // Estos botones están en el dropdown pero abren modales que están en modals.ejs
+        // El script de modals.ejs se encargará de la lógica de apertura.
+        document.getElementById("open-create-modal-btn")?.addEventListener("click", (e) => e.preventDefault());
+        document.getElementById("open-scrape-modal-btn")?.addEventListener("click", (e) => e.preventDefault());
+      });
+    </script>
   </body>
 </html>

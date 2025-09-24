@@ -189,8 +189,6 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     // --- Lógica para abrir/cerrar modales y dropdown ---
-    const addRecipeDropdownBtn = document.getElementById("add-recipe-dropdown-btn");
-    const addRecipeDropdown = document.getElementById("add-recipe-dropdown");
     const createModal = document.getElementById("create-modal");
     const scrapeModal = document.getElementById("scrape-modal");
     const openCreateBtn = document.getElementById("open-create-modal-btn");
@@ -198,30 +196,17 @@
     const closeCreateBtn = document.getElementById("close-create-modal-btn");
     const closeScrapeBtn = document.getElementById("close-scrape-modal-btn");
 
-    // Abrir/cerrar el menú desplegable
-    addRecipeDropdownBtn?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      addRecipeDropdown?.classList.toggle("hidden");
-    });
-
-    // Cerrar el menú si se hace clic fuera
-    document.addEventListener("click", (e) => {
-      if (!addRecipeDropdown?.contains(e.target) && !addRecipeDropdownBtn?.contains(e.target)) {
-        addRecipeDropdown?.classList.add("hidden");
-      }
-    });
-
     // --- Lógica para abrir los modales desde el menú desplegable ---
     openCreateBtn?.addEventListener("click", (e) => {
       e.preventDefault();
       if (createModal) createModal.style.display = "flex";
-      addRecipeDropdown?.classList.add("hidden");
+      document.getElementById("add-recipe-dropdown")?.classList.add("hidden");
     });
 
     openScrapeBtn?.addEventListener("click", (e) => {
       e.preventDefault();
       if (scrapeModal) scrapeModal.style.display = "flex";
-      addRecipeDropdown?.classList.add("hidden");
+      document.getElementById("add-recipe-dropdown")?.classList.add("hidden");
     });
 
     // --- Lógica para cerrar los modales ---
