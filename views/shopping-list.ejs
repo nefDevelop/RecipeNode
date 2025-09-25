@@ -8,12 +8,34 @@
     <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
 
     <main class="w-full md:w-3/4">
+      <h1 id="page-title" class="text-3xl font-bold mb-6">Lista de la Compra</h1>
+
       <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
       <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
         <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
         <div id="list-content" class="prose dark:prose-invert max-w-none">
           <!-- El contenido se generará aquí -->
         </div>
+      </div>
+
+      <!-- Contenedor de la Lista Manual Compartida -->
+      <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-2xl font-bold mb-4">Lista Manual Compartida</h2>
+        <form id="add-manual-item-form" class="flex gap-2 mb-4">
+          <input
+            type="text"
+            id="manual-item-input"
+            placeholder="Añadir un artículo..."
+            class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+          <button type="submit" class="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </form>
+        <div id="manual-list-content" class="prose dark:prose-invert max-w-none"></div>
       </div>
 
       <h1 id="generator-title" class="text-3xl font-bold mb-6">Generador de Lista de la Compra</h1>
@@ -77,6 +99,7 @@
     color: #9ca3af; /* text-gray-400 */
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -93,11 +116,16 @@
     const generateBtn = document.getElementById("generate-list-btn");
     const listContainer = document.getElementById("shopping-list-container");
     const listContent = document.getElementById("list-content");
+    const pageTitle = document.getElementById("page-title");
     const generatorTitle = document.getElementById("generator-title");
+    const manualListSection = document.getElementById("manual-list-section");
+    const manualListContent = document.getElementById("manual-list-content");
+    const addManualItemForm = document.getElementById("add-manual-item-form");
+    const manualItemInput = document.getElementById("manual-item-input");
 
     const STORAGE_KEY = "shoppingList";
     let currentMode = "weekly";
-    let currentDate = new Date();
+    let currentMonthDate = new Date();
     let currentWeekStartDate;
 
     // --- Funciones de persistencia de datos ---
@@ -116,8 +144,9 @@
       for (const category in listData.categories) {
         const itemsHtml = listData.categories[category]
           .map(
+            // Añadido dark:hover:bg-gray-700 y rounded-md para consistencia
             (item) => `
-            <li class="flex items-center py-1 hover:bg-gray-50 rounded" data-item-text="${item.text}">
+            <li class="flex items-center py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md" data-item-text="${item.text}">
               <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1" ${
                 item.checked ? "checked" : ""
               }>
@@ -138,7 +167,9 @@
         try {
           const savedList = JSON.parse(savedListJSON);
           renderList(savedList);
-          generatorTitle.textContent = "Generar Nueva Lista";
+          // Mover el generador al final si hay una lista guardada
+          manualListSection.parentNode.insertBefore(manualListSection, generatorTitle);
+          generatorTitle.textContent = "Generar Nueva Lista (reemplazará la actual)";
         } catch (e) {
           console.error("Error al parsear la lista de la compra guardada:", e);
           localStorage.removeItem(STORAGE_KEY);
@@ -172,11 +203,11 @@
     };
 
     const updateMonthDisplay = () => {
-      monthDisplay.textContent = currentDate
+      monthDisplay.textContent = currentMonthDate
         .toLocaleDateString("es-ES", { month: "long", year: "numeric" })
         .replace(/^\w/, (c) => c.toUpperCase());
-      monthDisplay.dataset.year = currentDate.getFullYear();
-      monthDisplay.dataset.month = currentDate.getMonth();
+      monthDisplay.dataset.year = currentMonthDate.getFullYear();
+      monthDisplay.dataset.month = currentMonthDate.getMonth();
     };
 
     const switchTab = (mode) => {
@@ -211,11 +242,11 @@
     weeklyTab.addEventListener("click", () => switchTab("weekly"));
     monthlyTab.addEventListener("click", () => switchTab("monthly"));
     prevMonthBtn.addEventListener("click", () => {
-      currentDate.setMonth(currentDate.getMonth() - 1);
+      currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
       updateMonthDisplay();
     });
     nextMonthBtn.addEventListener("click", () => {
-      currentDate.setMonth(currentDate.getMonth() + 1);
+      currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
       updateMonthDisplay();
     });
 
@@ -257,20 +288,22 @@
 
       saveListToStorage(newListData);
       renderList(newListData);
-      generatorTitle.textContent = "Generar Nueva Lista";
+      // Mover el generador al final
+      manualListSection.parentNode.insertBefore(manualListSection, generatorTitle);
+      generatorTitle.textContent = "Generar Nueva Lista (reemplazará la actual)";
+      pageTitle.scrollIntoView({ behavior: "smooth" });
     });
 
+    // Permite marcar/desmarcar al hacer clic en cualquier parte del <li> (excepto el checkbox directamente)
     listContent.addEventListener("click", (e) => {
-      const target = e.target;
-      if (target.tagName === "LI" || target.tagName === "SPAN") {
-        const li = target.closest("li");
-        if (li) {
-          const checkbox = li.querySelector('input[type="checkbox"]');
-          if (checkbox && e.target !== checkbox) {
-            checkbox.checked = !checkbox.checked;
-            checkbox.dispatchEvent(new Event("change", { bubbles: true }));
-          }
-        }
+      const li = e.target.closest("li");
+      if (!li) return;
+
+      const checkbox = li.querySelector('input[type="checkbox"]');
+      if (checkbox && e.target !== checkbox) {
+        // Solo si no se hizo clic directamente en el checkbox
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true })); // Disparar evento 'change'
       }
     });
 
@@ -295,11 +328,123 @@
       }
     });
 
+    // --- Lógica de la Lista Manual Compartida ---
+
+    const renderManualList = (items) => {
+      if (!items || items.length === 0) {
+        manualListContent.innerHTML = "<p>No hay artículos en la lista manual.</p>";
+        return;
+      }
+      const itemsHtml = items
+        .map(
+          (item) => `
+            <li class="flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md" data-id="${item.id}">
+                <div class="flex items-center">
+                    <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1 manual-item-checkbox" ${
+                      item.checked ? "checked" : ""
+                    }>
+                    <span class="flex-1 ${item.checked ? "line-through text-gray-400" : ""}">${item.text}</span>
+                </div>
+                <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+            </li>
+        `
+        )
+        .join("");
+      manualListContent.innerHTML = `<ul class="list-none p-0 cursor-pointer">${itemsHtml}</ul>`;
+    };
+
+    const fetchManualList = async () => {
+      try {
+        const response = await axios.get("/api/shopping-list/manual");
+        renderManualList(response.data);
+      } catch (error) {
+        console.error("Error al cargar la lista manual:", error);
+        manualListContent.innerHTML = '<p class="text-red-500">No se pudo cargar la lista. Inténtalo de nuevo más tarde.</p>';
+      }
+    };
+
+    addManualItemForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = manualItemInput.value.trim();
+      if (!text) return;
+
+      try {
+        await axios.post("/api/shopping-list/manual", { text });
+        manualItemInput.value = "";
+        fetchManualList(); // Recargar la lista
+      } catch (error) {
+        console.error("Error al añadir el artículo:", error);
+        alert("No se pudo añadir el artículo.");
+      }
+    });
+
+    manualListContent.addEventListener("click", async (e) => {
+      // Solo para el botón de eliminar
+      const target = e.target;
+      const li = target.closest("li");
+      if (!li) return;
+
+      const id = li.dataset.id;
+
+      // 1. Verificar si el clic fue en el botón de eliminar o en su SVG hijo
+      const deleteButton = target.closest(".delete-manual-item-btn");
+      if (deleteButton) {
+        if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
+          try {
+            await axios.delete(`/api/shopping-list/manual/${id}`);
+            fetchManualList(); // Recargar
+          } catch (error) {
+            console.error("Error al eliminar el artículo:", error);
+            alert("No se pudo eliminar el artículo.");
+          }
+        }
+        return; // Detenemos la ejecución si se hizo clic en el botón de eliminar
+      }
+
+      // Si el clic fue directamente en el checkbox, dejamos que el 'change' event listener lo maneje.
+      if (target.classList.contains("manual-item-checkbox")) return;
+
+      // Si no fue ni el botón de eliminar ni el checkbox, entonces fue en la línea del ítem.
+      // Toggleamos el checkbox y disparamos su evento 'change'.
+      const checkbox = li.querySelector(".manual-item-checkbox");
+      if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+
+    manualListContent.addEventListener("change", async (e) => {
+      // Solo para el checkbox
+      const target = e.target;
+      if (target.classList.contains("manual-item-checkbox")) {
+        const li = target.closest("li");
+        if (!li) return;
+        const id = li.dataset.id;
+        const checked = target.checked;
+        try {
+          await axios.put(`/api/shopping-list/manual/${id}`, { checked });
+          // No es necesario recargar toda la lista, el checkbox ya refleja el estado.
+          // Pero si quieres que el texto se tache inmediatamente, podrías actualizar solo el <span>.
+          // Por simplicidad, y para asegurar la consistencia, recargamos la lista.
+          fetchManualList();
+        } catch (error) {
+          console.error("Error al actualizar el artículo:", error);
+          alert("No se pudo actualizar el artículo.");
+          target.checked = !checked; // Revertir en caso de error
+        }
+      }
+    });
+
     // --- Inicialización ---
     loadListFromStorage();
     setInitialWeek();
     updateMonthDisplay();
     switchTab("weekly");
+    fetchManualList();
   });
 </script>
 

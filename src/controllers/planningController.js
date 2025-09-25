@@ -1,8 +1,4 @@
-const fs = require("fs");
-const fm = require("front-matter");
 const db = require("../config/database");
-const { parseIngredient, normalizeIngredient } = require("../utils/ingredientParser");
-const { extractIngredients } = require("../utils/recipeUtils");
 
 const getPlanningPage = (req, res) => {
   // recipeTitles is now provided by middleware
@@ -59,113 +55,8 @@ const savePlanningData = (req, res) => {
   }
 };
 
-const getShoppingListApi = (req, res) => {
-  const { startDate, endDate } = req.query;
-
-  if (!startDate || !endDate) {
-    return res.status(400).json({ error: "Se requieren fechas de inicio y fin." });
-  }
-
-  const sql = `SELECT recipe_name FROM planning WHERE date >= ? AND date <= ?`;
-
-  db.all(sql, [startDate, endDate], (err, plannedMeals) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (plannedMeals.length === 0) return res.json({ ingredients: {} });
-
-    const recipeNames = plannedMeals.map((r) => r.recipe_name);
-    const uniqueRecipeNames = [...new Set(recipeNames)];
-    if (uniqueRecipeNames.length === 0) return res.json({ ingredients: {} });
-
-    const placeholders = uniqueRecipeNames.map(() => "?").join(",");
-    const pathSql = `SELECT name, path FROM recipes WHERE name IN (${placeholders})`;
-
-    db.all(pathSql, uniqueRecipeNames, (pathErr, recipeDetails) => {
-      if (pathErr) return res.status(500).json({ error: pathErr.message });
-
-      const recipePathMap = recipeDetails.reduce((acc, row) => {
-        acc[row.name] = row.path;
-        return acc;
-      }, {});
-
-      db.all("SELECT id, value FROM unit_settings", [], (settingErr, settingRows) => {
-        if (settingErr) return res.status(500).json({ error: settingErr.message });
-        const conversions = settingRows.reduce((acc, row) => {
-          acc[row.id] = row.value;
-          return acc;
-        }, {});
-
-        const allIngredientsRaw = [];
-        recipeNames.forEach((name) => {
-          const recipePath = recipePathMap[name];
-          if (recipePath) {
-            try {
-              const fileContent = fs.readFileSync(recipePath, "utf8");
-              const { body } = fm(fileContent);
-              const ingredients = extractIngredients(body);
-              allIngredientsRaw.push(...ingredients);
-            } catch (readErr) {
-              console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
-            }
-          }
-        });
-
-        const normalizedIngredients = allIngredientsRaw.map((ingStr) => {
-          const parsed = parseIngredient(ingStr);
-          return normalizeIngredient(parsed, conversions);
-        });
-
-        const aggregated = normalizedIngredients.reduce((acc, ing) => {
-          const key = `${ing.name.toLowerCase()}|${ing.baseUnit}`;
-          if (!acc[key]) {
-            acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit };
-          }
-          acc[key].totalQuantity += ing.quantity;
-          return acc;
-        }, {});
-
-        const formattedList = Object.values(aggregated).map((ing) => {
-          let displayQuantity = ing.totalQuantity;
-          let displayUnit = ing.baseUnit;
-
-          if (ing.baseUnit === "g" && ing.totalQuantity >= 1000) {
-            displayQuantity = ing.totalQuantity / (conversions["kg-to-g"] || 1000);
-            displayUnit = "kg";
-          } else if (ing.baseUnit === "ml" && ing.totalQuantity >= 1000) {
-            displayQuantity = ing.totalQuantity / (conversions["l-to-ml"] || 1000);
-            displayUnit = "l";
-          }
-
-          if (displayQuantity % 1 !== 0) {
-            displayQuantity = parseFloat(displayQuantity.toFixed(2));
-          }
-
-          let displayString;
-          if (ing.baseUnit === "unidad") {
-            const pluralSuffix = displayQuantity > 1 ? (ing.name.endsWith("l") || ing.name.endsWith("n") ? "es" : "s") : "";
-            displayString = `${displayQuantity} ${ing.name}${pluralSuffix}`;
-          } else {
-            displayString = `${displayQuantity} ${displayUnit} de ${ing.name}`;
-          }
-
-          return displayString;
-        });
-
-        // Agrupamos todos los ingredientes bajo una única categoría para que coincida
-        // con el formato que espera el frontend.
-        const categorizedIngredients = {};
-        if (formattedList.length > 0) {
-          categorizedIngredients["Ingredientes"] = formattedList;
-        }
-
-        res.json({ ingredients: categorizedIngredients });
-      });
-    });
-  });
-};
-
 module.exports = {
   getPlanningPage,
   getPlanningData,
   savePlanningData,
-  getShoppingListApi,
 };

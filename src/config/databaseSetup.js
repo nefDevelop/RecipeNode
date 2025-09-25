@@ -6,6 +6,15 @@ function setupDatabase(db, recipesPath) {
   db.serialize(() => {
     // 1. Setup unit_settings table
     db.run(`CREATE TABLE IF NOT EXISTS unit_settings (id TEXT PRIMARY KEY, value REAL NOT NULL)`);
+    // Crear la tabla para la lista de la compra manual compartida
+    db.run(`
+      CREATE TABLE IF NOT EXISTS manual_shopping_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        text TEXT NOT NULL,
+        checked INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     const defaultUnits = [
       { id: "kg-to-g", value: 1000 },
       { id: "l-to-ml", value: 1000 },
@@ -13,6 +22,7 @@ function setupDatabase(db, recipesPath) {
       { id: "tbsp-to-ml", value: 15 },
       { id: "tsp-to-ml", value: 5 },
     ];
+
     const stmt = db.prepare("INSERT OR IGNORE INTO unit_settings (id, value) VALUES (?, ?)");
     defaultUnits.forEach((unit) => stmt.run(unit.id, unit.value));
     stmt.finalize();

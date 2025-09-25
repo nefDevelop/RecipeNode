@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 const db = require("./src/config/database");
-const fs = require("fs").promises;
+const fs = require("fs");
 const { setupDatabase } = require("./src/config/databaseSetup");
 const routes = require("./src/routes");
 const session = require("express-session");
@@ -47,7 +47,7 @@ const isAdmin = (req, res, next) => {
   res.status(403).json({ error: "Acceso denegado. Se requiere rol de administrador." });
 };
 
-// Ruta para eliminar una receta
+// Ruta para eliminar una receta (movida a su propio controlador/router, pero la dejamos aquí por si se usa)
 app.delete("/api/recipes", isAdmin, async (req, res) => {
   const { title } = req.body;
 
@@ -56,21 +56,23 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
   }
 
   try {
-    // 1. Eliminar de la base de datos
-    const dbDelete = new Promise((resolve, reject) => {
-      db.run("DELETE FROM recipes WHERE name = ?", [title], function (err) {
-        if (err) return reject(err);
-        resolve(this.changes);
-      });
+    const recipeRow = await new Promise((resolve, reject) => {
+      db.get("SELECT path FROM recipes WHERE name = ?", [title], (err, row) => (err ? reject(err) : resolve(row)));
     });
-    const changes = await dbDelete;
 
-    // 2. Eliminar el archivo .md
-    const recipeFilePath = path.join(__dirname, "recetas", `${title}.md`);
+    if (!recipeRow) {
+      return res.status(404).json({ error: `La receta "${title}" no fue encontrada.` });
+    }
+
+    // 1. Eliminar el archivo .md
+    const recipeFilePath = recipeRow.path;
     let fileDeleted = false;
     try {
-      await fs.unlink(recipeFilePath);
+      if (fs.existsSync(recipeFilePath)) {
+        fs.unlinkSync(recipeFilePath);
+      }
       fileDeleted = true;
+      console.log(`Archivo eliminado: ${recipeFilePath}`);
     } catch (fileErr) {
       if (fileErr.code !== "ENOENT") throw fileErr; // Volver a lanzar si es un error diferente a "no encontrado"
     }

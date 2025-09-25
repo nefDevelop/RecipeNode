@@ -1,24 +1,55 @@
 <%- include('partials/header', { title: 'Planificación', user: user }) %>
 
 <style>
+  /* --- Estilos Personalizados para FullCalendar --- */
+
+  /* Colores de los botones de navegación (prev, next, month, week) */
   #calendar {
-    --fc-button-bg-color: #10b981;
-    --fc-button-border-color: #10b981;
-    --fc-button-hover-bg-color: #059669;
-    --fc-button-hover-border-color: #059669;
-    --fc-button-active-bg-color: #047857;
-    --fc-button-active-border-color: #047857;
+    --fc-button-bg-color: #22c55e; /* green-500 */
+    --fc-button-border-color: #22c55e; /* green-500 */
+    --fc-button-hover-bg-color: #16a34a; /* green-600 */
+    --fc-button-hover-border-color: #16a34a; /* green-600 */
+    --fc-button-active-bg-color: #15803d; /* green-700 */
+    --fc-button-active-border-color: #15803d; /* green-700 */
   }
+
+  /* Tamaño de los botones (más pequeños) */
+  .fc-button {
+    padding: 0.4em 0.4em !important; /* Pequeño padding, forzado */
+    font-size: 0.9em !important; /* Pequeño tamaño de fuente, forzado */
+
+  }
+
+  /* Tamaño del texto del mes/semana */
+  .fc-toolbar-title {
+    padding: 5px 25px;
+    /* Usamos clamp() para un tamaño de fuente adaptable con límites. */
+    /* clamp(MÍNIMO, PREFERIDO, MÁXIMO) */
+    font-size: clamp(1.7rem, 3vw, 3.5rem) !important;
+    /* font-weight: bold; */
+  }
+
+  /* Cabecera de días de la semana (L, M, X...) - MODO CLARO */
+  .fc-col-header-cell {
+    background-color: #ffffff; /* white */
+  }
+  .fc-col-header-cell-cushion {
+    color: #4b5563; /* gray-600 */
+    text-decoration: none;
+    padding: 8px 4px;
+  }
+
   /* Dark mode styles for FullCalendar */
   .dark #calendar {
     --fc-border-color: #4a5568; /* gray-700 */
   }
   .dark .fc-col-header-cell {
-    background-color: transparent !important;
+    background-color: #374151; /* gray-700 */
   }
+  /* Cabecera de días de la semana - MODO OSCURO */
   .dark .fc-col-header-cell-cushion {
     /* Nombres de los días de la semana */
-    color: #a0aec0; /* gray-500 */
+    color: #9ca3af; /* gray-400 */
     text-decoration: none;
   }
   .dark .fc-daygrid-day-number {

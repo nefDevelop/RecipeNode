@@ -162,7 +162,7 @@ const getHomePage = async (req, res) => {
 
 const getShoppingListPage = (req, res) => {
   // recipeTitles is now provided by middleware
-  res.render("shopping-list", { title: "Lista de la Compra" });
+  res.render("shopping-list", { title: "Lista de la Compra", user: req.session });
 };
 
 const getAllRecipesApi = (req, res) => {
