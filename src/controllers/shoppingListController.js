@@ -8,7 +8,7 @@ const { extractIngredients } = require("../utils/recipeUtils");
  * Obtiene todos los artículos de la lista de la compra manual.
  */
 const getManualList = (req, res) => {
-  db.all("SELECT id, text, checked FROM manual_shopping_items ORDER BY created_at ASC", [], (err, rows) => {
+  db.all("SELECT id, text, checked FROM manual_shopping_items ORDER BY order_index ASC", [], (err, rows) => {
     if (err) {
       console.error("Error al obtener la lista manual:", err);
       return res.status(500).json({ error: "Error interno del servidor." });
@@ -28,13 +28,27 @@ const addManualItem = (req, res) => {
     return res.status(400).json({ error: "El texto del artículo es requerido." });
   }
 
-  const sql = "INSERT INTO manual_shopping_items (text) VALUES (?)";
-  db.run(sql, [text.trim()], function (err) {
+  // Primero, obtenemos el índice de orden más alto para asignar al nuevo elemento.
+  db.get("SELECT MAX(order_index) as max_order FROM manual_shopping_items", [], (err, row) => {
     if (err) {
-      console.error("Error al añadir artículo a la lista manual:", err);
+      console.error("Error al obtener el índice de orden máximo:", err);
       return res.status(500).json({ error: "Error al guardar el artículo." });
     }
-    res.status(201).json({ id: this.lastID, text: text.trim(), checked: false });
+
+    const newOrderIndex = row && row.max_order !== null ? row.max_order + 1 : 0;
+
+    const sql = "INSERT INTO manual_shopping_items (text, order_index) VALUES (?, ?)";
+    db.run(sql, [text.trim(), newOrderIndex], function (err) {
+      if (err) {
+        console.error("Error al añadir artículo a la lista manual:", err);
+        return res.status(500).json({ error: "Error al guardar el artículo." });
+      }
+      res.status(201).json({
+        id: this.lastID,
+        text: text.trim(),
+        checked: false,
+      });
+    });
   });
 };
 
@@ -81,6 +95,36 @@ const deleteManualItem = (req, res) => {
 };
 
 /**
+ * Actualiza el orden de los artículos de la lista manual.
+ */
+const updateManualListOrder = (req, res) => {
+  const { orderedIds } = req.body;
+
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ error: "Se esperaba un array de IDs." });
+  }
+
+  db.serialize(() => {
+    db.run("BEGIN TRANSACTION");
+    const stmt = db.prepare("UPDATE manual_shopping_items SET order_index = ? WHERE id = ?");
+
+    orderedIds.forEach((id, index) => {
+      stmt.run(index, id);
+    });
+
+    stmt.finalize((err) => {
+      if (err) {
+        db.run("ROLLBACK");
+        console.error("Error al actualizar el orden:", err);
+        return res.status(500).json({ error: "Error al guardar el nuevo orden." });
+      }
+      db.run("COMMIT");
+      res.status(200).json({ message: "Orden actualizado correctamente." });
+    });
+  });
+};
+
+/**
  * Genera una lista de la compra a partir de las recetas planificadas en un rango de fechas.
  */
 const generateShoppingList = (req, res) => {
@@ -111,59 +155,70 @@ const generateShoppingList = (req, res) => {
         return acc;
       }, {});
 
-      db.all("SELECT id, value FROM unit_settings", [], (settingErr, settingRows) => {
-        if (settingErr) return res.status(500).json({ error: settingErr.message });
-        const conversions = settingRows.reduce((acc, row) => {
-          acc[row.id] = row.value;
+      // Obtener las categorías personalizadas de la base de datos
+      db.all("SELECT lower(ingredient_name) as name, category FROM ingredient_categories", [], (catErr, categoryRows) => {
+        if (catErr) return res.status(500).json({ error: catErr.message });
+        const customCategories = categoryRows.reduce((acc, row) => {
+          acc[row.name] = row.category;
           return acc;
         }, {});
 
-        const allIngredientsRaw = [];
-        recipeNames.forEach((name) => {
-          const recipePath = recipePathMap[name];
-          if (recipePath) {
-            try {
-              const fileContent = fs.readFileSync(recipePath, "utf8");
-              const { body } = fm(fileContent);
-              const ingredients = extractIngredients(body);
-              allIngredientsRaw.push(...ingredients);
-            } catch (readErr) {
-              console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
+        db.all("SELECT id, value FROM unit_settings", [], (settingErr, settingRows) => {
+          if (settingErr) return res.status(500).json({ error: settingErr.message });
+          const conversions = settingRows.reduce((acc, row) => {
+            acc[row.id] = row.value;
+            return acc;
+          }, {});
+
+          const allIngredientsRaw = [];
+          recipeNames.forEach((name) => {
+            const recipePath = recipePathMap[name];
+            if (recipePath) {
+              try {
+                const fileContent = fs.readFileSync(recipePath, "utf8");
+                const { body } = fm(fileContent);
+                const ingredients = extractIngredients(body);
+                allIngredientsRaw.push(...ingredients);
+              } catch (readErr) {
+                console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
+              }
             }
-          }
+          });
+
+          const normalizedIngredients = allIngredientsRaw.map((ingStr) => {
+            const parsed = parseIngredient(ingStr);
+            return normalizeIngredient(parsed, conversions);
+          });
+
+          const aggregated = normalizedIngredients.reduce((acc, ing) => {
+            const key = `${ing.name.toLowerCase()}|${ing.baseUnit}`;
+            if (!acc[key]) {
+              // Usar categoría personalizada si existe, si no la del parser, y si no "Otros"
+              const category = customCategories[ing.name.toLowerCase()] || ing.category || "Otros";
+              acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit, category: category };
+            }
+            acc[key].totalQuantity += ing.quantity;
+            return acc;
+          }, {});
+
+          const categorizedIngredients = {};
+          Object.values(aggregated).forEach((ing) => {
+            const category = ing.category;
+            if (!categorizedIngredients[category]) {
+              categorizedIngredients[category] = [];
+            }
+            // Formato del texto del ingrediente
+            let displayString = `${ing.totalQuantity.toFixed(2).replace(/\.00$/, "")} ${ing.baseUnit} de ${ing.name}`;
+            if (ing.baseUnit === "unidad") displayString = `${ing.totalQuantity} ${ing.name}${ing.totalQuantity > 1 ? "s" : ""}`;
+
+            categorizedIngredients[category].push(displayString);
+          });
+
+          res.json({ ingredients: categorizedIngredients });
         });
-
-        const normalizedIngredients = allIngredientsRaw.map((ingStr) => {
-          const parsed = parseIngredient(ingStr);
-          return normalizeIngredient(parsed, conversions);
-        });
-
-        const aggregated = normalizedIngredients.reduce((acc, ing) => {
-          const key = `${ing.name.toLowerCase()}|${ing.baseUnit}`;
-          if (!acc[key]) {
-            acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit, category: ing.category || "Otros" };
-          }
-          acc[key].totalQuantity += ing.quantity;
-          return acc;
-        }, {});
-
-        const categorizedIngredients = {};
-        Object.values(aggregated).forEach((ing) => {
-          const category = ing.category;
-          if (!categorizedIngredients[category]) {
-            categorizedIngredients[category] = [];
-          }
-          // Formato del texto del ingrediente
-          let displayString = `${ing.totalQuantity.toFixed(2).replace(/\.00$/, "")} ${ing.baseUnit} de ${ing.name}`;
-          if (ing.baseUnit === "unidad") displayString = `${ing.totalQuantity} ${ing.name}${ing.totalQuantity > 1 ? "s" : ""}`;
-
-          categorizedIngredients[category].push(displayString);
-        });
-
-        res.json({ ingredients: categorizedIngredients });
       });
     });
   });
 };
 
-module.exports = { getManualList, addManualItem, updateManualItem, deleteManualItem, generateShoppingList };
+module.exports = { getManualList, addManualItem, updateManualItem, deleteManualItem, generateShoppingList, updateManualListOrder };

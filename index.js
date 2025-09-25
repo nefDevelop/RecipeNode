@@ -1,16 +1,34 @@
 const express = require("express");
 const path = require("path");
 require("dotenv").config(); // Carga las variables de entorno desde .env
-const db = require("./src/config/database");
+const db = require("./src/config/database"); // Asegúrate que esto inicializa la DB
 const fs = require("fs");
 const { setupDatabase } = require("./src/config/databaseSetup");
 const routes = require("./src/routes");
 const session = require("express-session");
+const shoppingListController = require("./src/controllers/shoppingListController");
+const settingsController = require("./src/controllers/settingsController");
 const SQLiteStore = require("connect-sqlite3")(session);
 
 const app = express();
 const port = 8214;
 
+// Crear la nueva tabla para categorías de ingredientes si no existe
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS ingredient_categories (
+    ingredient_name TEXT PRIMARY KEY,
+    category TEXT NOT NULL
+  )`);
+
+  // Migración: Añadir la columna 'order_index' a la tabla 'manual_shopping_items' si no existe.
+  // Esto es para soportar el ordenamiento manual (drag-and-drop).
+  // El IGNORE previene un error si la columna ya existe.
+  db.run("ALTER TABLE manual_shopping_items ADD COLUMN order_index INTEGER", (err) => {
+    if (err && !err.message.includes("duplicate column name")) {
+      console.error("Error al migrar la tabla manual_shopping_items:", err);
+    }
+  });
+});
 const recipesPath = path.join(__dirname, "recetas");
 setupDatabase(db, recipesPath);
 
@@ -142,6 +160,12 @@ app.delete("/api/planning/day", (req, res) => {
     res.status(200).json({ message: "Día limpiado correctamente." });
   });
 });
+
+// Nueva ruta para actualizar el orden de la lista manual
+app.put("/api/shopping-list/manual/order", shoppingListController.updateManualListOrder);
+
+// Nueva ruta para actualizar la categoría de un ingrediente
+app.post("/api/settings/ingredient-category", settingsController.updateIngredientCategory);
 
 // Middleware to pass session user to all templates
 app.use((req, res, next) => {

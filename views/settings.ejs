@@ -18,39 +18,86 @@
     </main>
   </div>
 </div>
+<!-- Sección de Categorías de Ingredientes -->
+<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+  <h2 class="text-2xl font-bold mb-4">Categorías de Ingredientes</h2>
+  <p class="mb-4 text-gray-600 dark:text-gray-400">
+    Asigna una categoría a cada ingrediente para organizar mejor tu lista de la compra. Los cambios se guardan automáticamente.
+  </p>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const deleteForm = document.getElementById("delete-recipe-form");
-    if (deleteForm) {
-      deleteForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const title = e.target.title.value;
-        if (!title) {
-          alert("Por favor, selecciona una receta para eliminar.");
-          return;
-        }
-        if (confirm(`¿Estás seguro de que quieres eliminar la receta "${title}"? Esta acción no se puede deshacer.`)) {
-          try {
-            const res = await fetch(`/api/recipes`, {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ title }),
-            });
-            if (res.ok) {
-              alert("Receta eliminada correctamente.");
-              window.location.reload();
-            } else {
-              const data = await res.json();
-              alert(`Error al eliminar la receta: ${data.error || "Error desconocido"}`);
-            }
-          } catch (err) {
-            alert("Error de red al intentar eliminar la receta.");
-          }
-        }
-      });
-    }
-  });
-</script>
+  <!-- Formulario para añadir/editar categoría -->
+  <form id="category-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div>
+      <label for="ingredient-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del Ingrediente</label>
+      <input
+        type="text"
+        id="ingredient-name"
+        name="ingredient_name"
+        class="mt-1 block w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+        required
+      />
+    </div>
+    <div>
+      <label for="category-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
+      <input
+        type="text"
+        id="category-name"
+        name="category"
+        class="mt-1 block w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+        required
+      />
+    </div>
+    <div class="md:col-span-2">
+      <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">Guardar Categoría</button>
+    </div>
+  </form>
 
-<%- include('partials/footer') %>
+  <!-- Lista de categorías existentes -->
+  <h3 class="text-xl font-semibold mb-2">Categorías Actuales</h3>
+  <div id="category-list" class="space-y-4">
+    <% if (Object.keys(categoryMappings).length > 0) { %> <% Object.entries(categoryMappings).sort().forEach(([category, ingredients]) => {
+    %>
+    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+      <h4 class="font-bold text-lg text-green-600 dark:text-green-400"><%= category %></h4>
+      <ul class="list-disc list-inside mt-2 text-gray-700 dark:text-gray-300">
+        <% ingredients.forEach(ingredient => { %>
+        <li><%= ingredient %></li>
+        <% }) %>
+      </ul>
+    </div>
+    <% }) %> <% } else { %>
+    <p class="text-gray-500">Aún no has definido ninguna categoría personalizada.</p>
+    <% } %>
+  </div>
+</div>
+
+<!-- Sección de Exportar/Importar -->
+<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+  <h2 class="text-2xl font-bold mb-4">Exportar/Importar Datos</h2>
+  <script>
+    document.getElementById("category-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const ingredientName = form.elements.ingredient_name.value;
+      const categoryName = form.elements.category.value;
+
+      try {
+        const response = await fetch("/api/settings/ingredient-category", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ingredient_name: ingredientName, category: categoryName }),
+        });
+        if (response.ok) {
+          location.reload(); // Recargar para ver los cambios
+        } else {
+          alert("Error al guardar la categoría.");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error de red al guardar la categoría.");
+      }
+    });
+  </script>
+
+  <%- include('partials/footer') %>
+</div>

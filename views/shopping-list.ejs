@@ -1,451 +1,137 @@
-<%- include('partials/header', { title: 'Lista de la Compra', user: user }) %>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <%- include('partials/head') %>
+    <title><%= title %></title>
+  </head>
+  <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <%- include('partials/header-nav', { user: user }) %>
 
-<div class="container mx-auto p-4">
-  <div class="md:flex md:gap-6">
-    <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+    <div class="container mx-auto p-4">
+      <div class="md:flex md:gap-6">
+        <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
 
-    <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
+        <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
 
-    <main class="w-full md:w-3/4">
-      <h1 id="page-title" class="text-3xl font-bold mb-6">Lista de la Compra</h1>
+        <main class="w-full md:w-3/4">
+          <h1 id="page-title" class="text-3xl font-bold mb-6">Lista de la Compra</h1>
 
-      <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
-      <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
-        <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
-        <div id="list-content" class="prose dark:prose-invert max-w-none">
-          <!-- El contenido se generará aquí -->
-        </div>
-      </div>
-
-      <!-- Contenedor de la Lista Manual Compartida -->
-      <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-        <h2 class="text-2xl font-bold mb-4">Lista Manual Compartida</h2>
-        <form id="add-manual-item-form" class="flex gap-2 mb-4">
-          <input
-            type="text"
-            id="manual-item-input"
-            placeholder="Añadir un artículo..."
-            class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-            required
-          />
-          <button type="submit" class="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-        </form>
-        <div id="manual-list-content" class="prose dark:prose-invert max-w-none"></div>
-      </div>
-
-      <h1 id="generator-title" class="text-3xl font-bold mb-6">Generador de Lista de la Compra</h1>
-
-      <!-- Controles -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-        <!-- Toggle Semanal/Mensual -->
-        <div class="flex justify-center mb-4 border-b border-gray-200 dark:border-gray-700">
-          <button id="weekly-tab" class="py-2 px-6 font-semibold">Semanal</button>
-          <button id="monthly-tab" class="py-2 px-6 font-semibold">Mensual</button>
-        </div>
-
-        <!-- Selector Semanal -->
-        <div id="weekly-selector" class="text-center">
-          <p class="mb-2">Selecciona una semana:</p>
-          <div class="flex items-center justify-center gap-4">
-            <button id="prev-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-              &lt;
-            </button>
-            <span id="week-range-display" class="font-semibold text-lg w-72 text-center"></span>
-            <button id="next-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-              &gt;
-            </button>
+          <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
+          <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
+            <div id="list-content" class="prose dark:prose-invert max-w-none">
+              <!-- El contenido se generará aquí -->
+            </div>
           </div>
-        </div>
 
-        <!-- Selector Mensual -->
-        <div id="monthly-selector" class="hidden text-center">
-          <p class="mb-2">Selecciona un mes:</p>
-          <div class="flex items-center justify-center gap-4">
-            <button id="prev-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-              &lt;
-            </button>
-            <span id="month-display" class="font-semibold text-lg w-48 text-center"></span>
-            <button id="next-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-              &gt;
-            </button>
+          <!-- Contenedor de la Lista Manual Compartida -->
+          <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-2xl font-bold mb-4">Lista Manual Compartida</h2>
+            <form id="add-manual-item-form" class="flex gap-2 mb-4">
+              <input
+                type="text"
+                id="manual-item-input"
+                placeholder="Añadir un artículo..."
+                class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                required
+              />
+              <button type="submit" class="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </form>
+            <!-- El ID del contenedor de la lista manual se ha cambiado a 'manual-list-items' -->
+            <ul id="manual-list-items" class="list-none p-0 space-y-1">
+              <!-- El contenido se generará aquí -->
+            </ul>
           </div>
-        </div>
 
-        <!-- Botón de Generar -->
-        <div class="text-center mt-6">
-          <button
-            id="generate-list-btn"
-            class="px-6 py-3 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
-          >
-            Generar Lista
-          </button>
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
+          <h1 id="generator-title" class="text-3xl font-bold mb-6">Generador de Lista de la Compra</h1>
 
-<style>
-  #list-content ul li {
-    cursor: pointer;
-  }
-  #list-content ul li input[type="checkbox"]:checked + span {
-    text-decoration: line-through;
-    color: #9ca3af; /* text-gray-400 */
-  }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+          <!-- Controles -->
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <!-- Toggle Semanal/Mensual -->
+            <div class="flex justify-center mb-4 border-b border-gray-200 dark:border-gray-700">
+              <button id="weekly-tab" class="py-2 px-6 font-semibold">Semanal</button>
+              <button id="monthly-tab" class="py-2 px-6 font-semibold">Mensual</button>
+            </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const weeklyTab = document.getElementById("weekly-tab");
-    const monthlyTab = document.getElementById("monthly-tab");
-    const weeklySelector = document.getElementById("weekly-selector");
-    const monthlySelector = document.getElementById("monthly-selector");
-    const prevWeekBtn = document.getElementById("prev-week");
-    const nextWeekBtn = document.getElementById("next-week");
-    const weekRangeDisplay = document.getElementById("week-range-display");
-    const prevMonthBtn = document.getElementById("prev-month");
-    const nextMonthBtn = document.getElementById("next-month");
-    const monthDisplay = document.getElementById("month-display");
-    const generateBtn = document.getElementById("generate-list-btn");
-    const listContainer = document.getElementById("shopping-list-container");
-    const listContent = document.getElementById("list-content");
-    const pageTitle = document.getElementById("page-title");
-    const generatorTitle = document.getElementById("generator-title");
-    const manualListSection = document.getElementById("manual-list-section");
-    const manualListContent = document.getElementById("manual-list-content");
-    const addManualItemForm = document.getElementById("add-manual-item-form");
-    const manualItemInput = document.getElementById("manual-item-input");
-
-    const STORAGE_KEY = "shoppingList";
-    let currentMode = "weekly";
-    let currentMonthDate = new Date();
-    let currentWeekStartDate;
-
-    // --- Funciones de persistencia de datos ---
-
-    const saveListToStorage = (listData) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(listData));
-    };
-
-    const renderList = (listData) => {
-      if (!listData || !listData.categories || Object.keys(listData.categories).length === 0) {
-        listContainer.classList.add("hidden");
-        return;
-      }
-
-      let html = "";
-      for (const category in listData.categories) {
-        const itemsHtml = listData.categories[category]
-          .map(
-            // Añadido dark:hover:bg-gray-700 y rounded-md para consistencia
-            (item) => `
-            <li class="flex items-center py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md" data-item-text="${item.text}">
-              <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1" ${
-                item.checked ? "checked" : ""
-              }>
-              <span class="flex-1">${item.text}</span>
-            </li>
-          `
-          )
-          .join("");
-        html += `<h3>${category}</h3><ul class="list-none p-0">${itemsHtml}</ul>`;
-      }
-      listContent.innerHTML = html;
-      listContainer.classList.remove("hidden");
-    };
-
-    const loadListFromStorage = () => {
-      const savedListJSON = localStorage.getItem(STORAGE_KEY);
-      if (savedListJSON) {
-        try {
-          const savedList = JSON.parse(savedListJSON);
-          renderList(savedList);
-          // Mover el generador al final si hay una lista guardada
-          manualListSection.parentNode.insertBefore(manualListSection, generatorTitle);
-          generatorTitle.textContent = "Generar Nueva Lista (reemplazará la actual)";
-        } catch (e) {
-          console.error("Error al parsear la lista de la compra guardada:", e);
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-    };
-
-    // --- Funciones de UI ---
-
-    const updateWeekDisplay = () => {
-      const startDate = new Date(currentWeekStartDate);
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 6);
-
-      const options = { day: "numeric", month: "long" };
-      weekRangeDisplay.textContent = `Del ${startDate.toLocaleDateString("es-ES", options)} al ${endDate.toLocaleDateString(
-        "es-ES",
-        options
-      )}`;
-      weekRangeDisplay.dataset.startDate = startDate.toISOString().split("T")[0];
-      weekRangeDisplay.dataset.endDate = endDate.toISOString().split("T")[0];
-    };
-
-    const setInitialWeek = () => {
-      const today = new Date();
-      const day = today.getDay();
-      const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Lunes como inicio de semana
-      currentWeekStartDate = new Date(today.setDate(diff));
-      currentWeekStartDate.setHours(0, 0, 0, 0);
-      updateWeekDisplay();
-    };
-
-    const updateMonthDisplay = () => {
-      monthDisplay.textContent = currentMonthDate
-        .toLocaleDateString("es-ES", { month: "long", year: "numeric" })
-        .replace(/^\w/, (c) => c.toUpperCase());
-      monthDisplay.dataset.year = currentMonthDate.getFullYear();
-      monthDisplay.dataset.month = currentMonthDate.getMonth();
-    };
-
-    const switchTab = (mode) => {
-      currentMode = mode;
-      weeklySelector.classList.toggle("hidden", mode !== "weekly");
-      monthlySelector.classList.toggle("hidden", mode !== "monthly");
-      [weeklyTab, monthlyTab].forEach((tab) => {
-        const isActive = tab.id.startsWith(mode);
-        // Clases para el tab activo
-        tab.classList.toggle("border-green-600", isActive);
-        tab.classList.toggle("text-green-600", isActive);
-        tab.classList.toggle("bg-white", isActive);
-        tab.classList.toggle("dark:bg-gray-800", isActive);
-        // Clases para el tab inactivo
-        tab.classList.toggle("bg-gray-100", !isActive);
-        tab.classList.toggle("dark:bg-gray-700", !isActive);
-        tab.classList.toggle("text-gray-500", !isActive);
-        tab.classList.toggle("dark:text-gray-400", !isActive);
-      });
-    };
-
-    // --- Event Listeners ---
-
-    prevWeekBtn.addEventListener("click", () => {
-      currentWeekStartDate.setDate(currentWeekStartDate.getDate() - 7);
-      updateWeekDisplay();
-    });
-    nextWeekBtn.addEventListener("click", () => {
-      currentWeekStartDate.setDate(currentWeekStartDate.getDate() + 7);
-      updateWeekDisplay();
-    });
-    weeklyTab.addEventListener("click", () => switchTab("weekly"));
-    monthlyTab.addEventListener("click", () => switchTab("monthly"));
-    prevMonthBtn.addEventListener("click", () => {
-      currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
-      updateMonthDisplay();
-    });
-    nextMonthBtn.addEventListener("click", () => {
-      currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
-      updateMonthDisplay();
-    });
-
-    generateBtn.addEventListener("click", async () => {
-      if (localStorage.getItem(STORAGE_KEY)) {
-        if (!confirm("Esto reemplazará tu lista actual. ¿Estás seguro?")) {
-          return;
-        }
-      }
-
-      let startDate, endDate;
-      if (currentMode === "weekly") {
-        startDate = new Date(weekRangeDisplay.dataset.startDate);
-        endDate = new Date(weekRangeDisplay.dataset.endDate);
-      } else {
-        const year = parseInt(monthDisplay.dataset.year);
-        const month = parseInt(monthDisplay.dataset.month);
-        startDate = new Date(year, month, 1);
-        endDate = new Date(year, month + 1, 0);
-      }
-      const isoStartDate = startDate.toISOString().split("T")[0];
-      const isoEndDate = endDate.toISOString().split("T")[0];
-
-      listContainer.classList.remove("hidden");
-      listContent.innerHTML = "<p>Generando lista...</p>";
-
-      const response = await fetch(`/api/shopping-list?startDate=${isoStartDate}&endDate=${isoEndDate}`);
-      const data = await response.json();
-
-      if (!data || typeof data.ingredients === "undefined") {
-        listContent.innerHTML = "<p>No se encontraron ingredientes para el periodo seleccionado o hubo un error.</p>";
-        return;
-      }
-
-      const newListData = { categories: {} };
-      for (const category in data.ingredients) {
-        newListData.categories[category] = data.ingredients[category].map((itemText) => ({ text: itemText, checked: false }));
-      }
-
-      saveListToStorage(newListData);
-      renderList(newListData);
-      // Mover el generador al final
-      manualListSection.parentNode.insertBefore(manualListSection, generatorTitle);
-      generatorTitle.textContent = "Generar Nueva Lista (reemplazará la actual)";
-      pageTitle.scrollIntoView({ behavior: "smooth" });
-    });
-
-    // Permite marcar/desmarcar al hacer clic en cualquier parte del <li> (excepto el checkbox directamente)
-    listContent.addEventListener("click", (e) => {
-      const li = e.target.closest("li");
-      if (!li) return;
-
-      const checkbox = li.querySelector('input[type="checkbox"]');
-      if (checkbox && e.target !== checkbox) {
-        // Solo si no se hizo clic directamente en el checkbox
-        checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(new Event("change", { bubbles: true })); // Disparar evento 'change'
-      }
-    });
-
-    listContent.addEventListener("change", (e) => {
-      if (e.target.type === "checkbox") {
-        const savedListJSON = localStorage.getItem(STORAGE_KEY);
-        if (!savedListJSON) return;
-        try {
-          const listData = JSON.parse(savedListJSON);
-          const itemText = e.target.nextElementSibling.textContent;
-          for (const category in listData.categories) {
-            const item = listData.categories[category].find((i) => i.text === itemText);
-            if (item) {
-              item.checked = e.target.checked;
-              break;
-            }
-          }
-          saveListToStorage(listData);
-        } catch (err) {
-          console.error("Error al actualizar el estado de la lista:", err);
-        }
-      }
-    });
-
-    // --- Lógica de la Lista Manual Compartida ---
-
-    const renderManualList = (items) => {
-      if (!items || items.length === 0) {
-        manualListContent.innerHTML = "<p>No hay artículos en la lista manual.</p>";
-        return;
-      }
-      const itemsHtml = items
-        .map(
-          (item) => `
-            <li class="flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md" data-id="${item.id}">
-                <div class="flex items-center">
-                    <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1 manual-item-checkbox" ${
-                      item.checked ? "checked" : ""
-                    }>
-                    <span class="flex-1 ${item.checked ? "line-through text-gray-400" : ""}">${item.text}</span>
-                </div>
-                <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+            <!-- Selector Semanal -->
+            <div id="weekly-selector" class="text-center">
+              <p class="mb-2">Selecciona una semana:</p>
+              <div class="flex items-center justify-center gap-4">
+                <button id="prev-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+                  &lt;
                 </button>
-            </li>
-        `
-        )
-        .join("");
-      manualListContent.innerHTML = `<ul class="list-none p-0 cursor-pointer">${itemsHtml}</ul>`;
-    };
+                <span id="week-range-display" class="font-semibold text-lg w-72 text-center"></span>
+                <button id="next-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+                  &gt;
+                </button>
+              </div>
+            </div>
 
-    const fetchManualList = async () => {
-      try {
-        const response = await axios.get("/api/shopping-list/manual");
-        renderManualList(response.data);
-      } catch (error) {
-        console.error("Error al cargar la lista manual:", error);
-        manualListContent.innerHTML = '<p class="text-red-500">No se pudo cargar la lista. Inténtalo de nuevo más tarde.</p>';
+            <!-- Selector Mensual -->
+            <div id="monthly-selector" class="hidden text-center">
+              <p class="mb-2">Selecciona un mes:</p>
+              <div class="flex items-center justify-center gap-4">
+                <button id="prev-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+                  &lt;
+                </button>
+                <span id="month-display" class="font-semibold text-lg w-48 text-center"></span>
+                <button id="next-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+                  &gt;
+                </button>
+              </div>
+            </div>
+
+            <!-- Botón de Generar -->
+            <div class="text-center mt-6">
+              <button
+                id="generate-list-btn"
+                class="px-6 py-3 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+              >
+                Generar Lista
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <style>
+      #list-content ul li {
+        cursor: pointer;
       }
-    };
-
-    addManualItemForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = manualItemInput.value.trim();
-      if (!text) return;
-
-      try {
-        await axios.post("/api/shopping-list/manual", { text });
-        manualItemInput.value = "";
-        fetchManualList(); // Recargar la lista
-      } catch (error) {
-        console.error("Error al añadir el artículo:", error);
-        alert("No se pudo añadir el artículo.");
+      #list-content ul li input[type="checkbox"]:checked + span {
+        text-decoration: line-through;
+        color: #9ca3af; /* text-gray-400 */
       }
-    });
-
-    manualListContent.addEventListener("click", async (e) => {
-      // Solo para el botón de eliminar
-      const target = e.target;
-      const li = target.closest("li");
-      if (!li) return;
-
-      const id = li.dataset.id;
-
-      // 1. Verificar si el clic fue en el botón de eliminar o en su SVG hijo
-      const deleteButton = target.closest(".delete-manual-item-btn");
-      if (deleteButton) {
-        if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
-          try {
-            await axios.delete(`/api/shopping-list/manual/${id}`);
-            fetchManualList(); // Recargar
-          } catch (error) {
-            console.error("Error al eliminar el artículo:", error);
-            alert("No se pudo eliminar el artículo.");
-          }
-        }
-        return; // Detenemos la ejecución si se hizo clic en el botón de eliminar
+      /* Estilos para el drag-and-drop */
+      #manual-list-items li {
+        cursor: move; /* Cambia el cursor para indicar que se puede mover */
       }
-
-      // Si el clic fue directamente en el checkbox, dejamos que el 'change' event listener lo maneje.
-      if (target.classList.contains("manual-item-checkbox")) return;
-
-      // Si no fue ni el botón de eliminar ni el checkbox, entonces fue en la línea del ítem.
-      // Toggleamos el checkbox y disparamos su evento 'change'.
-      const checkbox = li.querySelector(".manual-item-checkbox");
-      if (checkbox) {
-        checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      #manual-list-items .sortable-ghost {
+        background-color: #dbeafe; /* bg-blue-100 */
+        opacity: 0.7;
       }
-    });
+    </style>
 
-    manualListContent.addEventListener("change", async (e) => {
-      // Solo para el checkbox
-      const target = e.target;
-      if (target.classList.contains("manual-item-checkbox")) {
-        const li = target.closest("li");
-        if (!li) return;
-        const id = li.dataset.id;
-        const checked = target.checked;
-        try {
-          await axios.put(`/api/shopping-list/manual/${id}`, { checked });
-          // No es necesario recargar toda la lista, el checkbox ya refleja el estado.
-          // Pero si quieres que el texto se tache inmediatamente, podrías actualizar solo el <span>.
-          // Por simplicidad, y para asegurar la consistencia, recargamos la lista.
-          fetchManualList();
-        } catch (error) {
-          console.error("Error al actualizar el artículo:", error);
-          alert("No se pudo actualizar el artículo.");
-          target.checked = !checked; // Revertir en caso de error
-        }
-      }
-    });
+    <!-- Librerías -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-    // --- Inicialización ---
-    loadListFromStorage();
-    setInitialWeek();
-    updateMonthDisplay();
-    switchTab("weekly");
-    fetchManualList();
-  });
-</script>
+    <!-- Script de la página -->
+    <script src="/js/shopping-list.js"></script>
 
-<%- include('partials/footer') %>
+    <%- include('partials/footer') %>
+  </body>
+</html>
