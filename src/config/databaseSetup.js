@@ -96,12 +96,17 @@ function setupDatabase(db, recipesPath) {
         if (err) return console.error("Error creando la tabla de usuarios:", err);
 
         const saltRounds = 10;
-        const adminPassword = "admin123"; // Consider moving to an environment variable
+        const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
         bcrypt.hash(adminPassword, saltRounds, (hashErr, hash) => {
           if (hashErr) return console.error("Error hasheando la contraseña del admin:", hashErr);
 
-          const adminStmt = db.prepare("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)");
-          adminStmt.run("admin", hash, "admin", () => console.log("Usuario administrador asegurado."));
+          // Usamos INSERT ... ON CONFLICT para actualizar la contraseña del admin si ya existe.
+          // Esto asegura que el .env siempre sea la fuente de verdad.
+          const sql = `
+            INSERT INTO users (username, password, role) VALUES ('admin', ?, 'admin')
+            ON CONFLICT(username) DO UPDATE SET password=excluded.password, role='admin'`;
+          const adminStmt = db.prepare(sql);
+          adminStmt.run(hash, () => console.log("Usuario administrador asegurado."));
           adminStmt.finalize();
         });
       }

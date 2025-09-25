@@ -12,6 +12,7 @@
 # Base de datos
 # Ignoramos los archivos de la base de datos de SQLite para no subir datos de desarrollo.
 *.db
+sessions.db
 *.db-journal
 
 # Logs

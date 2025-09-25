@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+require("dotenv").config(); // Carga las variables de entorno desde .env
 const db = require("./src/config/database");
 const fs = require("fs");
 const { setupDatabase } = require("./src/config/databaseSetup");
@@ -29,7 +30,7 @@ app.use(
       db: "sessions.db",
       dir: "./", // Almacena la DB de sesiones en la raíz del proyecto
     }),
-    secret: "un-secreto-muy-secreto-que-deberia-estar-en-env", // Cambiar por una variable de entorno en producción
+    secret: process.env.SESSION_SECRET || "un-secreto-muy-secreto-que-deberia-estar-en-env",
     resave: false,
     saveUninitialized: false,
     cookie: {

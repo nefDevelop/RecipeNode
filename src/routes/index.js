@@ -22,8 +22,8 @@ const viewRoutes = require("./viewRoutes");
 router.use(recipeRoutes);
 router.use(viewRoutes);
 router.use(planningRoutes);
-router.use(settingsRoutes);
-router.use(authRoutes);
+router.use("/settings", settingsRoutes);
+router.use("/api/auth", authRoutes); // Montar las rutas de autenticación bajo /api/auth
 
 // Rutas de la API de la lista de la compra manual (para asegurar que estén registradas)
 router.get("/api/shopping-list/manual", isAuthenticated, shoppingListController.getManualList);
