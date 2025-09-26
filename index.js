@@ -13,13 +13,7 @@ const SQLiteStore = require("connect-sqlite3")(session);
 const app = express();
 const port = 8214;
 
-// Crear la nueva tabla para categorías de ingredientes si no existe
 db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS ingredient_categories (
-    ingredient_name TEXT PRIMARY KEY,
-    category TEXT NOT NULL
-  )`);
-
   // Migración: Añadir la columna 'order_index' a la tabla 'manual_shopping_items' si no existe.
   // Esto es para soportar el ordenamiento manual (drag-and-drop).
   // El IGNORE previene un error si la columna ya existe.

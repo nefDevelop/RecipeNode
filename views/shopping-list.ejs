@@ -1,137 +1,130 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <%- include('partials/header') %>
-    <title><%= title %></title>
-  </head>
-  <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
-    <%- include('partials/header-nav', { user: user }) %>
+<%- include('partials/header', { title: title, user: user }) %>
 
-    <div class="container mx-auto p-4">
-      <div class="md:flex md:gap-6">
-        <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+<div class="container mx-auto p-4">
+  <div class="md:flex md:gap-6">
+    <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
 
-        <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
+    <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
 
-        <main class="w-full md:w-3/4">
-          <h1 id="page-title" class="text-3xl font-bold mb-6">Lista de la Compra</h1>
+    <main class="w-full md:w-3/4">
+      <h1 id="page-title" class="text-3xl font-bold mb-6">Lista de la Compra</h1>
 
-          <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
-          <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
-            <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
-            <div id="list-content" class="prose dark:prose-invert max-w-none">
-              <!-- El contenido se generará aquí -->
-            </div>
-          </div>
-
-          <!-- Contenedor de la Lista Manual Compartida -->
-          <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-            <h2 class="text-2xl font-bold mb-4">Lista Manual Compartida</h2>
-            <form id="add-manual-item-form" class="flex gap-2 mb-4">
-              <input
-                type="text"
-                id="manual-item-input"
-                placeholder="Añadir un artículo..."
-                class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                required
-              />
-              <button type="submit" class="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </form>
-            <!-- El ID del contenedor de la lista manual se ha cambiado a 'manual-list-items' -->
-            <ul id="manual-list-items" class="list-none p-0 space-y-1">
-              <!-- El contenido se generará aquí -->
-            </ul>
-          </div>
-
-          <h1 id="generator-title" class="text-3xl font-bold mb-6">Generador de Lista de la Compra</h1>
-
-          <!-- Controles -->
-          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-            <!-- Toggle Semanal/Mensual -->
-            <div class="flex justify-center mb-4 border-b border-gray-200 dark:border-gray-700">
-              <button id="weekly-tab" class="py-2 px-6 font-semibold">Semanal</button>
-              <button id="monthly-tab" class="py-2 px-6 font-semibold">Mensual</button>
-            </div>
-
-            <!-- Selector Semanal -->
-            <div id="weekly-selector" class="text-center">
-              <p class="mb-2">Selecciona una semana:</p>
-              <div class="flex items-center justify-center gap-4">
-                <button id="prev-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-                  &lt;
-                </button>
-                <span id="week-range-display" class="font-semibold text-lg w-72 text-center"></span>
-                <button id="next-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-                  &gt;
-                </button>
-              </div>
-            </div>
-
-            <!-- Selector Mensual -->
-            <div id="monthly-selector" class="hidden text-center">
-              <p class="mb-2">Selecciona un mes:</p>
-              <div class="flex items-center justify-center gap-4">
-                <button id="prev-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-                  &lt;
-                </button>
-                <span id="month-display" class="font-semibold text-lg w-48 text-center"></span>
-                <button id="next-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
-                  &gt;
-                </button>
-              </div>
-            </div>
-
-            <!-- Botón de Generar -->
-            <div class="text-center mt-6">
-              <button
-                id="generate-list-btn"
-                class="px-6 py-3 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
-              >
-                Generar Lista
-              </button>
-            </div>
-          </div>
-        </main>
+      <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
+      <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
+        <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
+        <div id="list-content" class="prose dark:prose-invert max-w-none">
+          <!-- El contenido se generará aquí -->
+        </div>
       </div>
-    </div>
 
-    <style>
-      #list-content ul li {
-        cursor: pointer;
-      }
-      #list-content ul li input[type="checkbox"]:checked + span {
-        text-decoration: line-through;
-        color: #9ca3af; /* text-gray-400 */
-      }
-      /* Estilos para el drag-and-drop */
-      #manual-list-items li {
-        cursor: move; /* Cambia el cursor para indicar que se puede mover */
-      }
-      #manual-list-items .sortable-ghost {
-        background-color: #dbeafe; /* bg-blue-100 */
-        opacity: 0.7;
-      }
-    </style>
+      <!-- Contenedor de la Lista Manual Compartida -->
+      <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-2xl font-bold mb-4">Lista Manual Compartida</h2>
+        <form id="add-manual-item-form" class="flex gap-2 mb-4">
+          <input
+            type="text"
+            id="manual-item-input"
+            placeholder="Añadir un artículo..."
+            class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+          <button type="button" class="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </form>
+        <!-- Cerramos el primer formulario aquí -->
+        <!-- Envolvemos la lista en un div con las clases 'prose' para unificar el estilo -->
+        <div class="prose dark:prose-invert max-w-none">
+          <ul id="manual-list-items" class="list-none p-0">
+            <!-- El contenido se generará aquí dinámicamente -->
+          </ul>
+        </div>
+      </div>
 
-    <!-- Librerías -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+      <h1 id="generator-title" class="text-3xl font-bold mb-6">Generador de Lista de la Compra</h1>
 
-    <!-- Script de la página -->
-    <script src="/js/shopping-list.js"></script>
+      <!-- Controles -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+        <!-- Toggle Semanal/Mensual -->
+        <div class="flex justify-center mb-4 border-b border-gray-200 dark:border-gray-700">
+          <button id="weekly-tab" class="py-2 px-6 font-semibold">Semanal</button>
+          <button id="monthly-tab" class="py-2 px-6 font-semibold">Mensual</button>
+        </div>
 
-    <%- include('partials/footer') %>
-  </body>
-</html>
+        <!-- Selector Semanal -->
+        <div id="weekly-selector" class="text-center">
+          <p class="mb-2">Selecciona una semana:</p>
+          <div class="flex items-center justify-center gap-4">
+            <button id="prev-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &lt;
+            </button>
+            <span id="week-range-display" class="font-semibold text-lg w-72 text-center"></span>
+            <button id="next-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &gt;
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector Mensual -->
+        <div id="monthly-selector" class="hidden text-center">
+          <p class="mb-2">Selecciona un mes:</p>
+          <div class="flex items-center justify-center gap-4">
+            <button id="prev-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &lt;
+            </button>
+            <span id="month-display" class="font-semibold text-lg w-48 text-center"></span>
+            <button id="next-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &gt;
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón de Generar -->
+        <div class="text-center mt-6">
+          <button
+            id="generate-list-btn"
+            class="px-6 py-3 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
+          >
+            Generar Lista
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<style>
+  #list-content ul li {
+    cursor: pointer;
+  }
+  #list-content ul li input[type="checkbox"]:checked + span {
+    text-decoration: line-through;
+    color: #9ca3af; /* text-gray-400 */
+  }
+
+  /* Estilos para la lista manual (drag-and-drop) */
+  #manual-list-items li,
+  #manual-list-items li span {
+    cursor: move; /* Cambia el cursor para indicar que se puede mover */
+  }
+  #manual-list-items li:hover {
+    background-color: rgba(128, 128, 128, 0.1); /* Un fondo sutil al pasar el ratón */
+  }
+
+  #manual-list-items .sortable-ghost {
+    background-color: #dbeafe; /* bg-blue-100 */
+    opacity: 0.7;
+  }
+</style>
+
+<!-- Librerías -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<!-- Script de la página -->
+<script src="/js/shopping-list.js"></script>
+
+<%- include('partials/footer') %>

@@ -137,13 +137,13 @@
           >
             <a
               href="#"
-              id="open-create-modal-btn"
+              id="show-create-modal-btn"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
               >Crear Manualmente</a
             >
             <a
               href="#"
-              id="open-scrape-modal-btn"
+              id="show-scrape-modal-btn-header"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
               >Importar desde URL</a
             >
@@ -170,10 +170,22 @@
           }
         });
 
-        // Estos botones están en el dropdown pero abren modales que están en modals.ejs
-        // El script de modals.ejs se encargará de la lógica de apertura.
-        document.getElementById("open-create-modal-btn")?.addEventListener("click", (e) => e.preventDefault());
-        document.getElementById("open-scrape-modal-btn")?.addEventListener("click", (e) => e.preventDefault());
+        // --- Lógica para abrir el modal unificado desde el header ---
+        const createModal = document.getElementById("create-recipe-modal");
+        const manualBtn = document.getElementById("show-create-modal-btn");
+        const scrapeBtn = document.getElementById("show-scrape-modal-btn-header");
+
+        manualBtn?.addEventListener("click", (e) => {
+          e.preventDefault();
+          createModal?.classList.remove("hidden");
+          document.getElementById("manual-tab")?.click(); // Activa la pestaña manual
+        });
+
+        scrapeBtn?.addEventListener("click", (e) => {
+          e.preventDefault();
+          createModal?.classList.remove("hidden");
+          document.getElementById("scrape-tab")?.click(); // Activa la pestaña de importar
+        });
       });
     </script>
   </body>
