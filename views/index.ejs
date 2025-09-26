@@ -199,6 +199,39 @@
         <% } %>
       </div>
     </main>
+
+    <!-- Timer Modal/Overlay -->
+    <div
+      id="timer-modal"
+      class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[1001] hidden"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl text-center relative"
+      >
+        <h2 id="timer-modal-title" class="text-2xl font-bold mb-4">Temporizador</h2>
+        <div id="timer-display" class="text-6xl font-mono mb-6">00:00</div>
+        <div class="flex justify-center gap-4">
+          <button
+            id="timer-start-pause-btn"
+            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Iniciar
+          </button>
+          <button
+            id="timer-reset-btn"
+            class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2"
+          >
+            Reiniciar
+          </button>
+          <button
+            id="timer-close-btn"
+            class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

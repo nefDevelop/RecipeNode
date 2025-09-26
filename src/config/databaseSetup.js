@@ -62,6 +62,24 @@ function setupDatabase(db, recipesPath) {
     db.run(`CREATE TABLE IF NOT EXISTS recipes (name TEXT PRIMARY KEY, path TEXT NOT NULL)`, (err) => {
       if (err) return console.error("Error creando la tabla de recetas:", err);
 
+      // Add cooking_time column if it doesn't exist
+      db.run(`ALTER TABLE recipes ADD COLUMN cooking_time INTEGER`, (alterErr) => {
+        if (alterErr && !alterErr.message.includes("duplicate column name")) {
+          console.error("Error adding cooking_time column:", alterErr);
+        } else if (!alterErr) {
+          console.log("Added cooking_time column to recipes table.");
+        }
+      });
+
+      // Add cuisine_type column if it doesn't exist
+      db.run(`ALTER TABLE recipes ADD COLUMN cuisine_type TEXT`, (alterErr) => {
+        if (alterErr && !alterErr.message.includes("duplicate column name")) {
+          console.error("Error adding cuisine_type column:", alterErr);
+        } else if (!alterErr) {
+          console.log("Added cuisine_type column to recipes table.");
+        }
+      });
+
       // Sync filesystem recipes to DB on startup
       try {
         const files = fs.readdirSync(recipesPath).filter((file) => path.extname(file) === ".md");

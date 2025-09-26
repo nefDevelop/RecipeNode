@@ -149,6 +149,15 @@ const getHomePage = async (req, res) => {
       // Esto permite que los usuarios los marquen mientras cocinan.
       htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
+      // 6. Identificar y envolver patrones de tiempo para temporizadores interactivos
+      htmlContent = htmlContent.replace(/(\d+)\s+(minuto|minutos|segundo|segundos)/gi, (match, number, unit) => {
+        let duration = parseInt(number, 10);
+        if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
+          duration *= 60;
+        }
+        return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
+      });
+
       // --- LOGS DE ESTILOS ---
       console.log(`\n--- [RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
       const classMatches = htmlContent.match(/class="[^"]+"/g) || [];
@@ -202,9 +211,60 @@ const getShoppingListPage = (req, res) => {
 
 const getAllRecipesApi = async (req, res) => {
   try {
-    const rows = await dbAll("SELECT name FROM recipes ORDER BY name");
-    const recipeNames = rows.map((r) => r.name);
-    res.json(recipeNames);
+    const { search, time_max, ingredients, cuisine } = req.query;
+    let sql = "SELECT name, path, cooking_time, cuisine_type FROM recipes WHERE 1=1";
+    const params = [];
+
+    if (search) {
+      sql += " AND name LIKE ?";
+      params.push(`%${search}%`);
+    }
+    if (time_max) {
+      sql += " AND cooking_time <= ?";
+      params.push(parseInt(time_max));
+    }
+    if (cuisine) {
+      sql += " AND cuisine_type = ?";
+      params.push(cuisine);
+    }
+
+    // For ingredients, we'll fetch all matching recipes first and then filter by content
+    let filteredRecipes = await dbAll(sql + " ORDER BY name", params);
+
+    if (ingredients) {
+      const ingredientList = ingredients.split(",").map(item => item.trim().toLowerCase());
+      const recipesWithContent = await Promise.all(
+        filteredRecipes.map(async (recipe) => {
+          try {
+            const fileContent = await fs.promises.readFile(recipe.path, "utf8");
+            return { ...recipe, content: fileContent };
+          } catch (e) {
+            console.error(`Error reading file for ingredient filter ${recipe.name}: ${e.message}`);
+            return null;
+          }
+        })
+      );
+      filteredRecipes = recipesWithContent.filter(recipe => {
+        if (!recipe || !recipe.content) return false;
+        return ingredientList.every(ingredient => recipe.content.toLowerCase().includes(ingredient));
+      });
+    }
+
+    const recipesWithImages = await Promise.all(
+      filteredRecipes.map(async (recipe) => {
+        try {
+          const fileContent = await fs.promises.readFile(recipe.path, "utf8");
+          const { attributes, body } = fm(fileContent);
+          const image = extractImageFromMarkdown(attributes, body);
+          return { name: recipe.name, image };
+        } catch (e) {
+          console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
+          return { name: recipe.name, image: null };
+        }
+      })
+    );
+
+    res.json(recipesWithImages);
   } catch (error) {
     console.error("Error fetching recipe list for API:", error);
     return res.status(500).json({ error: "Failed to retrieve recipes from database." });
@@ -254,6 +314,15 @@ const getRecipeByIdApi = async (req, res) => {
     // Habilitar los checkboxes de las listas de tareas eliminando el atributo 'disabled'.
     htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
+    // 6. Identificar y envolver patrones de tiempo para temporizadores interactivos
+    htmlContent = htmlContent.replace(/(\d+)\s+(minuto|minutos|segundo|segundos)/gi, (match, number, unit) => {
+      let duration = parseInt(number, 10);
+      if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
+        duration *= 60;
+      }
+      return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
+    });
+
     // --- LOGS DE ESTILOS ---
     console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
     console.log(`[Estilos] Clases CSS encontradas:`, htmlContent.match(/class="[^"]+"/g) || []);
@@ -297,6 +366,12 @@ title: "${title.replace(/"/g, '\\"')}"
   if (image) frontmatter += `image: ${image}\n`;
   frontmatter += `created: ${now}\n`;
   frontmatter += `updated: ${now}\n`;
+
+  // Extract cooking_time and cuisine_type from markdownContent if present in front-matter
+  const { attributes: newAttributes } = fm(frontmatter + markdownContent);
+  const cookingTime = newAttributes.time || null; // Assuming 'time' in front-matter
+  const cuisineType = newAttributes.cuisine || null; // Assuming 'cuisine' in front-matter
+
   frontmatter += `---
 
 `;
@@ -304,7 +379,7 @@ title: "${title.replace(/"/g, '\\"')}"
 
   try {
     await fs.promises.writeFile(filePath, fileContent, "utf8");
-    await dbRun("INSERT INTO recipes (name, path) VALUES (?, ?)", [slug, filePath]);
+    await dbRun("INSERT INTO recipes (name, path, cooking_time, cuisine_type) VALUES (?, ?, ?, ?)", [slug, filePath, cookingTime, cuisineType]);
 
     // Añadimos una URL de redirección a la respuesta.
     // El cliente usará esta URL para recargar la página y ver la nueva receta.

@@ -85,4 +85,119 @@ document.addEventListener("DOMContentLoaded", () => {
   if (location.hash === "#kitchen") {
     applyKitchenMode();
   }
+
+  // --- Interactive Timer Functionality ---
+  let timerInterval = null;
+  let currentTimerDuration = 0;
+  let originalTimerDuration = 0;
+  let timerDisplayElement = null;
+  let timerRecipeName = '';
+  let timerModal = null;
+  let timerSound = new Audio('/sounds/timer-beep.mp3'); // TODO: Ensure this path is correct and sound file exists
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return [
+        h,
+        m,
+        s
+      ]
+      .map(v => v < 10 ? '0' + v : v)
+      .filter((v, i) => v !== '00' || i > 0 || h > 0) // Don't show leading '00:' for hours if no hours
+      .join(':');
+  };
+
+  const updateTimerDisplay = () => {
+    if (timerDisplayElement) {
+      timerDisplayElement.textContent = formatTime(currentTimerDuration);
+    }
+  };
+
+  const startTimer = (duration, recipeName) => {
+    if (timerInterval) clearInterval(timerInterval); // Clear any existing timer
+
+    originalTimerDuration = duration;
+    currentTimerDuration = duration;
+    timerRecipeName = recipeName;
+
+    if (timerModal) {
+      document.getElementById('timer-modal-title').textContent = `Temporizador para: ${timerRecipeName}`;
+      timerModal.classList.remove('hidden');
+    }
+    updateTimerDisplay();
+
+    timerInterval = setInterval(() => {
+      currentTimerDuration--;
+      updateTimerDisplay();
+
+      if (currentTimerDuration <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        if (timerSound) timerSound.play();
+        alert(`¡Tiempo terminado para "${timerRecipeName}"!`);
+        if (timerModal) timerModal.classList.add('hidden'); // Hide modal after completion
+      }
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  };
+
+  const resetTimer = () => {
+    stopTimer();
+    currentTimerDuration = originalTimerDuration;
+    updateTimerDisplay();
+  };
+
+  // Event listener for timer triggers
+  document.querySelectorAll('.timer-trigger').forEach(trigger => {
+    trigger.style.cursor = 'pointer'; // Indicate it's clickable
+    trigger.style.textDecoration = 'underline'; // Visual cue
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      const duration = parseInt(trigger.dataset.duration, 10);
+      // Try to find the recipe title from the nearest h1 or a global variable
+      const recipeTitle = document.querySelector('.prose h1')?.textContent || document.title;
+      startTimer(duration, recipeTitle);
+    });
+  });
+
+  // Initialize timer modal elements
+  timerModal = document.getElementById('timer-modal');
+  timerDisplayElement = document.getElementById('timer-display');
+  const timerStartPauseBtn = document.getElementById('timer-start-pause-btn');
+  const timerResetBtn = document.getElementById('timer-reset-btn');
+  const timerCloseBtn = document.getElementById('timer-close-btn');
+
+  if (timerStartPauseBtn) {
+    timerStartPauseBtn.addEventListener('click', () => {
+      if (timerInterval) {
+        stopTimer();
+        timerStartPauseBtn.textContent = 'Iniciar';
+      } else {
+        startTimer(currentTimerDuration, timerRecipeName); // Resume from current duration
+        timerStartPauseBtn.textContent = 'Pausar';
+      }
+    });
+  }
+
+  if (timerResetBtn) {
+    timerResetBtn.addEventListener('click', () => {
+      resetTimer();
+      if (timerStartPauseBtn) timerStartPauseBtn.textContent = 'Iniciar';
+    });
+  }
+
+  if (timerCloseBtn) {
+    timerCloseBtn.addEventListener('click', () => {
+      if (timerModal) timerModal.classList.add('hidden');
+      stopTimer(); // Stop timer when modal is closed
+    });
+  }
 });

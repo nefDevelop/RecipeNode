@@ -1,6 +1,3 @@
-
-Temporizadores Interactivos: Dentro de las instrucciones de una receta, donde ponga "cocinar durante 20 minutos", podrías hacer que ese texto fuera un botón que inicie una cuenta atrás directamente en la página.
-
 Búsqueda y Filtrado Avanzado: Además de buscar por título, podrías añadir filtros para que los usuarios encuentren recetas por:
 
 Tiempo de cocción (ej. "menos de 30 minutos").
@@ -9,6 +6,4 @@ Tipo de cocina (ej. "Postres", "Italiana").
 Calificación personal.
 Calificaciones y Notas Privadas: Permitir que cada usuario pueda dar una calificación con estrellas (de 1 a 5) y añadir notas personales a cada receta que ha probado. Esto ayuda a recordar qué recetas funcionaron mejor o qué ajustes hicieron.
 
-
-API más Robusta: Refactorizar los controladores que aún usan callbacks de la base de datos para que utilicen async/await de forma consistente. Esto hace el código más limpio, legible y fácil de mantener, especialmente en el manejo de errores.
-
+Contador de abrir recetas. Recetas mas usadas.
