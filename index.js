@@ -32,6 +32,13 @@ db.run("ALTER TABLE manual_shopping_items ADD COLUMN order_index INTEGER", (err)
     console.error("Error al migrar la tabla manual_shopping_items:", err);
   }
 });
+
+// Migración: Añadir la columna 'views' a la tabla 'recipes' si no existe.
+db.run("ALTER TABLE recipes ADD COLUMN views INTEGER DEFAULT 0", (err) => {
+  if (err && !err.message.includes("duplicate column name")) {
+    console.error("Error al migrar la tabla recipes (views):", err);
+  }
+});
 const recipesPath = path.join(__dirname, "recetas");
 setupDatabase(db, recipesPath);
 

@@ -110,7 +110,17 @@ const getHomePage = async (req, res) => {
       }
 
       const fileContent = await fs.promises.readFile(recipeRow.path, "utf8");
-      const { attributes, body: rawBody } = fm(fileContent);
+      let { attributes, body: rawBody } = fm(fileContent);
+
+      // Increment view count
+      attributes.views = (attributes.views || 0) + 1;
+
+      // Reconstruct front-matter and content
+      const updatedFrontMatter = `---\n${Object.entries(attributes).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n`;
+      const updatedFileContent = updatedFrontMatter + rawBody;
+
+      // Write updated content back to file
+      await fs.promises.writeFile(recipeRow.path, updatedFileContent, "utf8");
 
       // 1. Limpiar el contenido de Markdown de sintaxis no estándar (Dataview, comentarios)
       let markdownContent = rawBody
@@ -282,7 +292,17 @@ const getRecipeByIdApi = async (req, res) => {
     }
 
     const fileContent = await fs.promises.readFile(recipeRow.path, "utf8");
-    const { attributes, body: rawBody } = fm(fileContent);
+    let { attributes, body: rawBody } = fm(fileContent);
+
+    // Increment view count
+    attributes.views = (attributes.views || 0) + 1;
+
+    // Reconstruct front-matter and content
+    const updatedFrontMatter = `---\n${Object.entries(attributes).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n`;
+    const updatedFileContent = updatedFrontMatter + rawBody;
+
+    // Write updated content back to file
+    await fs.promises.writeFile(recipeRow.path, updatedFileContent, "utf8");
 
     // Lógica de renderizado consistente con getHomePage
     let markdownContent = rawBody
