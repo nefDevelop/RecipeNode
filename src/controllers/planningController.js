@@ -69,8 +69,57 @@ const savePlanningData = async (req, res) => {
   }
 };
 
+const generatePlanningList = async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: "Se requieren fechas de inicio y fin." });
+  }
+
+  try {
+    const plannedMeals = await dbAll(
+      `SELECT date, meal_type, recipe_name 
+       FROM planning 
+       WHERE date >= ? AND date <= ? 
+       ORDER BY date, meal_type`,
+      [startDate, endDate]
+    );
+
+    if (plannedMeals.length === 0) {
+      return res.json({ html: "<p>No hay comidas planificadas en este período.</p>" });
+    }
+
+    const mealsByDate = plannedMeals.reduce((acc, meal) => {
+      if (!acc[meal.date]) {
+        acc[meal.date] = [];
+      }
+      acc[meal.date].push(meal);
+      return acc;
+    }, {});
+
+    let html = "<ul>";
+    for (const date in mealsByDate) {
+      const dateObj = new Date(date + 'T00:00:00');
+      const dateString = dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      html += `<li><strong>${dateString}</strong><ul>`;
+      mealsByDate[date].forEach(meal => {
+        const mealType = meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1);
+        html += `<li>${mealType}: ${meal.recipe_name}</li>`;
+      });
+      html += "</ul></li>";
+    }
+    html += "</ul>";
+
+    res.json({ html });
+  } catch (error) {
+    console.error("Error al generar la lista de planificación:", error);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+};
+
 module.exports = {
   getPlanningPage,
   getPlanningData,
   savePlanningData,
+  generatePlanningList,
 };

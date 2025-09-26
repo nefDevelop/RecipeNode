@@ -70,6 +70,64 @@
     <main class="w-full md:w-3/4">
       <h1 class="text-3xl font-bold mb-6">Planificación de Comidas</h1>
       <div id="calendar" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow"></div>
+
+      <!-- Sección para generar la lista de planificación -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mt-6">
+        <h2 class="text-2xl font-bold mb-4">Generar Lista de Planificación</h2>
+
+        <!-- Toggle Semanal/Mensual -->
+        <div class="flex justify-center mb-4 border-b border-gray-200 dark:border-gray-700">
+          <button id="weekly-tab" class="py-2 px-6 font-semibold">Semanal</button>
+          <button id="monthly-tab" class="py-2 px-6 font-semibold">Mensual</button>
+        </div>
+
+        <!-- Selector Semanal -->
+        <div id="weekly-selector" class="text-center">
+          <p class="mb-2">Selecciona una semana:</p>
+          <div class="flex items-center justify-center gap-4">
+            <button id="prev-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &lt;
+            </button>
+            <span id="week-range-display" class="font-semibold text-lg w-72 text-center"></span>
+            <button id="next-week" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &gt;
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector Mensual -->
+        <div id="monthly-selector" class="hidden text-center">
+          <p class="mb-2">Selecciona un mes:</p>
+          <div class="flex items-center justify-center gap-4">
+            <button id="prev-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &lt;
+            </button>
+            <span id="month-display" class="font-semibold text-lg w-48 text-center"></span>
+            <button id="next-month" class="px-3 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded">
+              &gt;
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón de Generar -->
+        <div class="text-center mt-6">
+          <button id="generate-list-btn" class="px-6 py-3 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700">
+            Generar Lista
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenedor para la lista generada -->
+      <div id="planning-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mt-6 hidden">
+        <h2 class="text-2xl font-bold mb-4">Lista de Comidas Planificadas</h2>
+        <div id="list-content" class="prose dark:prose-invert max-w-none">
+          <!-- El contenido se generará aquí -->
+        </div>
+        <div class="text-center mt-4">
+          <button id="copy-list-btn" class="px-4 py-2 rounded text-white bg-blue-500 hover:bg-blue-600">Copiar</button>
+          <button id="share-list-btn" class="px-4 py-2 rounded text-white bg-indigo-500 hover:bg-indigo-600 ml-2">Compartir</button>
+        </div>
+      </div>
     </main>
   </div>
 </div>
@@ -206,6 +264,123 @@
     });
 
     calendar.render();
+
+    // --- Lógica para el generador de lista de planificación ---
+    const weeklyTab = document.getElementById('weekly-tab');
+    const monthlyTab = document.getElementById('monthly-tab');
+    const weeklySelector = document.getElementById('weekly-selector');
+    const monthlySelector = document.getElementById('monthly-selector');
+    const generateListBtn = document.getElementById('generate-list-btn');
+    const planningListContainer = document.getElementById('planning-list-container');
+    const listContent = document.getElementById('list-content');
+    const copyListBtn = document.getElementById('copy-list-btn');
+    const shareListBtn = document.getElementById('share-list-btn');
+
+    let currentStartDate = new Date();
+    let listType = 'weekly'; // 'weekly' or 'monthly'
+
+    function updateDateSelectors() {
+      if (listType === 'weekly') {
+        const startOfWeek = new Date(currentStartDate);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + (startOfWeek.getDay() === 0 ? -6 : 1)); // Lunes
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6); // Domingo
+
+        document.getElementById('week-range-display').textContent = 
+          `${startOfWeek.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+      } else {
+        document.getElementById('month-display').textContent = 
+          currentStartDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      }
+    }
+
+    function switchTab(type) {
+      listType = type;
+      if (type === 'weekly') {
+        weeklySelector.classList.remove('hidden');
+        monthlySelector.classList.add('hidden');
+        weeklyTab.classList.add('border-b-2', 'border-green-500');
+        monthlyTab.classList.remove('border-b-2', 'border-green-500');
+      } else {
+        weeklySelector.classList.add('hidden');
+        monthlySelector.classList.remove('hidden');
+        monthlyTab.classList.add('border-b-2', 'border-green-500');
+        weeklyTab.classList.remove('border-b-2', 'border-green-500');
+      }
+      updateDateSelectors();
+    }
+
+    weeklyTab.addEventListener('click', () => switchTab('weekly'));
+    monthlyTab.addEventListener('click', () => switchTab('monthly'));
+
+    document.getElementById('prev-week').addEventListener('click', () => {
+      currentStartDate.setDate(currentStartDate.getDate() - 7);
+      updateDateSelectors();
+    });
+    document.getElementById('next-week').addEventListener('click', () => {
+      currentStartDate.setDate(currentStartDate.getDate() + 7);
+      updateDateSelectors();
+    });
+    document.getElementById('prev-month').addEventListener('click', () => {
+      currentStartDate.setMonth(currentStartDate.getMonth() - 1);
+      updateDateSelectors();
+    });
+    document.getElementById('next-month').addEventListener('click', () => {
+      currentStartDate.setMonth(currentStartDate.getMonth() + 1);
+      updateDateSelectors();
+    });
+
+    generateListBtn.addEventListener('click', async () => {
+      let startDate, endDate;
+      if (listType === 'weekly') {
+        startDate = new Date(currentStartDate);
+        startDate.setDate(startDate.getDate() - startDate.getDay() + (startDate.getDay() === 0 ? -6 : 1));
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+      } else {
+        startDate = new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), 1);
+        endDate = new Date(currentStartDate.getFullYear(), currentStartDate.getMonth() + 1, 0);
+      }
+
+      const startDateString = startDate.toISOString().split('T')[0];
+      const endDateString = endDate.toISOString().split('T')[0];
+
+      try {
+        const response = await fetch(`/api/planning/list?startDate=${startDateString}&endDate=${endDateString}`);
+        if (!response.ok) throw new Error('Error al generar la lista.');
+        
+        const { html } = await response.json();
+        listContent.innerHTML = html;
+        planningListContainer.classList.remove('hidden');
+      } catch (error) {
+        console.error(error);
+        alert('Hubo un error al generar la lista. Inténtalo de nuevo.');
+      }
+    });
+
+    copyListBtn.addEventListener('click', () => {
+      const textToCopy = listContent.innerText;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert('Lista copiada al portapapeles.');
+      }, () => {
+        alert('Error al copiar la lista.');
+      });
+    });
+
+    shareListBtn.addEventListener('click', () => {
+      const textToShare = listContent.innerText;
+      if (navigator.share) {
+        navigator.share({
+          title: 'Lista de Comidas Planificadas',
+          text: textToShare,
+        }).catch(console.error);
+      } else {
+        alert('La función de compartir no está disponible en este navegador.');
+      }
+    });
+
+    // Init
+    switchTab('weekly');
 
     function openModal(date, meals = {}) {
       selectedDateStr = date;

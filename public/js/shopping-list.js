@@ -163,14 +163,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (isSeparator) {
         li.className = "flex items-center justify-between py-2 my-2"; // Estilo para separador
-        li.innerHTML = `
-          <div class="flex-grow text-center text-gray-500 dark:text-gray-400 font-semibold tracking-wider">${item.text}</div>
-          <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        `;
+        const separatorText = item.text.replace(/---/g, '').trim();
+        if (separatorText) {
+            li.innerHTML = `
+              <div class="flex-grow flex items-center gap-2 text-gray-500 dark:text-gray-400 font-semibold tracking-wider">
+                <hr class="flex-grow border-gray-300 dark:border-gray-600">
+                <span>${separatorText}</span>
+                <hr class="flex-grow border-gray-300 dark:border-gray-600">
+              </div>
+              <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            `;
+        } else {
+            li.innerHTML = `
+              <div class="flex-grow flex items-center text-gray-500 dark:text-gray-400">
+                <hr class="w-full border-gray-300 dark:border-gray-600">
+              </div>
+              <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            `;
+        }
       } else {
         li.className = "flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"; // Estilo para item normal
         li.innerHTML = `
@@ -315,21 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
     await addManualItemToList(manualItemInput.value);
   });
 
-  // Añadir un separador con el nuevo botón
-  addSeparatorBtn.addEventListener("click", async () => {
-    const text = manualItemInput.value.trim();
-    let separatorText;
 
-    if (text) {
-      // Si hay texto, lo usamos como cabecera del separador
-      separatorText = `${"-".repeat(5)} ${text} ${"-".repeat(5)}`;
-    } else {
-      // Si no hay texto, es solo una línea
-      separatorText = "-".repeat(30);
-    }
-    // Llamamos a la función helper para añadir el separador a la lista
-    await addManualItemToList(separatorText);
-  });
 
   manualListItemsContainer.addEventListener("click", async (e) => {
     const li = e.target.closest("li");
