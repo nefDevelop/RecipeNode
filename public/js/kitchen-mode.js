@@ -33,6 +33,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const applyKitchenMode = () => {
     if (!body.classList.contains("kitchen-mode")) {
       body.classList.add("kitchen-mode");
+      // Al entrar en modo cocina, nos aseguramos de que el tema oscuro se respete.
+      // Los estilos CSS de 'kitchen-mode' deben usar 'dark:' para el fondo.
+      if (localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
       requestWakeLock();
     }
   };
@@ -40,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const removeKitchenMode = () => {
     if (body.classList.contains("kitchen-mode")) {
       body.classList.remove("kitchen-mode");
-      releaseWakeLock();
+      releaseWakeLock(); // Liberamos el bloqueo de pantalla al salir.
     }
   };
 

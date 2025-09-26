@@ -6,11 +6,39 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
 
     <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
-
     <!-- Main Content -->
     <main class="w-full md:w-3/4">
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow min-h-[80vh]">
         <% if (content) { %>
+        <!-- Controles para escalar comensales -->
+        <% if (servings) { %>
+        <div
+          id="servings-scaler"
+          class="flex items-center gap-2 mb-6 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg"
+          data-original-servings="<%= servings %>"
+        >
+          <span class="font-semibold">Comensales:</span>
+          <button
+            id="servings-minus"
+            class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 font-bold text-lg flex items-center justify-center"
+          >
+            -
+          </button>
+          <input
+            type="number"
+            id="servings-input"
+            value="<%= servings %>"
+            min="1"
+            class="w-16 text-center p-1 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+          />
+          <button
+            id="servings-plus"
+            class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 font-bold text-lg flex items-center justify-center"
+          >
+            +
+          </button>
+        </div>
+        <% } %>
         <!-- Estilos específicos para la vista de receta -->
         <link rel="stylesheet" href="/css/kitchen-mode.css" />
         <link rel="stylesheet" href="/css/print.css" media="print" />

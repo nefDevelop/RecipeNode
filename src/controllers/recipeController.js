@@ -95,18 +95,23 @@ const getHomePage = async (req, res) => {
       // 1. Limpiar el contenido de Markdown de sintaxis no estándar (Dataview, comentarios)
       let markdownContent = rawBody
         .replace(/%%.*?%%/g, "") // Eliminar comentarios de Obsidian %%...%%
-        .replace(/`\$=.*?`/g, ""); // Eliminar scripts inline de Dataview
+        .replace(/`\$=.*?`/g, "") // Eliminar scripts inline de Dataview
+        .replace(/```dataviewjs[\s\S]*?```/g, ""); // Eliminar bloques de código dataviewjs
       //.replace(/^#\s*`\$= dv\.current\(\)\.title`\s*$/gm, ""); // Eliminar la línea del título si es de Dataview
 
-      // 2. Pre-procesar el markdown para estandarizar la sintaxis de imágenes ![[...]]
-      // a etiquetas <img> de HTML. Esto asegura que se rendericen correctamente.
-      const processedMarkdown = markdownContent.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
-        const cleanName = imageName.trim();
-        // Extraer solo el nombre del archivo, sin rutas como '_resources/'
-        const finalImageName = cleanName.split("/").pop();
-        // Asumimos que todas las imágenes se sirven desde la carpeta pública /resources/
-        return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
-      });
+      // 2. Pre-procesar el markdown para estandarizar la sintaxis de Obsidian
+      let processedMarkdown = markdownContent
+        // Convierte enlaces de imagen ![[imagen.jpg]] a etiquetas <img>
+        .replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
+          const cleanName = imageName.trim();
+          const finalImageName = cleanName.split("/").pop();
+          return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+        })
+        // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
+        .replace(/\[\[([^|\]\n]+)(?:\|([^\]\n]+))?\]\]/g, (match, linkTarget, linkText) => {
+          const text = linkText || linkTarget;
+          return `<a href="/?recipe=${encodeURIComponent(linkTarget.trim())}" class="text-green-600 hover:underline">${text.trim()}</a>`;
+        });
 
       // 3. Convertir el Markdown (que ahora puede contener HTML) a HTML final.
       // `marked` procesará la sintaxis de markdown y dejará intactas las etiquetas <img> que hemos insertado.
@@ -132,7 +137,13 @@ const getHomePage = async (req, res) => {
       console.log(`[Estilos] Estilos en línea encontrados (${styleMatches.length}):`, styleMatches);
       console.log(`--- Fin del análisis ---\n`);
 
-      res.render("index", { title: attributes.title || recipeName, content: htmlContent, recipes: null, user: req.session });
+      res.render("index", {
+        title: attributes.title || recipeName,
+        content: htmlContent,
+        servings: attributes.servings,
+        recipes: null,
+        user: req.session,
+      });
     } else {
       const allRecipes = await new Promise((resolve, reject) => {
         db.all("SELECT name, path FROM recipes ORDER BY name", [], (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -152,7 +163,13 @@ const getHomePage = async (req, res) => {
         })
       );
 
-      res.render("index", { title: "Recetas", content: null, recipes: recipesWithImages, user: req.session });
+      res.render("index", {
+        title: "Recetas",
+        content: null,
+        recipes: recipesWithImages,
+        user: req.session,
+        servings: null, // Asegurarse de que 'servings' siempre esté definido
+      });
     }
   } catch (error) {
     console.error("Error al obtener la página de recetas:", error);
@@ -195,14 +212,22 @@ const getRecipeByIdApi = async (req, res) => {
     let markdownContent = rawBody
       .replace(/%%.*?%%/g, "")
       .replace(/`\$=.*?`/g, "")
-      .replace(/^#\s*`\$= dv\.current\(\)\.title`\s*$/gm, "");
+      .replace(/^#\s*`\$= dv\.current\(\)\.title`\s*$/gm, "")
+      .replace(/```dataviewjs[\s\S]*?```/g, ""); // Eliminar bloques de código dataviewjs
 
-    const processedMarkdown = markdownContent.replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
-      const cleanName = imageName.trim();
-      const finalImageName = cleanName.split("/").pop();
-      return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
-    });
-
+    // Lógica de pre-procesamiento consistente
+    let processedMarkdown = markdownContent
+      // Convierte enlaces de imagen ![[imagen.jpg]] a etiquetas <img>
+      .replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
+        const cleanName = imageName.trim();
+        const finalImageName = cleanName.split("/").pop();
+        return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+      })
+      // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
+      .replace(/\[\[([^|\]\n]+)(?:\|([^\]\n]+))?\]\]/g, (match, linkTarget, linkText) => {
+        const text = linkText || linkTarget;
+        return `<a href="/?recipe=${encodeURIComponent(linkTarget.trim())}" class="text-green-600 hover:underline">${text.trim()}</a>`;
+      });
     const markedOptions = {
       gfm: true, // Habilitar GitHub Flavored Markdown para reconocer las task lists
       pedantic: false,

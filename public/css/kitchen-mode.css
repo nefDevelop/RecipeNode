@@ -22,8 +22,9 @@
   width: 100vw;
   height: 100vh;
   overflow-y: auto;
-  background: white; /* O el color de fondo de tu app */
   z-index: 1000;
+  background-color: white; /* Fondo para modo claro */
+
   padding: 1.5rem;
   font-size: 1.1rem; /* Fuente ligeramente más grande para legibilidad */
   line-height: 1.7;
@@ -54,4 +55,23 @@
 /* Oculta inicialmente el botón de salida */
 #exit-kitchen-mode-btn {
   display: none;
+}
+
+/* Estilos de fondo para el modo oscuro.
+   La clase .dark se aplica en el elemento <html>. */
+.dark .kitchen-mode #recipe-content-wrapper {
+  background-color: #111827; /* Equivalente a dark:bg-gray-900 */
+}
+
+/* Ocultar los botones de subir/bajar en el input de tipo número */
+/* Para Chrome, Safari, Edge, Opera */
+#servings-input::-webkit-outer-spin-button,
+#servings-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Para Firefox */
+#servings-input[type="number"] {
+  -moz-appearance: textfield;
 }

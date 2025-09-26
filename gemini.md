@@ -1,72 +1,22 @@
-# Roadmap del Proyecto: RecipeNode
 
-## Fase 1: Configuración y Estructura Base
+Temporizadores Interactivos: Dentro de las instrucciones de una receta, donde ponga "cocinar durante 20 minutos", podrías hacer que ese texto fuera un botón que inicie una cuenta atrás directamente en la página.
 
-- [x] Tarea 1: Configuración del entorno
+Búsqueda y Filtrado Avanzado: Además de buscar por título, podrías añadir filtros para que los usuarios encuentren recetas por:
 
-  - [x] Definir stack tecnológico:
-    - Backend: Node.js, Express.js
-    - Base de datos: SQLite
-    - Frontend: HTML, CSS con Tailwind CSS
-    - Librerías: `express`, `sqlite3`, `gray-matter`, `markdown-it`, `axios`, `cheerio`, `bcrypt`
-  - [x] Crear estructura de carpetas del proyecto (`server`, `public`, `recetas`).
-  - [x] Inicializar proyecto Node.js (`npm init -y`).
-  - [x] Instalar dependencias (`npm install ...`).
-  - [x] Crear carpeta `public/resources` para imágenes.
+Tiempo de cocción (ej. "menos de 30 minutos").
+Ingredientes que tienen en casa (ej. "recetas con pollo y arroz").
+Tipo de cocina (ej. "Postres", "Italiana").
+Calificación personal.
+Calificaciones y Notas Privadas: Permitir que cada usuario pueda dar una calificación con estrellas (de 1 a 5) y añadir notas personales a cada receta que ha probado. Esto ayuda a recordar qué recetas funcionaron mejor o qué ajustes hicieron.
 
-- [x] **Tarea 2: Base de Datos**
-  - [x] Crear script de inicialización (`init-db.js`).
-  - [x] Definir y crear tabla `users` (id, username, password, role).
-  - [x] Definir y crear tabla `recipes` (id, title, servings, author_id).
-  - [x] Definir y crear tabla `planning` (date, meal_type, recipe_name).
-  - [x] Insertar un usuario administrador inicial en el script.
-  - [x] Crear script para poblar la tabla `recipes` desde los archivos `.md` existentes.
 
-## Fase 2: API Core y Funcionalidades Principales
+Mejoras Técnicas y de Arquitectura
+Convertir en una PWA (Progressive Web App): Esto permitiría a los usuarios "instalar" la aplicación en la pantalla de inicio de su móvil. La ventaja más grande sería el acceso sin conexión, ideal para consultar la lista de la compra en el supermercado, donde la cobertura a veces es mala.
 
-- [x] **Tarea 3: API de Recetas y Planificación**
-  - [x] **Rutas de Recetas:**
-    - [x] `GET /api/recipes`: Obtener lista de todas las recetas.
-    - [x] `GET /api/recipes/:id`: Obtener una receta individual.
-      - [x] Implementar conversión de enlaces `![[imagen.png]]` a `<img>`.
-    - [x] `POST /api/recipes`: Crear nueva receta desde la web (genera archivo `.md`).
-    - [x] `POST /api/recipes/scrape`: Importar receta desde una URL.
-  - [x] **Rutas de Planificación:**
-    - [x] `GET /api/planning`: Obtener todas las recetas planificadas.
-    - [x] `POST /api/planning`: Asignar una receta a una fecha y tipo de comida.
-  - [x] **Ruta de Lista de la Compra:**
-    - [x] `GET /api/shopping-list`: Generar lista de la compra para un rango de fechas.
-      - [x] Crear módulo para analizar, estandarizar y sumar ingredientes.
-      - [x] Manejar convenciones de unidades (ej. `100 g`).
+Mejorar el Scraper (Importador de Recetas): El scraping es complejo porque cada web es diferente. Podrías mejorar el importador para que, en lugar de intentar adivinar, presente al usuario el contenido de la web en bloques y le permita seleccionar visualmente qué bloque corresponde a los ingredientes y cuál a los pasos.
 
-## Fase 3: Usuarios y Frontend
+API más Robusta: Refactorizar los controladores que aún usan callbacks de la base de datos para que utilicen async/await de forma consistente. Esto hace el código más limpio, legible y fácil de mantener, especialmente en el manejo de errores.
 
-- [x] **Tarea 4: Sistema de Autenticación**
+Implementar cualquiera de estas ideas haría tu aplicación aún más útil y atractiva para los usuarios. ¡Tu proyecto tiene una base excelente para seguir creciendo!
 
-  - [x] Definir roles de usuario (Público, Usuario, Admin).
-  - [x] Implementar rutas `POST /register` y `POST /login`.
-  - [x] Proteger rutas de la API (POST, PUT, DELETE) con middleware de autenticación.
-  - [x] Implementar middleware de autorización basado en roles (user vs admin).
-
-- [x] **Tarea 5: Interfaz de Usuario (Frontend)**
-  - [x] **Estructura y Estilo:**
-    - [x] Construir la interfaz base con HTML y Tailwind CSS.
-    - [x] Asegurar diseño responsivo para móviles.
-  - [x] **Componentes y Vistas:**
-    - [x] Vista de catálogo de recetas.
-    - [x] Vista de detalle de receta (usar `markdown-it` para renderizar).
-    - [x] Vista de planificación con calendario visual.
-      - [x] Adaptar a móvil con "Tocar para Asignar".
-      - [x] Implementar toggle para vista semanal/mensual.
-    - [x] Vista de lista de la compra.
-    - [x] Vistas y formularios de autenticación (Login/Registro).
-    - [x] Formulario para crear/importar recetas.
-
-## Fase 4: Funcionalidades Adicionales y Pulido
-
-- [ ] **Tarea 6: Mejoras de Experiencia de Usuario (UX)**
-  - [x] Implementar función de búsqueda (título e ingredientes).
-  - [x] Implementar "Modo Cocina" (mantener pantalla activa, se agranda la receta quitando navbar y sidebar, boton de salir del modo cocina, o pulsando atras en el movil o escape en el pc).
-  - [x] Añadir funciones para compartir e imprimir recetas.
-  - [x] Implementar vista de lista de la compra (semanal/mensual).
-  - [ ] Implementar planificación detallada de comidas.
+Prompts to try

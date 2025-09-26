@@ -125,6 +125,28 @@ const updateManualListOrder = (req, res) => {
 };
 
 /**
+ * Normaliza el nombre de un ingrediente para una agrupación más inteligente.
+ * - Convierte a minúsculas.
+ * - Elimina contenido entre paréntesis.
+ * - Intenta convertir plurales a singulares (de forma simple).
+ * @param {string} name - El nombre del ingrediente.
+ * @returns {string} - El nombre normalizado.
+ */
+const normalizeIngredientName = (name) => {
+  let normalized = name.toLowerCase();
+  // Eliminar texto entre paréntesis (ej. "Queso (sin lactosa)")
+  normalized = normalized.replace(/\s*\(.*\)\s*/g, "").trim();
+
+  // Reglas simples de singularización
+  if (normalized.endsWith("es") && normalized.length > 3) {
+    normalized = normalized.slice(0, -2);
+  } else if (normalized.endsWith("s") && !normalized.endsWith("ss") && normalized.length > 2) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+};
+
+/**
  * Genera una lista de la compra a partir de las recetas planificadas en un rango de fechas.
  */
 const generateShoppingList = async (req, res) => {
@@ -175,9 +197,10 @@ const generateShoppingList = async (req, res) => {
     const normalizedIngredients = allIngredientsRaw.map((ingStr) => normalizeIngredient(parseIngredient(ingStr), conversions));
 
     const aggregated = normalizedIngredients.reduce((acc, ing) => {
-      const key = `${ing.name.toLowerCase()}|${ing.baseUnit}`;
+      const normalizedName = normalizeIngredientName(ing.name);
+      const key = `${normalizedName}|${ing.baseUnit}`;
       if (!acc[key]) {
-        acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit };
+        acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit, displayName: normalizedName };
       }
       acc[key].totalQuantity += ing.quantity;
       return acc;
@@ -185,8 +208,11 @@ const generateShoppingList = async (req, res) => {
 
     // 6. Format final list and sort alphabetically
     const finalList = Object.values(aggregated).map((ing) => {
-      let displayString = `${ing.totalQuantity.toFixed(2).replace(/\.00$/, "")} ${ing.baseUnit} de ${ing.name}`;
-      if (ing.baseUnit === "unidad") displayString = `${ing.totalQuantity} ${ing.name}${ing.totalQuantity > 1 ? "s" : ""}`;
+      const quantity = parseFloat(ing.totalQuantity.toFixed(2));
+      const displayName = quantity > 1 ? `${ing.displayName}s` : ing.displayName;
+
+      let displayString = `${quantity.toString().replace(/\.00$/, "")} ${ing.baseUnit} de ${displayName}`;
+      if (ing.baseUnit === "unidad") displayString = `${quantity} ${displayName}`;
       return displayString;
     });
 

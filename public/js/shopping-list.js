@@ -54,8 +54,30 @@ document.addEventListener("DOMContentLoaded", () => {
         `
       )
       .join("");
-    listContent.innerHTML = `<ul class="list-none p-0">${itemsHtml}</ul>`;
+    listContent.innerHTML = `<ul id="generated-list-ul" class="list-none p-0">${itemsHtml}</ul>`;
     listContainer.classList.remove("hidden");
+
+    // --- Drag and Drop para la Lista Generada ---
+    const generatedListUl = document.getElementById("generated-list-ul");
+    if (generatedListUl) {
+      new Sortable(generatedListUl, {
+        animation: 150,
+        ghostClass: "sortable-ghost",
+        onEnd: function (evt) {
+          const listItems = generatedListUl.querySelectorAll("li");
+          const orderedTexts = Array.from(listItems).map((li) => li.dataset.itemText);
+
+          // Reordenar y guardar en localStorage
+          const savedListJSON = localStorage.getItem(STORAGE_KEY);
+          if (!savedListJSON) return;
+          const listData = JSON.parse(savedListJSON);
+          const ingredients = Array.isArray(listData) ? listData : listData.ingredients;
+          const ingredientMap = new Map(ingredients.map((item) => [item.text, item]));
+          const newListData = orderedTexts.map((text) => ingredientMap.get(text));
+          saveListToStorage(newListData);
+        },
+      });
+    }
   };
 
   const loadListFromStorage = () => {
