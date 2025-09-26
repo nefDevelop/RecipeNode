@@ -60,6 +60,14 @@ const isAdmin = (req, res, next) => {
   res.status(403).json({ error: "Acceso denegado. Se requiere rol de administrador." });
 };
 
+// Middleware para comprobar si el usuario está autenticado
+const isAuthenticated = (req, res, next) => {
+  if (req.session && req.session.userId) {
+    return next();
+  }
+  res.status(401).json({ error: "Acceso denegado. Debes iniciar sesión." });
+};
+
 // Ruta para eliminar una receta (movida a su propio controlador/router, pero la dejamos aquí por si se usa)
 app.delete("/api/recipes", isAdmin, async (req, res) => {
   const { title } = req.body;
@@ -102,7 +110,7 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
 });
 
 // Nueva ruta para guardar el plan de un día completo (Desayuno, Almuerzo, Cena)
-app.post("/api/planning/day", isAdmin, (req, res) => {
+app.post("/api/planning/day", isAuthenticated, (req, res) => {
   const { date, meals } = req.body;
 
   if (!date || !meals) {
@@ -141,7 +149,7 @@ app.post("/api/planning/day", isAdmin, (req, res) => {
 });
 
 // Nueva ruta para limpiar un día completo de la planificación
-app.delete("/api/planning/day", (req, res) => {
+app.delete("/api/planning/day", isAuthenticated, (req, res) => {
   const { date } = req.body;
   if (!date) {
     return res.status(400).json({ error: "La fecha es requerida." });

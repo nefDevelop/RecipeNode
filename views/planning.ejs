@@ -174,6 +174,12 @@
         return { html: eventHtml };
       },
       dateClick: function (info) {
+        const isAuthenticated = <%= isAuthenticated %>;
+        if (!isAuthenticated) {
+          // alert("Debes iniciar sesión para planificar comidas.");
+          return;
+        }
+
         selectedDateStr = info.dateStr;
         const dayEvents = calendar.getEvents().filter((e) => e.startStr.startsWith(info.dateStr));
         const meals = {};
@@ -183,6 +189,12 @@
         openModal(info.dateStr, meals);
       },
       eventClick: function (info) {
+        const isAuthenticated = <%= isAuthenticated %>;
+        if (!isAuthenticated) {
+          // Para usuarios no logueados, no hacemos nada al hacer clic en un evento.
+          return;
+        }
+
         const dateStr = info.event.startStr.split("T")[0];
         const dayEvents = calendar.getEvents().filter((e) => e.startStr.startsWith(dateStr));
         const meals = {};
