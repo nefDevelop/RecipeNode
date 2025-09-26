@@ -4,58 +4,64 @@ const db = require("../config/database");
 const { parseIngredient, normalizeIngredient } = require("../utils/ingredientParser");
 const { extractIngredients } = require("../utils/recipeUtils");
 
+// --- Database Promise Wrappers ---
+const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row))));
+const dbAll = (sql, params = []) =>
+  new Promise((resolve, reject) => db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows))));
+const dbRun = (sql, params = []) =>
+  new Promise((resolve, reject) =>
+    db.run(sql, params, function (err) {
+      err ? reject(err) : resolve(this);
+    })
+  );
+
 /**
  * Obtiene todos los artículos de la lista de la compra manual.
  */
-const getManualList = (req, res) => {
-  db.all("SELECT id, text, checked FROM manual_shopping_items ORDER BY order_index ASC", [], (err, rows) => {
-    if (err) {
-      console.error("Error al obtener la lista manual:", err);
-      return res.status(500).json({ error: "Error interno del servidor." });
-    }
+const getManualList = async (req, res) => {
+  try {
+    const rows = await dbAll("SELECT id, text, checked FROM manual_shopping_items ORDER BY order_index ASC");
     // Convertir 'checked' de 0/1 a booleano para el frontend
     const items = rows.map((item) => ({ ...item, checked: !!item.checked }));
     res.json(items);
-  });
+  } catch (error) {
+    console.error("Error al obtener la lista manual:", error);
+    return res.status(500).json({ error: "Error interno del servidor." });
+  }
 };
 
 /**
  * Añade un nuevo artículo a la lista de la compra manual.
  */
-const addManualItem = (req, res) => {
+const addManualItem = async (req, res) => {
   const { text } = req.body;
   if (!text || typeof text !== "string" || text.trim() === "") {
     return res.status(400).json({ error: "El texto del artículo es requerido." });
   }
 
-  // Primero, obtenemos el índice de orden más alto para asignar al nuevo elemento.
-  db.get("SELECT MAX(order_index) as max_order FROM manual_shopping_items", [], (err, row) => {
-    if (err) {
-      console.error("Error al obtener el índice de orden máximo:", err);
-      return res.status(500).json({ error: "Error al guardar el artículo." });
-    }
-
+  try {
+    // Primero, obtenemos el índice de orden más alto para asignar al nuevo elemento.
+    const row = await dbGet("SELECT MAX(order_index) as max_order FROM manual_shopping_items");
     const newOrderIndex = row && row.max_order !== null ? row.max_order + 1 : 0;
 
     const sql = "INSERT INTO manual_shopping_items (text, order_index) VALUES (?, ?)";
-    db.run(sql, [text.trim(), newOrderIndex], function (err) {
-      if (err) {
-        console.error("Error al añadir artículo a la lista manual:", err);
-        return res.status(500).json({ error: "Error al guardar el artículo." });
-      }
-      res.status(201).json({
-        id: this.lastID,
-        text: text.trim(),
-        checked: false,
-      });
+    const result = await dbRun(sql, [text.trim(), newOrderIndex]);
+
+    res.status(201).json({
+      id: result.lastID,
+      text: text.trim(),
+      checked: false,
     });
-  });
+  } catch (error) {
+    console.error("Error al añadir artículo a la lista manual:", error);
+    return res.status(500).json({ error: "Error al guardar el artículo." });
+  }
 };
 
 /**
  * Actualiza el estado (marcado/desmarcado) de un artículo.
  */
-const updateManualItem = (req, res) => {
+const updateManualItem = async (req, res) => {
   const { id } = req.params;
   const { checked } = req.body;
 
@@ -63,65 +69,61 @@ const updateManualItem = (req, res) => {
     return res.status(400).json({ error: "El estado 'checked' debe ser un booleano." });
   }
 
-  const sql = "UPDATE manual_shopping_items SET checked = ? WHERE id = ?";
-  db.run(sql, [checked ? 1 : 0, id], function (err) {
-    if (err) {
-      console.error("Error al actualizar el artículo:", err);
-      return res.status(500).json({ error: "Error al actualizar el artículo." });
-    }
-    if (this.changes === 0) {
+  try {
+    const sql = "UPDATE manual_shopping_items SET checked = ? WHERE id = ?";
+    const result = await dbRun(sql, [checked ? 1 : 0, id]);
+    if (result.changes === 0) {
       return res.status(404).json({ error: "Artículo no encontrado." });
     }
     res.status(200).json({ message: "Artículo actualizado correctamente." });
-  });
+  } catch (error) {
+    console.error("Error al actualizar el artículo:", error);
+    return res.status(500).json({ error: "Error al actualizar el artículo." });
+  }
 };
 
 /**
  * Elimina un artículo de la lista de la compra manual.
  */
-const deleteManualItem = (req, res) => {
+const deleteManualItem = async (req, res) => {
   const { id } = req.params;
-  const sql = "DELETE FROM manual_shopping_items WHERE id = ?";
-  db.run(sql, [id], function (err) {
-    if (err) {
-      console.error("Error al eliminar el artículo:", err);
-      return res.status(500).json({ error: "Error al eliminar el artículo." });
-    }
-    if (this.changes === 0) {
+  try {
+    const sql = "DELETE FROM manual_shopping_items WHERE id = ?";
+    const result = await dbRun(sql, [id]);
+    if (result.changes === 0) {
       return res.status(404).json({ error: "Artículo no encontrado." });
     }
     res.status(204).send(); // 204 No Content
-  });
+  } catch (error) {
+    console.error("Error al eliminar el artículo:", error);
+    return res.status(500).json({ error: "Error al eliminar el artículo." });
+  }
 };
 
 /**
  * Actualiza el orden de los artículos de la lista manual.
  */
-const updateManualListOrder = (req, res) => {
+const updateManualListOrder = async (req, res) => {
   const { orderedIds } = req.body;
 
   if (!Array.isArray(orderedIds)) {
     return res.status(400).json({ error: "Se esperaba un array de IDs." });
   }
 
-  db.serialize(() => {
-    db.run("BEGIN TRANSACTION");
-    const stmt = db.prepare("UPDATE manual_shopping_items SET order_index = ? WHERE id = ?");
-
-    orderedIds.forEach((id, index) => {
-      stmt.run(index, id);
-    });
-
-    stmt.finalize((err) => {
-      if (err) {
-        db.run("ROLLBACK");
-        console.error("Error al actualizar el orden:", err);
-        return res.status(500).json({ error: "Error al guardar el nuevo orden." });
-      }
-      db.run("COMMIT");
-      res.status(200).json({ message: "Orden actualizado correctamente." });
-    });
-  });
+  // Usar una transacción para asegurar la atomicidad
+  try {
+    await dbRun("BEGIN TRANSACTION");
+    const updatePromises = orderedIds.map((id, index) =>
+      dbRun("UPDATE manual_shopping_items SET order_index = ? WHERE id = ?", [index, id])
+    );
+    await Promise.all(updatePromises);
+    await dbRun("COMMIT");
+    res.status(200).json({ message: "Orden actualizado correctamente." });
+  } catch (error) {
+    await dbRun("ROLLBACK");
+    console.error("Error al actualizar el orden:", error);
+    return res.status(500).json({ error: "Error al guardar el nuevo orden." });
+  }
 };
 
 /**
@@ -157,10 +159,6 @@ const generateShoppingList = async (req, res) => {
   }
 
   try {
-    // Promisify db.all
-    const dbAll = (sql, params) =>
-      new Promise((resolve, reject) => db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows))));
-
     // 1. Get planned meals
     const plannedMeals = await dbAll(`SELECT recipe_name FROM planning WHERE date >= ? AND date <= ?`, [startDate, endDate]);
     if (plannedMeals.length === 0) return res.json({ ingredients: [] });
@@ -177,21 +175,21 @@ const generateShoppingList = async (req, res) => {
     const settingRows = await dbAll("SELECT id, value FROM unit_settings", []);
     const conversions = settingRows.reduce((acc, row) => ({ ...acc, [row.id]: row.value }), {});
 
-    // 4. Read all ingredients from recipe files
-    const allIngredientsRaw = [];
-    recipeNames.forEach((name) => {
+    // 4. Read all ingredients from recipe files asynchronously
+    const ingredientPromises = recipeNames.map(async (name) => {
       const recipePath = recipePathMap[name];
-      if (recipePath) {
-        try {
-          const fileContent = fs.readFileSync(recipePath, "utf8");
-          const { body } = fm(fileContent);
-          const ingredients = extractIngredients(body);
-          allIngredientsRaw.push(...ingredients);
-        } catch (readErr) {
-          console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
-        }
+      if (!recipePath) return [];
+
+      try {
+        const fileContent = await fs.promises.readFile(recipePath, "utf8");
+        const { body } = fm(fileContent);
+        return extractIngredients(body);
+      } catch (readErr) {
+        console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
+        return []; // Return empty array on error to not break the flow
       }
     });
+    const allIngredientsRaw = (await Promise.all(ingredientPromises)).flat();
 
     // 5. Normalize and aggregate ingredients
     const normalizedIngredients = allIngredientsRaw.map((ingStr) => normalizeIngredient(parseIngredient(ingStr), conversions));

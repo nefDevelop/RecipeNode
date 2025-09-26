@@ -6,6 +6,28 @@ const db = require("../config/database");
 const axios = require("axios");
 const cheerio = require("cheerio");
 
+// --- Database Promise Wrappers ---
+// These helpers convert the callback-based sqlite3 methods to Promise-based ones.
+const dbGet = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row);
+    });
+  });
+};
+
+const dbAll = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+};
+
+const dbRun = (sql, params = []) => new Promise((resolve, reject) => db.run(sql, params, (err) => (err ? reject(err) : resolve())));
+
 // Helper function to create a URL-friendly slug from a title
 const slugify = (text) => {
   return text
@@ -76,9 +98,7 @@ const getHomePage = async (req, res) => {
     const recipeName = req.query.recipe;
 
     if (recipeName) {
-      const recipeRow = await new Promise((resolve, reject) => {
-        db.get("SELECT path FROM recipes WHERE name = ?", [recipeName], (err, row) => (err ? reject(err) : resolve(row)));
-      });
+      const recipeRow = await dbGet("SELECT path FROM recipes WHERE name = ?", [recipeName]);
 
       if (!recipeRow) {
         return res.render("index", {
@@ -145,9 +165,7 @@ const getHomePage = async (req, res) => {
         user: req.session,
       });
     } else {
-      const allRecipes = await new Promise((resolve, reject) => {
-        db.all("SELECT name, path FROM recipes ORDER BY name", [], (err, rows) => (err ? reject(err) : resolve(rows)));
-      });
+      const allRecipes = await dbAll("SELECT name, path FROM recipes ORDER BY name");
 
       const recipesWithImages = await Promise.all(
         allRecipes.map(async (recipe) => {
@@ -182,24 +200,22 @@ const getShoppingListPage = (req, res) => {
   res.render("shopping-list", { title: "Lista de la Compra", user: req.session });
 };
 
-const getAllRecipesApi = (req, res) => {
-  db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => {
-    if (err) {
-      console.error("Error fetching recipe list for API:", err);
-      return res.status(500).json({ error: "Failed to retrieve recipes from database." });
-    }
+const getAllRecipesApi = async (req, res) => {
+  try {
+    const rows = await dbAll("SELECT name FROM recipes ORDER BY name");
     const recipeNames = rows.map((r) => r.name);
     res.json(recipeNames);
-  });
+  } catch (error) {
+    console.error("Error fetching recipe list for API:", error);
+    return res.status(500).json({ error: "Failed to retrieve recipes from database." });
+  }
 };
 
 const getRecipeByIdApi = async (req, res) => {
   const recipeName = req.params.id;
 
   try {
-    const recipeRow = await new Promise((resolve, reject) => {
-      db.get("SELECT path FROM recipes WHERE name = ?", [recipeName], (err, row) => (err ? reject(err) : resolve(row)));
-    });
+    const recipeRow = await dbGet("SELECT path FROM recipes WHERE name = ?", [recipeName]);
 
     if (!recipeRow) {
       return res.status(404).json({ error: `Recipe "${recipeName}" not found.` });
@@ -256,7 +272,7 @@ const getRecipeByIdApi = async (req, res) => {
   }
 };
 
-const createRecipeApi = (req, res) => {
+const createRecipeApi = async (req, res) => {
   const { title, markdownContent, source, image } = req.body;
 
   if (!title || !markdownContent) {
@@ -287,24 +303,20 @@ title: "${title.replace(/"/g, '\\"')}"
   const fileContent = frontmatter + markdownContent;
 
   try {
-    fs.writeFileSync(filePath, fileContent, "utf8");
+    await fs.promises.writeFile(filePath, fileContent, "utf8");
+    await dbRun("INSERT INTO recipes (name, path) VALUES (?, ?)", [slug, filePath]);
 
-    db.run("INSERT INTO recipes (name, path) VALUES (?, ?)", [slug, filePath], (err) => {
-      if (err) {
-        console.error("Error inserting new recipe into DB:", err);
-        fs.unlinkSync(filePath); // Rollback file creation
-        return res.status(500).json({ error: "Failed to save recipe to the database." });
-      }
-      // Añadimos una URL de redirección a la respuesta.
-      // El cliente usará esta URL para recargar la página y ver la nueva receta.
-      res.status(201).json({
-        message: "Recipe created successfully",
-        redirectUrl: `/?recipe=${slug}`,
-      });
+    // Añadimos una URL de redirección a la respuesta.
+    // El cliente usará esta URL para recargar la página y ver la nueva receta.
+    res.status(201).json({
+      message: "Recipe created successfully",
+      redirectUrl: `/?recipe=${slug}`,
     });
-  } catch (writeErr) {
-    console.error("Error writing recipe file:", writeErr);
-    return res.status(500).json({ error: "Failed to write recipe file." });
+  } catch (error) {
+    console.error("Error creating recipe:", error);
+    // Intenta eliminar el archivo si se creó pero la inserción en la BD falló.
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    return res.status(500).json({ error: "Failed to create recipe." });
   }
 };
 

@@ -13,15 +13,24 @@ const SQLiteStore = require("connect-sqlite3")(session);
 const app = express();
 const port = 8214;
 
-db.serialize(() => {
-  // Migración: Añadir la columna 'order_index' a la tabla 'manual_shopping_items' si no existe.
-  // Esto es para soportar el ordenamiento manual (drag-and-drop).
-  // El IGNORE previene un error si la columna ya existe.
-  db.run("ALTER TABLE manual_shopping_items ADD COLUMN order_index INTEGER", (err) => {
-    if (err && !err.message.includes("duplicate column name")) {
-      console.error("Error al migrar la tabla manual_shopping_items:", err);
-    }
-  });
+// --- Database Promise Wrappers ---
+const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row))));
+const dbAll = (sql, params = []) =>
+  new Promise((resolve, reject) => db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows))));
+const dbRun = (sql, params = []) =>
+  new Promise((resolve, reject) =>
+    db.run(sql, params, function (err) {
+      err ? reject(err) : resolve(this);
+    })
+  );
+
+// Migración: Añadir la columna 'order_index' a la tabla 'manual_shopping_items' si no existe.
+// Esto es para soportar el ordenamiento manual (drag-and-drop).
+db.run("ALTER TABLE manual_shopping_items ADD COLUMN order_index INTEGER", (err) => {
+  // Ignoramos el error si la columna ya existe, que es lo esperado en ejecuciones posteriores.
+  if (err && !err.message.includes("duplicate column name")) {
+    console.error("Error al migrar la tabla manual_shopping_items:", err);
+  }
 });
 const recipesPath = path.join(__dirname, "recetas");
 setupDatabase(db, recipesPath);
@@ -77,9 +86,7 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
   }
 
   try {
-    const recipeRow = await new Promise((resolve, reject) => {
-      db.get("SELECT path FROM recipes WHERE name = ?", [title], (err, row) => (err ? reject(err) : resolve(row)));
-    });
+    const recipeRow = await dbGet("SELECT path FROM recipes WHERE name = ?", [title]);
 
     if (!recipeRow) {
       return res.status(404).json({ error: `La receta "${title}" no fue encontrada.` });
@@ -98,6 +105,9 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
       if (fileErr.code !== "ENOENT") throw fileErr; // Volver a lanzar si es un error diferente a "no encontrado"
     }
 
+    // 2. Eliminar la receta de la base de datos
+    const { changes } = await dbRun("DELETE FROM recipes WHERE name = ?", [title]);
+
     if (changes === 0 && !fileDeleted) {
       return res.status(404).json({ error: `La receta "${title}" no fue encontrada.` });
     }
@@ -110,57 +120,51 @@ app.delete("/api/recipes", isAdmin, async (req, res) => {
 });
 
 // Nueva ruta para guardar el plan de un día completo (Desayuno, Almuerzo, Cena)
-app.post("/api/planning/day", isAuthenticated, (req, res) => {
+app.post("/api/planning/day", isAuthenticated, async (req, res) => {
   const { date, meals } = req.body;
 
   if (!date || !meals) {
     return res.status(400).json({ error: "Se requieren la fecha y las comidas." });
   }
 
-  // Usamos una transacción para asegurar que todas las operaciones se completen o ninguna lo haga.
-  db.serialize(() => {
-    db.run("BEGIN TRANSACTION;");
+  try {
+    // Usamos una transacción para asegurar que todas las operaciones se completen o ninguna lo haga.
+    await dbRun("BEGIN TRANSACTION;");
 
     // Primero, borramos las entradas existentes para ese día para evitar conflictos.
-    db.run("DELETE FROM planning WHERE date = ?", [date]);
+    await dbRun("DELETE FROM planning WHERE date = ?", [date]);
 
-    const stmt = db.prepare("INSERT INTO planning (date, meal_type, recipe_name) VALUES (?, ?, ?)");
-
-    // Iteramos sobre las comidas enviadas (breakfast, lunch, dinner)
-    for (const mealType in meals) {
-      const recipeName = meals[mealType];
-      // Solo insertamos si se ha seleccionado una receta para ese tipo de comida.
-      if (recipeName && recipeName !== "") {
-        stmt.run(date, mealType, recipeName);
-      }
-    }
-
-    stmt.finalize((err) => {
-      if (err) {
-        db.run("ROLLBACK;");
-        return res.status(500).json({ error: "Error al finalizar la inserción." });
-      }
-      db.run("COMMIT;", (commitErr) => {
-        if (commitErr) return res.status(500).json({ error: "Error al guardar la planificación." });
-        res.status(200).json({ message: "Planificación guardada correctamente." });
+    // Creamos un array de promesas para todas las inserciones.
+    const insertPromises = Object.entries(meals)
+      .filter(([, recipeName]) => recipeName && recipeName !== "") // Solo insertamos si hay receta
+      .map(([mealType, recipeName]) => {
+        return dbRun("INSERT INTO planning (date, meal_type, recipe_name) VALUES (?, ?, ?)", [date, mealType, recipeName]);
       });
-    });
-  });
+
+    await Promise.all(insertPromises); // Ejecutamos todas las inserciones
+
+    await dbRun("COMMIT;");
+    res.status(200).json({ message: "Planificación guardada correctamente." });
+  } catch (error) {
+    await dbRun("ROLLBACK;");
+    console.error("Error al guardar la planificación del día:", error);
+    return res.status(500).json({ error: "Error al guardar la planificación." });
+  }
 });
 
 // Nueva ruta para limpiar un día completo de la planificación
-app.delete("/api/planning/day", isAuthenticated, (req, res) => {
+app.delete("/api/planning/day", isAuthenticated, async (req, res) => {
   const { date } = req.body;
   if (!date) {
     return res.status(400).json({ error: "La fecha es requerida." });
   }
-  db.run("DELETE FROM planning WHERE date = ?", [date], function (err) {
-    if (err) {
-      console.error(`Error al limpiar el día ${date}:`, err);
-      return res.status(500).json({ error: "Error de base de datos al limpiar el día." });
-    }
+  try {
+    await dbRun("DELETE FROM planning WHERE date = ?", [date]);
     res.status(200).json({ message: "Día limpiado correctamente." });
-  });
+  } catch (error) {
+    console.error(`Error al limpiar el día ${date}:`, error);
+    return res.status(500).json({ error: "Error de base de datos al limpiar el día." });
+  }
 });
 
 // Nueva ruta para actualizar el orden de la lista manual
@@ -175,9 +179,7 @@ app.use((req, res, next) => {
 // Middleware to pass all recipe titles to all templates for search functionality
 app.use(async (req, res, next) => {
   try {
-    const recipeRows = await new Promise((resolve, reject) =>
-      db.all("SELECT name FROM recipes ORDER BY name", [], (err, rows) => (err ? reject(err) : resolve(rows)))
-    );
+    const recipeRows = await dbAll("SELECT name FROM recipes ORDER BY name");
     res.locals.recipeTitles = recipeRows.map((r) => r.name);
   } catch (error) {
     console.error("Error fetching recipe titles for layout:", error);
