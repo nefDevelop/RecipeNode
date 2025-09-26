@@ -8,12 +8,12 @@ const viewController = require("../controllers/viewController");
 router.get("/", recipeController.getHomePage);
 
 // Ruta para la nueva página de la lista de la compra
-router.get("/shopping-list", async (req, res) => {
-  // La variable 'recipeTitles' ahora es proporcionada por un middleware global.
-  // Simplemente renderizamos la vista.
+router.get("/shopping-list", (req, res) => {
+  // async no es necesario aquí
+  // Las variables 'user' y 'recipeTitles' son proporcionadas por middlewares globales,
+  // por lo que están disponibles automáticamente en la vista.
   res.render("shopping-list", {
     title: "Lista de la Compra",
-    user: req.session,
   });
 });
 
