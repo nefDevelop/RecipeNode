@@ -12,6 +12,3 @@ Calificaciones y Notas Privadas: Permitir que cada usuario pueda dar una calific
 
 API más Robusta: Refactorizar los controladores que aún usan callbacks de la base de datos para que utilicen async/await de forma consistente. Esto hace el código más limpio, legible y fácil de mantener, especialmente en el manejo de errores.
 
-Implementar cualquiera de estas ideas haría tu aplicación aún más útil y atractiva para los usuarios. ¡Tu proyecto tiene una base excelente para seguir creciendo!
-
-Prompts to try
