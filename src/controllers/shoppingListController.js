@@ -127,98 +127,76 @@ const updateManualListOrder = (req, res) => {
 /**
  * Genera una lista de la compra a partir de las recetas planificadas en un rango de fechas.
  */
-const generateShoppingList = (req, res) => {
+const generateShoppingList = async (req, res) => {
   const { startDate, endDate } = req.query;
 
   if (!startDate || !endDate) {
     return res.status(400).json({ error: "Se requieren fechas de inicio y fin." });
   }
 
-  const sql = `SELECT recipe_name FROM planning WHERE date >= ? AND date <= ?`;
+  try {
+    // Promisify db.all
+    const dbAll = (sql, params) =>
+      new Promise((resolve, reject) => db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows))));
 
-  db.all(sql, [startDate, endDate], (err, plannedMeals) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (plannedMeals.length === 0) return res.json({ ingredients: {} });
+    // 1. Get planned meals
+    const plannedMeals = await dbAll(`SELECT recipe_name FROM planning WHERE date >= ? AND date <= ?`, [startDate, endDate]);
+    if (plannedMeals.length === 0) return res.json({ ingredients: [] });
 
+    // 2. Get unique recipe paths
     const recipeNames = plannedMeals.map((r) => r.recipe_name);
     const uniqueRecipeNames = [...new Set(recipeNames)];
-    if (uniqueRecipeNames.length === 0) return res.json({ ingredients: {} });
-
+    if (uniqueRecipeNames.length === 0) return res.json({ ingredients: [] });
     const placeholders = uniqueRecipeNames.map(() => "?").join(",");
-    const pathSql = `SELECT name, path FROM recipes WHERE name IN (${placeholders})`;
+    const recipeDetails = await dbAll(`SELECT name, path FROM recipes WHERE name IN (${placeholders})`, uniqueRecipeNames);
+    const recipePathMap = recipeDetails.reduce((acc, row) => ({ ...acc, [row.name]: row.path }), {});
 
-    db.all(pathSql, uniqueRecipeNames, (pathErr, recipeDetails) => {
-      if (pathErr) return res.status(500).json({ error: pathErr.message });
+    // 3. Get unit conversions
+    const settingRows = await dbAll("SELECT id, value FROM unit_settings", []);
+    const conversions = settingRows.reduce((acc, row) => ({ ...acc, [row.id]: row.value }), {});
 
-      const recipePathMap = recipeDetails.reduce((acc, row) => {
-        acc[row.name] = row.path;
-        return acc;
-      }, {});
-
-      // Obtener las categorías personalizadas de la base de datos
-      db.all("SELECT lower(ingredient_name) as name, category FROM ingredient_categories", [], (catErr, categoryRows) => {
-        if (catErr) return res.status(500).json({ error: catErr.message });
-        const customCategories = categoryRows.reduce((acc, row) => {
-          acc[row.name] = row.category;
-          return acc;
-        }, {});
-
-        db.all("SELECT id, value FROM unit_settings", [], (settingErr, settingRows) => {
-          if (settingErr) return res.status(500).json({ error: settingErr.message });
-          const conversions = settingRows.reduce((acc, row) => {
-            acc[row.id] = row.value;
-            return acc;
-          }, {});
-
-          const allIngredientsRaw = [];
-          recipeNames.forEach((name) => {
-            const recipePath = recipePathMap[name];
-            if (recipePath) {
-              try {
-                const fileContent = fs.readFileSync(recipePath, "utf8");
-                const { body } = fm(fileContent);
-                const ingredients = extractIngredients(body);
-                allIngredientsRaw.push(...ingredients);
-              } catch (readErr) {
-                console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
-              }
-            }
-          });
-
-          const normalizedIngredients = allIngredientsRaw.map((ingStr) => {
-            const parsed = parseIngredient(ingStr);
-            return normalizeIngredient(parsed, conversions);
-          });
-
-          const aggregated = normalizedIngredients.reduce((acc, ing) => {
-            const key = `${ing.name.toLowerCase()}|${ing.baseUnit}`;
-            if (!acc[key]) {
-              // Usar categoría personalizada si existe, si no la del parser, y si no "Otros"
-              const category = customCategories[ing.name.toLowerCase()] || ing.category || "Otros";
-              acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit, category: category };
-            }
-            acc[key].totalQuantity += ing.quantity;
-            return acc;
-          }, {});
-
-          const categorizedIngredients = {};
-          Object.values(aggregated).forEach((ing) => {
-            const category = ing.category;
-            if (!categorizedIngredients[category]) {
-              categorizedIngredients[category] = [];
-            }
-            // Formato del texto del ingrediente
-            let displayString = `${ing.totalQuantity.toFixed(2).replace(/\.00$/, "")} ${ing.baseUnit} de ${ing.name}`;
-            if (ing.baseUnit === "unidad") displayString = `${ing.totalQuantity} ${ing.name}${ing.totalQuantity > 1 ? "s" : ""}`;
-
-            categorizedIngredients[category].push(displayString);
-          });
-
-          res.json({ ingredients: categorizedIngredients });
-        });
-      });
+    // 4. Read all ingredients from recipe files
+    const allIngredientsRaw = [];
+    recipeNames.forEach((name) => {
+      const recipePath = recipePathMap[name];
+      if (recipePath) {
+        try {
+          const fileContent = fs.readFileSync(recipePath, "utf8");
+          const { body } = fm(fileContent);
+          const ingredients = extractIngredients(body);
+          allIngredientsRaw.push(...ingredients);
+        } catch (readErr) {
+          console.error(`No se pudo leer el archivo de receta: ${recipePath}`, readErr);
+        }
+      }
     });
-  });
+
+    // 5. Normalize and aggregate ingredients
+    const normalizedIngredients = allIngredientsRaw.map((ingStr) => normalizeIngredient(parseIngredient(ingStr), conversions));
+
+    const aggregated = normalizedIngredients.reduce((acc, ing) => {
+      const key = `${ing.name.toLowerCase()}|${ing.baseUnit}`;
+      if (!acc[key]) {
+        acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit };
+      }
+      acc[key].totalQuantity += ing.quantity;
+      return acc;
+    }, {});
+
+    // 6. Format final list and sort alphabetically
+    const finalList = Object.values(aggregated).map((ing) => {
+      let displayString = `${ing.totalQuantity.toFixed(2).replace(/\.00$/, "")} ${ing.baseUnit} de ${ing.name}`;
+      if (ing.baseUnit === "unidad") displayString = `${ing.totalQuantity} ${ing.name}${ing.totalQuantity > 1 ? "s" : ""}`;
+      return displayString;
+    });
+
+    finalList.sort((a, b) => a.localeCompare(b));
+
+    res.json({ ingredients: finalList });
+  } catch (error) {
+    console.error("Error al generar la lista de la compra:", error);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
 };
 
 module.exports = { getManualList, addManualItem, updateManualItem, deleteManualItem, generateShoppingList, updateManualListOrder };

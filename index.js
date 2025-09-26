@@ -158,9 +158,6 @@ app.delete("/api/planning/day", (req, res) => {
 // Nueva ruta para actualizar el orden de la lista manual
 app.put("/api/shopping-list/manual/order", shoppingListController.updateManualListOrder);
 
-// Nueva ruta para actualizar la categoría de un ingrediente
-app.post("/api/settings/ingredient-category", settingsController.updateIngredientCategory);
-
 // Middleware to pass session user to all templates
 app.use((req, res, next) => {
   res.locals.user = req.session;
