@@ -98,12 +98,13 @@ const getHomePage = async (req, res) => {
     const recipeName = req.query.recipe;
 
     if (recipeName) {
-      const recipeRow = await dbGet("SELECT path FROM recipes WHERE name = ?", [recipeName]);
+      await dbRun("UPDATE recipes SET views = views + 1 WHERE name = ?", [recipeName]);
+      const recipeRow = await dbGet("SELECT path, views FROM recipes WHERE name = ?", [recipeName]);
 
       if (!recipeRow) {
         return res.render("index", {
           title: "Receta no encontrada",
-          content: `La receta "${recipeName}" no existe.`,
+          content: `La receta "${recipeName}" no existe.`, // Corrected escaping for template literal
           recipes: null,
           user: req.session,
         });
@@ -138,7 +139,7 @@ const getHomePage = async (req, res) => {
           return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
         })
         // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
-        .replace(/\[\[([^|\]\n]+)(?:\|([^\]\n]+))?\]\]/g, (match, linkTarget, linkText) => {
+        .replace(new RegExp("\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]", "g"), (match, linkTarget, linkText) => {
           const text = linkText || linkTarget;
           return `<a href="/?recipe=${encodeURIComponent(linkTarget.trim())}" class="text-green-600 hover:underline">${text.trim()}</a>`;
         });
@@ -153,7 +154,7 @@ const getHomePage = async (req, res) => {
       let htmlContent = marked.parse(processedMarkdown, markedOptions);
 
       // 4. Post-procesar el HTML para corregir rutas de imágenes que no eran de tipo ![[...]]
-      // Esto arregla rutas como <img src="../_resources/..."> o !alt
+      // Esto arregla rutas como <img src="../_resources/"> o !alt
       htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
       // 5. Habilitar los checkboxes de las listas de tareas eliminando el atributo 'disabled'.
       // Esto permite que los usuarios los marquen mientras cocinan.
@@ -169,22 +170,27 @@ const getHomePage = async (req, res) => {
       });
 
       // --- LOGS DE ESTILOS ---
-      console.log(`\n--- [RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
+      console.log(`\n--- [RECETA: ${recipeName}] Análisis de Estilos en HTML ---
+`);
       const classMatches = htmlContent.match(/class="[^"]+"/g) || [];
       const styleMatches = htmlContent.match(/style="[^"]+"/g) || [];
       console.log(`[Estilos] Clases CSS encontradas (${classMatches.length}):`, classMatches);
       console.log(`[Estilos] Estilos en línea encontrados (${styleMatches.length}):`, styleMatches);
-      console.log(`--- Fin del análisis ---\n`);
+      console.log(`--- Fin del análisis ---
+`);
 
+      const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
         title: attributes.title || recipeName,
         content: htmlContent,
         servings: attributes.servings,
+        views: recipeRow.views, // Pass views to the template
         recipes: null,
+        mostViewed: mostViewedRecipes,
         user: req.session,
       });
     } else {
-      const allRecipes = await dbAll("SELECT name, path FROM recipes ORDER BY name");
+      const allRecipes = await dbAll("SELECT name, path, views FROM recipes ORDER BY name"); // Fetch views here
 
       const recipesWithImages = await Promise.all(
         allRecipes.map(async (recipe) => {
@@ -192,18 +198,20 @@ const getHomePage = async (req, res) => {
             const fileContent = await fs.promises.readFile(recipe.path, "utf8");
             const { attributes, body } = fm(fileContent);
             const image = extractImageFromMarkdown(attributes, body);
-            return { name: recipe.name, image };
+            return { name: recipe.name, image, views: recipe.views }; // Include views here
           } catch (e) {
             console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
-            return { name: recipe.name, image: null };
+            return { name: recipe.name, image: null, views: recipe.views }; // Include views here
           }
         })
       );
 
+      const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
         title: "Recetas",
         content: null,
         recipes: recipesWithImages,
+        mostViewed: mostViewedRecipes,
         user: req.session,
         servings: null, // Asegurarse de que 'servings' siempre esté definido
       });
@@ -285,7 +293,9 @@ const getRecipeByIdApi = async (req, res) => {
   const recipeName = req.params.id;
 
   try {
-    const recipeRow = await dbGet("SELECT path FROM recipes WHERE name = ?", [recipeName]);
+    await dbRun("UPDATE recipes SET views = views + 1 WHERE name = ?", [recipeName]);
+    await dbRun("UPDATE recipes SET views = views + 1 WHERE name = ?", [recipeName]);
+    const recipeRow = await dbGet("SELECT path, views FROM recipes WHERE name = ?", [recipeName]);
 
     if (!recipeRow) {
       return res.status(404).json({ error: `Recipe "${recipeName}" not found.` });
@@ -294,15 +304,12 @@ const getRecipeByIdApi = async (req, res) => {
     const fileContent = await fs.promises.readFile(recipeRow.path, "utf8");
     let { attributes, body: rawBody } = fm(fileContent);
 
-    // Increment view count
-    attributes.views = (attributes.views || 0) + 1;
-
-    // Reconstruct front-matter and content
-    const updatedFrontMatter = `---\n${Object.entries(attributes).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n`;
-    const updatedFileContent = updatedFrontMatter + rawBody;
-
-    // Write updated content back to file
-    await fs.promises.writeFile(recipeRow.path, updatedFileContent, "utf8");
+    // Sincronizar el contador de la BD al archivo .md
+    if (attributes.views !== recipeRow.views) {
+      attributes.views = recipeRow.views;
+      const updatedFrontMatter = `---\n${Object.entries(attributes).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n`;
+      await fs.promises.writeFile(recipeRow.path, updatedFrontMatter + rawBody, "utf8");
+    }
 
     // Lógica de renderizado consistente con getHomePage
     let markdownContent = rawBody
@@ -320,7 +327,7 @@ const getRecipeByIdApi = async (req, res) => {
         return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
       })
       // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
-      .replace(/\[\[([^|\]\n]+)(?:\|([^\]\n]+))?\]\]/g, (match, linkTarget, linkText) => {
+      .replace(new RegExp("\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]", "g"), (match, linkTarget, linkText) => {
         const text = linkText || linkTarget;
         return `<a href="/?recipe=${encodeURIComponent(linkTarget.trim())}" class="text-green-600 hover:underline">${text.trim()}</a>`;
       });
@@ -344,10 +351,14 @@ const getRecipeByIdApi = async (req, res) => {
     });
 
     // --- LOGS DE ESTILOS ---
-    console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---`);
+    console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---
+`);
     console.log(`[Estilos] Clases CSS encontradas:`, htmlContent.match(/class="[^"]+"/g) || []);
     console.log(`[Estilos] Estilos en línea encontrados:`, htmlContent.match(/style="[^"]+"/g) || []);
-    console.log(`--- Fin del análisis ---\n`);
+    console.log(`--- Fin del análisis ---
+`);
+
+    attributes.views = recipeRow.views;
 
     res.json({
       id: recipeName,
@@ -379,8 +390,7 @@ const createRecipeApi = async (req, res) => {
   }
 
   const now = new Date().toISOString();
-  let frontmatter = `---
-title: "${title.replace(/"/g, '\\"')}"
+  let frontmatter = `---\ntitle: "${title.replace(/"/g, '\"')}"
 `;
   if (source) frontmatter += `source: ${source}\n`;
   if (image) frontmatter += `image: ${image}\n`;

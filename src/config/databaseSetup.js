@@ -80,17 +80,38 @@ function setupDatabase(db, recipesPath) {
         }
       });
 
+      // Add views column if it doesn't exist
+      db.run(`ALTER TABLE recipes ADD COLUMN views INTEGER DEFAULT 0`, (alterErr) => {
+        if (alterErr && !alterErr.message.includes("duplicate column name")) {
+          console.error("Error adding views column:", alterErr);
+        } else if (!alterErr) {
+          console.log("Added views column to recipes table.");
+        }
+      });
+
       // Sync filesystem recipes to DB on startup
       try {
         const files = fs.readdirSync(recipesPath).filter((file) => path.extname(file) === ".md");
         const recipeNamesFromFS = files.map((file) => path.basename(file, ".md"));
+        const fm = require("front-matter"); // Importar aquí para mantener el alcance local
 
         db.serialize(() => {
-          const insertStmt = db.prepare("INSERT OR REPLACE INTO recipes (name, path) VALUES (?, ?)");
+          const insertStmt = db.prepare("INSERT OR REPLACE INTO recipes (name, path, cooking_time, cuisine_type, views) VALUES (?, ?, ?, ?, ?)");
+          
           files.forEach((file) => {
             const name = path.basename(file, ".md");
             const fullPath = path.join(recipesPath, file);
-            insertStmt.run(name, fullPath);
+            try {
+              const fileContent = fs.readFileSync(fullPath, "utf8");
+              const { attributes } = fm(fileContent);
+              const views = attributes.views || 0;
+              const cookingTime = attributes.time || null;
+              const cuisineType = attributes.cuisine || null;
+              insertStmt.run(name, fullPath, cookingTime, cuisineType, views);
+            } catch (e) {
+              console.error(`Error al leer front-matter para ${name}: ${e.message}`);
+              insertStmt.run(name, fullPath, null, null, 0); // Insertar con valores por defecto si falla
+            }
           });
           insertStmt.finalize();
 
@@ -100,7 +121,7 @@ function setupDatabase(db, recipesPath) {
           } else {
             db.run(`DELETE FROM recipes`);
           }
-          console.log(`Sincronizadas ${files.length} recetas con la base de datos.`);
+          console.log(`Sincronizadas ${files.length} recetas con la base de datos (incluyendo metadatos).`);
         });
       } catch (e) {
         console.error("No se pudieron sincronizar las recetas desde el sistema de archivos:", e);

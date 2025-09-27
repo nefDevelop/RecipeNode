@@ -5,7 +5,7 @@
     <!-- Overlay para el menú lateral, z-30 para que esté debajo del header (z-50) -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
 
-    <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user }) %>
+    <%- include('partials/sidebar', { recipeTitles: recipeTitles, user: user, mostViewed: mostViewed }) %>
     <!-- Main Content -->
     <main class="w-full md:w-3/4">
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow min-h-[80vh]">
@@ -39,6 +39,17 @@
           </button>
         </div>
         <% } %>
+
+        <% if (typeof views !== 'undefined' && views > 0) { %>
+          <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+            </svg>
+            <span>Visto <%= views %> veces</span>
+          </div>
+        <% } %>
+
         <!-- Estilos específicos para la vista de receta -->
         <link rel="stylesheet" href="/css/kitchen-mode.css" />
         <link rel="stylesheet" href="/css/print.css" media="print" />
@@ -170,6 +181,13 @@
                   >
                     <%= recipe.name %>
                   </h3>
+                  <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span><%= recipe.views || 0 %></span>
+                  </div>
                 </div>
               </a>
               <!-- Botón de Borrar (Solo para Admins) -->
