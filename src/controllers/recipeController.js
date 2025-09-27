@@ -139,7 +139,7 @@ const getHomePage = async (req, res) => {
           return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
         })
         // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
-        .replace(new RegExp("\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]", "g"), (match, linkTarget, linkText) => {
+        .replace(/\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]/g, (match, linkTarget, linkText) => {
           const text = linkText || linkTarget;
           return `<a href="/?recipe=${encodeURIComponent(linkTarget.trim())}" class="text-green-600 hover:underline">${text.trim()}</a>`;
         });
@@ -327,7 +327,7 @@ const getRecipeByIdApi = async (req, res) => {
         return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
       })
       // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
-      .replace(new RegExp("\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]", "g"), (match, linkTarget, linkText) => {
+      .replace(/\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]/g, (match, linkTarget, linkText) => {
         const text = linkText || linkTarget;
         return `<a href="/?recipe=${encodeURIComponent(linkTarget.trim())}" class="text-green-600 hover:underline">${text.trim()}</a>`;
       });
