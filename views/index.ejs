@@ -38,16 +38,18 @@
             +
           </button>
         </div>
-        <% } %>
-
-        <% if (typeof views !== 'undefined' && views > 0) { %>
-          <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4 text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-            </svg>
-            <span>Visto <%= views %> veces</span>
-          </div>
+        <% } %> <% if (typeof views !== 'undefined' && views > 0) { %>
+        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+            <path
+              fill-rule="evenodd"
+              d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>Visto <%= views %> veces</span>
+        </div>
         <% } %>
 
         <!-- Estilos específicos para la vista de receta -->
@@ -119,96 +121,98 @@
         <!-- Si estamos en la página principal, mostramos la galería -->
         <h1 class="text-3xl font-bold mb-6">Todas las Recetas</h1>
         <div id="recipe-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <% if (recipes && recipes.length > 0) { %>
-            <% recipes.forEach(recipe => { %>
-            <!-- Contenedor relativo para posicionar el botón de borrado -->
-            <div class="relative group">
-              <a
-                href="/?recipe=<%= encodeURIComponent(recipe.name) %>"
-                class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-              >
-                <div class="relative pb-[75%] bg-green-100">
-                  <!-- Ratio de aspecto 4:3 -->
-                  <% if (recipe.image) { %>
-                  <img
-                    src="<%- recipe.image %>"
-                    alt="<%= recipe.name %>"
-                    class="absolute h-full w-full object-cover"
-                    onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"
-                  />
-                  <div
-                    class="placeholder absolute h-full w-full bg-green-100 dark:bg-green-900 items-center justify-center"
-                    style="display: none"
+          <% if (recipes && recipes.length > 0) { %> <% recipes.forEach(recipe => { %>
+          <!-- Contenedor relativo para posicionar el botón de borrado -->
+          <div class="relative group">
+            <a
+              href="/?recipe=<%= encodeURIComponent(recipe.name) %>"
+              class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            >
+              <div class="relative pb-[75%] bg-green-100">
+                <!-- Ratio de aspecto 4:3 -->
+                <% if (recipe.image) { %>
+                <img
+                  src="<%- recipe.image %>"
+                  alt="<%= recipe.name %>"
+                  class="absolute h-full w-full object-cover"
+                  onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"
+                />
+                <div
+                  class="placeholder absolute h-full w-full bg-green-100 dark:bg-green-900 items-center justify-center"
+                  style="display: none"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-12 h-12 text-green-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-12 h-12 text-green-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <% } else { %>
-                  <div class="absolute h-full w-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-12 h-12 text-green-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <% } %>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
                 </div>
-                <div class="p-4">
-                  <h3
-                    class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
-                    title="<%= recipe.name %>"
+                <% } else { %>
+                <div class="absolute h-full w-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-12 h-12 text-green-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <%= recipe.name %>
-                  </h3>
-                  <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                    </svg>
-                    <span><%= recipe.views || 0 %></span>
-                  </div>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
                 </div>
-              </a>
-              <!-- Botón de Borrar (Solo para Admins) -->
-              <% if (user && user.role === 'admin') { %>
-              <button
-                class="delete-recipe-btn absolute top-2 right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                data-recipe-name="<%= recipe.name %>"
-                title="Eliminar receta"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fill-rule="evenodd"
-                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </button>
-              <% } %>
-            </div>
-            <% }) %>
-          <% } else { %>
+                <% } %>
+              </div>
+              <div class="p-4">
+                <h3
+                  class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
+                  title="<%= recipe.name %>"
+                >
+                  <%= recipe.name %>
+                </h3>
+                <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path
+                      fill-rule="evenodd"
+                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <span><%= recipe.views || 0 %></span>
+                </div>
+              </div>
+            </a>
+            <!-- Botón de Borrar (Solo para Admins) -->
+            <% if (user && user.role === 'admin') { %>
+            <button
+              class="delete-recipe-btn absolute top-2 right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              data-recipe-name="<%= recipe.name %>"
+              title="Eliminar receta"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+            <% } %>
+          </div>
+          <% }) %> <% } else { %>
           <!-- Mensaje por si algo falla -->
           <div class="text-center text-gray-500 pt-16 col-span-full">
             <h1 class="text-2xl font-bold">Bienvenido a RecipeNode</h1>
@@ -221,13 +225,8 @@
     </main>
 
     <!-- Timer Modal/Overlay -->
-    <div
-      id="timer-modal"
-      class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[1001] hidden"
-    >
-      <div
-        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl text-center relative"
-      >
+    <div id="timer-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[1001] hidden">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl text-center relative">
         <h2 id="timer-modal-title" class="text-2xl font-bold mb-4">Temporizador</h2>
         <div id="timer-display" class="text-6xl font-mono mb-6">00:00</div>
         <div class="flex justify-center gap-4">
@@ -352,8 +351,6 @@
 
 <!-- Script para el Modo Cocina -->
 <script src="/js/kitchen-mode.js"></script>
-
-<script src="/js/sidebar-search.js"></script>
 
 <!-- Cargar los modales y sus scripts -->
 <%- include('partials/footer') %>

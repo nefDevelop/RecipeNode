@@ -328,6 +328,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterToggleButton = document.getElementById("filter-toggle-btn");
   const filterOptionsContainer = document.getElementById("filter-options");
 
+  console.log("filterToggleButton:", filterToggleButton);
+  console.log("filterOptionsContainer:", filterOptionsContainer);
+
   if (filterToggleButton && filterOptionsContainer) {
     filterToggleButton.addEventListener("click", () => {
       filterOptionsContainer.classList.toggle("hidden");
@@ -351,4 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Filter options hidden as no URL parameters present.");
     }
   }
+
+
 });
