@@ -209,7 +209,7 @@ const getHomePage = async (req, res) => {
         if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
           duration *= 60;
         }
-        return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
+        return `<span class="timer-trigger" style="text-decoration: underline;" data-duration="${duration}">${match}</span>`;
       });
 
       // --- LOGS DE ESTILOS ---
@@ -414,7 +414,7 @@ const getRecipeByIdApi = async (req, res) => {
       if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
         duration *= 60;
       }
-      return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
+      return `<span class="timer-trigger" style="text-decoration: underline;" data-duration="${duration}">${match}</span>`;
     });
 
     // --- LOGS DE ESTILOS ---

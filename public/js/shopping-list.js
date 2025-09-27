@@ -392,6 +392,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadListFromStorage();
   setInitialWeek();
   updateMonthDisplay();
-  switchTab("weekly");
+  switchTab("monthly");
   fetchManualList();
 });

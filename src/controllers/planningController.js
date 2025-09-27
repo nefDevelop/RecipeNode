@@ -26,7 +26,7 @@ const getPlanningData = async (req, res) => {
   }
 
   try {
-    const rows = await dbAll("SELECT date, meal_type, recipe_name FROM planning");
+    const rows = await dbAll("SELECT date, meal_type, recipe_name FROM planning ORDER BY CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END");
     // Transform the rows into the format FullCalendar expects: an array of event objects.
     const events = rows.map((row) => {
       // Establecer un color de fondo uniforme para todos los eventos del calendario
@@ -103,7 +103,12 @@ const generatePlanningList = async (req, res) => {
       const dateString = dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       html += `<li><strong>${dateString}</strong><ul>`;
       mealsByDate[date].forEach(meal => {
-        const mealType = meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1);
+        const mealTypeMap = {
+          breakfast: 'Desayuno',
+          lunch: 'Almuerzo',
+          dinner: 'Cena',
+        };
+        const mealType = mealTypeMap[meal.meal_type] || (meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1));
         html += `<li>${mealType}: ${meal.recipe_name}</li>`;
       });
       html += "</ul></li>";

@@ -303,16 +303,31 @@ document.addEventListener("DOMContentLoaded", () => {
       if (searchResultsContainer) {
         searchResultsContainer.style.display = "none";
       }
+      if (filterOptionsContainer) {
+        filterOptionsContainer.classList.add("hidden");
+      }
       searchInput.blur();
-      console.log("Escape key pressed, hiding suggestions.");
+      console.log("Escape key pressed, hiding suggestions and filters.");
     }
   });
 
-  // Ocultar resultados si se hace clic fuera
+  // Ocultar resultados y filtros si se hace clic fuera
   document.addEventListener("click", (e) => {
-    if (searchResultsContainer && !searchInput.contains(e.target) && !searchResultsContainer.contains(e.target) && (!filterOptionsContainer || !filterOptionsContainer.contains(e.target))) {
-      searchResultsContainer.style.display = "none";
-      console.log("Clicked outside search/filters, hiding suggestions.");
+    const isClickInsideSearch = searchInput.contains(e.target) || (searchResultsContainer && searchResultsContainer.contains(e.target));
+    const isClickInsideFilter = filterToggleButton.contains(e.target) || (filterOptionsContainer && filterOptionsContainer.contains(e.target));
+
+    if (!isClickInsideSearch) {
+      if (searchResultsContainer) {
+        searchResultsContainer.style.display = "none";
+      }
+      console.log("Clicked outside search, hiding suggestions.");
+    }
+
+    if (!isClickInsideFilter) {
+      if (filterOptionsContainer) {
+        filterOptionsContainer.classList.add("hidden");
+      }
+      console.log("Clicked outside filter, hiding filters.");
     }
   });
 
