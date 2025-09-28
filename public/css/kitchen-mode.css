@@ -75,3 +75,9 @@
 #servings-input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* --- Timer Trigger --- */
+.timer-trigger {
+  text-decoration: underline;
+  cursor: pointer;
+}

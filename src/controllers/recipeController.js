@@ -204,12 +204,12 @@ const getHomePage = async (req, res) => {
       htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
       // 6. Identificar y envolver patrones de tiempo para temporizadores interactivos
-      htmlContent = htmlContent.replace(/(\d+)\s+(minuto|minutos|segundo|segundos)/gi, (match, number, unit) => {
+      htmlContent = htmlContent.replace(/(\d+)\s+(minuto|segundo)s?/gi, (match, number, unit) => {
         let duration = parseInt(number, 10);
         if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
           duration *= 60;
         }
-        return `<span class="timer-trigger" style="text-decoration: underline;" data-duration="${duration}">${match}</span>`;
+        return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
       });
 
       // --- LOGS DE ESTILOS ---
@@ -409,12 +409,12 @@ const getRecipeByIdApi = async (req, res) => {
     htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
     // 6. Identificar y envolver patrones de tiempo para temporizadores interactivos
-    htmlContent = htmlContent.replace(/(\d+)\s+(minuto|minutos|segundo|segundos)/gi, (match, number, unit) => {
+    htmlContent = htmlContent.replace(/(\d+)\s+(minuto|segundo)s?/gi, (match, number, unit) => {
       let duration = parseInt(number, 10);
       if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
         duration *= 60;
       }
-      return `<span class="timer-trigger" style="text-decoration: underline;" data-duration="${duration}">${match}</span>`;
+      return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
     });
 
     // --- LOGS DE ESTILOS ---

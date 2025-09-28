@@ -157,8 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event listener for timer triggers
   document.querySelectorAll('.timer-trigger').forEach(trigger => {
-    trigger.style.cursor = 'pointer'; // Indicate it's clickable
-    trigger.style.textDecoration = 'underline'; // Visual cue
     trigger.addEventListener('click', (event) => {
       event.preventDefault();
       const duration = parseInt(trigger.dataset.duration, 10);
