@@ -196,22 +196,44 @@ const generateShoppingList = async (req, res) => {
 
     const aggregated = normalizedIngredients.reduce((acc, ing) => {
       const normalizedName = normalizeIngredientName(ing.name);
-      const key = `${normalizedName}|${ing.baseUnit}`;
+      // Create a key that differentiates between ingredients with and without quantity
+      const key = ing.quantity === null ? `${normalizedName}|no_qty` : `${normalizedName}|${ing.baseUnit}`;
+
       if (!acc[key]) {
-        acc[key] = { name: ing.name, totalQuantity: 0, baseUnit: ing.baseUnit, displayName: normalizedName };
+        acc[key] = {
+          name: ing.name,
+          baseUnit: ing.baseUnit,
+          displayName: normalizedName,
+          totalQuantity: ing.quantity === null ? 0 : ing.quantity, // Initialize with quantity or 0 if no quantity
+          recipeCount: ing.quantity === null ? 1 : 0, // Initialize recipeCount if no quantity
+        };
+      } else {
+        if (ing.quantity === null) {
+          acc[key].recipeCount++;
+        } else {
+          acc[key].totalQuantity += ing.quantity;
+        }
       }
-      acc[key].totalQuantity += ing.quantity;
       return acc;
     }, {});
 
-    // 6. Format final list and sort alphabetically
-    const finalList = Object.values(aggregated).map((ing) => {
-      const quantity = parseFloat(ing.totalQuantity.toFixed(2));
-      const displayName = quantity > 1 ? `${ing.displayName}s` : ing.displayName;
+    // 6. Filter out items with 0 quantity and 0 recipe count
+    const filteredAggregated = Object.values(aggregated).filter(ing => !(ing.totalQuantity === 0 && ing.recipeCount === 0));
 
-      let displayString = `${quantity.toString().replace(/\.00$/, "")} ${ing.baseUnit} de ${displayName}`;
-      if (ing.baseUnit === "unidad") displayString = `${quantity} ${displayName}`;
-      return displayString;
+    // 7. Format final list and sort alphabetically
+    const finalList = filteredAggregated.map((ing) => {
+      if (ing.recipeCount > 0) {
+        // For ingredients without explicit quantity, show recipe count
+        return `${ing.displayName} (${ing.recipeCount} recetas)`;
+      } else {
+        // For ingredients with quantity, use existing formatting
+        const quantity = parseFloat(ing.totalQuantity.toFixed(2));
+        const displayName = quantity > 1 ? `${ing.displayName}s` : ing.displayName;
+
+        let displayString = `${quantity.toString().replace(/\.00$/, "")} ${ing.baseUnit} de ${displayName}`;
+        if (ing.baseUnit === "unidad") displayString = `${quantity} ${displayName}`;
+        return displayString;
+      }
     });
 
     finalList.sort((a, b) => a.localeCompare(b));

@@ -42,7 +42,8 @@ function extractIngredients(markdownBody) {
   let match;
   while ((match = listItemRegex.exec(ingredientsSection)) !== null) {
     const ingredient = match[1].trim();
-    if (ingredient) {
+    // Skip lines that end with a colon, as they are likely section headers
+    if (ingredient && !ingredient.endsWith(':')) {
       ingredients.push(ingredient);
     }
   }
