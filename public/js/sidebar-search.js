@@ -17,16 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
   //console.log("Filter: false");
 
   // Función para generar el HTML de una tarjeta de receta
-  const generateRecipeCardHtml = (recipe) => {
-    const imageUrl = recipe.image || ""; // Default to empty string if no image
-    const placeholderStyle = recipe.image ? "display: none;" : "display: flex;";
-
-    return `
-      <div class="relative group">
-        <a
-          href="/?recipe=${encodeURIComponent(recipe.name)}"
-          class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-        >
+    const generateRecipeCardHtml = (recipe) => {
+      const imageUrl = recipe.image || "";
+      const placeholderStyle = recipe.image ? "display: none;" : "display: flex;";
+      const displaySettings = window.recipeCardDisplaySettings || {}; // Get display settings
+  
+      let cardContentHtml = ``;
+  
+      if (displaySettings.image) {
+        cardContentHtml += `
           <div class="relative pb-[75%] bg-green-100">
             ${
               imageUrl
@@ -41,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-12 h-12 text-green-300"
                 fill="none"
-                viewBox="0 0 24 24" 
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
                 <path
@@ -53,35 +52,75 @@ document.addEventListener("DOMContentLoaded", () => {
               </svg>
             </div>
           </div>
-          <div class="p-4">
-            <h3
-              class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
-              title="${recipe.name}"
-            >
-              ${recipe.name}
-            </h3>
-          </div>
-        </a>
-        <!-- Botón de Borrar (Solo para Admins) -->
-        <!-- <% if (user && user.role === 'admin') { %> -->
-        <!-- <button
-          class="delete-recipe-btn absolute top-2 right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          data-recipe-name="${recipe.name}"
-          title="Eliminar receta"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button> -->
-        <!-- <% } %> -->
-      </div>
-    `;
-  };
-
+        `;
+      }
+  
+      cardContentHtml += `<div class="p-4">`;
+  
+      if (displaySettings.name) {
+        cardContentHtml += `
+          <h3
+            class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
+            title="${recipe.name}"
+          >
+            ${recipe.name}
+          </h3>
+        `;
+      }
+  
+      if (displaySettings.difficulty && recipe.difficulty) {
+        cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Dificultad: ${recipe.difficulty}</p>
+        `;
+      }
+  
+      if (displaySettings.cookingTime && recipe.cooking_time) {
+        cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Tiempo: ${recipe.cooking_time} min</p>
+        `;
+      }
+  
+      if (displaySettings.tags && recipe.tags && recipe.tags.length > 0) {
+        cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Etiquetas: ${recipe.tags.join(', ')}</p>
+        `;
+      }
+  
+      if (displaySettings.mainIngredient && recipe.main_ingredient) {
+        cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Ingrediente Principal: ${recipe.main_ingredient}</p>
+        `;
+      }
+  
+      cardContentHtml += `</div>`; // Close p-4 div
+  
+      return `
+        <div class="relative group">
+          <a
+            href="/?recipe=${encodeURIComponent(recipe.name)}"
+            class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+          >
+            ${cardContentHtml}
+          </a>
+          <!-- Botón de Borrar (Solo para Admins) -->
+          <!-- <% if (user && user.role === 'admin') { %> -->
+          <!-- <button
+            class="delete-recipe-btn absolute top-2 right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            data-recipe-name="${recipe.name}"
+            title="Eliminar receta"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button> -->
+          <!-- <% } %> -->
+        </div>
+      `;
+    };
   // Function to fetch and display search suggestions in the dropdown
   const fetchAndDisplaySuggestions = async () => {
     const searchTerm = searchInput.value.toLowerCase();

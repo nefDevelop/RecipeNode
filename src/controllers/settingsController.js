@@ -17,6 +17,22 @@ const getSettingsPage = async (req, res) => {
       return acc;
     }, {});
 
+    // Fetch recipe card display settings or provide defaults
+    let recipeCardDisplaySettings = await dbAll("SELECT value FROM unit_settings WHERE id = 'recipe_card_display_fields'");
+    if (recipeCardDisplaySettings.length > 0) {
+      settings.recipe_card_display_fields = JSON.parse(recipeCardDisplaySettings[0].value);
+    } else {
+      // Default display settings
+      settings.recipe_card_display_fields = {
+        image: true,
+        name: true,
+        difficulty: true,
+        cookingTime: true,
+        tags: true,
+        mainIngredient: true,
+      };
+    }
+
     return res.render("settings", {
       title: "Ajustes",
       settings,
@@ -31,12 +47,36 @@ const getSettingsPage = async (req, res) => {
 
 // Actualiza las conversiones de unidades.
 const updateSettings = async (req, res) => {
-  const units = req.body;
+  const { ...otherSettings } = req.body; // Capture all other settings
   try {
-    // Usamos Promise.all para ejecutar todas las actualizaciones en paralelo
-    const updatePromises = Object.entries(units).map(([id, value]) => {
-      return dbRun("UPDATE unit_settings SET value = ? WHERE id = ?", [value, id]);
+    const updatePromises = [];
+
+    // Handle unit settings (existing logic)
+    for (const id in otherSettings) {
+      // Exclude recipe_card_display_fields from otherSettings processing
+      if (id.startsWith('recipe_card_display_fields[')) {
+        continue;
+      }
+      updatePromises.push(dbRun("UPDATE unit_settings SET value = ? WHERE id = ?", [otherSettings[id], id]));
+    }
+
+    // Handle recipe card display settings
+    const recipeCardDisplayFieldsFromForm = req.body.recipe_card_display_fields || {};
+    const allPossibleDisplayFields = [
+      'image', 'name', 'difficulty', 'cookingTime', 'tags', 'mainIngredient'
+    ];
+    const finalRecipeCardDisplaySettings = {};
+    allPossibleDisplayFields.forEach(field => {
+      finalRecipeCardDisplaySettings[field] = !!recipeCardDisplayFieldsFromForm[field]; // Convert to boolean
     });
+
+    updatePromises.push(
+      dbRun(
+        "INSERT OR REPLACE INTO unit_settings (id, value) VALUES (?, ?)",
+        ["recipe_card_display_fields", JSON.stringify(finalRecipeCardDisplaySettings)]
+      )
+    );
+
     await Promise.all(updatePromises);
     res.redirect("/settings");
   } catch (error) {

@@ -222,6 +222,23 @@ const getHomePage = async (req, res) => {
       console.log(`--- Fin del análisis ---
 `);
 
+      // Fetch recipe card display settings or provide defaults
+      let recipeCardDisplaySettings = await dbAll("SELECT value FROM unit_settings WHERE id = 'recipe_card_display_fields'");
+      let settings = {};
+      if (recipeCardDisplaySettings.length > 0) {
+        settings.recipe_card_display_fields = JSON.parse(recipeCardDisplaySettings[0].value);
+      } else {
+        // Default display settings
+        settings.recipe_card_display_fields = {
+          image: true,
+          name: true,
+          difficulty: true,
+          cookingTime: true,
+          tags: true,
+          mainIngredient: true,
+        };
+      }
+
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
         title: attributes.title || recipeName,
@@ -231,6 +248,7 @@ const getHomePage = async (req, res) => {
         recipes: null,
         mostViewed: mostViewedRecipes,
         user: req.session,
+        settings: settings, // Pass the settings object to the template
       });
     } else {
       const allRecipes = await dbAll("SELECT name, path, views FROM recipes ORDER BY name"); // Fetch views here
@@ -249,6 +267,23 @@ const getHomePage = async (req, res) => {
         })
       );
 
+      // Fetch recipe card display settings or provide defaults
+      let recipeCardDisplaySettings = await dbAll("SELECT value FROM unit_settings WHERE id = 'recipe_card_display_fields'");
+      let settings = {};
+      if (recipeCardDisplaySettings.length > 0) {
+        settings.recipe_card_display_fields = JSON.parse(recipeCardDisplaySettings[0].value);
+      } else {
+        // Default display settings
+        settings.recipe_card_display_fields = {
+          image: true,
+          name: true,
+          difficulty: true,
+          cookingTime: true,
+          tags: true,
+          mainIngredient: true,
+        };
+      }
+
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
         title: "Recetas",
@@ -257,6 +292,7 @@ const getHomePage = async (req, res) => {
         mostViewed: mostViewedRecipes,
         user: req.session,
         servings: null, // Asegurarse de que 'servings' siempre esté definido
+        settings: settings, // Pass the settings object to the template
       });
     }
   } catch (error) {
@@ -343,7 +379,14 @@ const getAllRecipesApi = async (req, res) => {
           const fileContent = await fs.promises.readFile(recipe.path, "utf8");
           const { attributes, body } = fm(fileContent);
           const image = extractImageFromMarkdown(attributes, body);
-          return { name: recipe.name, image };
+          return {
+            name: recipe.name,
+            image,
+            difficulty: recipe.difficulty,
+            cooking_time: recipe.cooking_time,
+            tags: recipe.tags ? JSON.parse(recipe.tags) : [], // Parse tags if they are JSON strings
+            main_ingredient: recipe.main_ingredient,
+          };
         } catch (e) {
           console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
           return { name: recipe.name, image: null };

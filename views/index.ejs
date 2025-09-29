@@ -127,6 +127,8 @@
               href="/?recipe=<%= encodeURIComponent(recipe.name) %>"
               class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
             >
+              <% const displayFields = settings.recipe_card_display_fields || {}; %>
+              <% if (displayFields.image) { %>
               <div class="relative pb-[75%] bg-green-100">
                 <!-- Ratio de aspecto 4:3 -->
                 <% if (recipe.image) { %>
@@ -174,13 +176,28 @@
                 </div>
                 <% } %>
               </div>
+              <% } %>
               <div class="p-4">
+                <% if (displayFields.name) { %>
                 <h3
                   class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
                   title="<%= recipe.name %>"
                 >
                   <%= recipe.name %>
                 </h3>
+                <% } %>
+                <% if (displayFields.difficulty && recipe.difficulty) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Dificultad: <%= recipe.difficulty %></p>
+                <% } %>
+                <% if (displayFields.cookingTime && recipe.cooking_time) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Tiempo: <%= recipe.cooking_time %> min</p>
+                <% } %>
+                <% if (displayFields.tags && recipe.tags && recipe.tags.length > 0) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Etiquetas: <%= recipe.tags.join(', ') %></p>
+                <% } %>
+                <% if (displayFields.mainIngredient && recipe.main_ingredient) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Ingrediente Principal: <%= recipe.main_ingredient %></p>
+                <% } %>
                 <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -254,6 +271,8 @@
 </div>
 
 <script>
+  window.recipeCardDisplaySettings = <%- JSON.stringify(settings.recipe_card_display_fields || {}) %>;
+
   document.addEventListener("DOMContentLoaded", () => {
     // --- Lógica para Borrar Recetas (Admin) ---
     const deleteButtons = document.querySelectorAll(".delete-recipe-btn");
