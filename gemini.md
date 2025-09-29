@@ -1,2 +1,1 @@
-- **Problema - Subrayado de temporizadores:**
-  - El subrayado de los temporizadores interactivos en las recetas no abarca la frase completa (ej. "5 minutos"), solo la palabra "minuto" o "segundo". Esto es un problema de CSS en la clase `timer-trigger`.
+- Ajustes: Seleccionar que ver de la card. Segun campos del filtrado.
