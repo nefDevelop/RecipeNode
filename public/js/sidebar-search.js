@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("recipe-search-input");
   const searchResultsContainer = document.getElementById("search-results");
   const recipeGallery = document.getElementById("recipe-gallery");
+  const filterOptionsContainer = document.getElementById("filter-options");
+  const filterToggleButton = document.getElementById("filter-toggle-btn");
 
   // Only initialize if the search input is present
   if (!searchInput) {
@@ -9,15 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  console.log("searchInput:", searchInput);
-  console.log("searchResultsContainer:", searchResultsContainer);
-  console.log("recipeGallery:", recipeGallery);
-
   let activeIndex = -1;
-
-  const cookingTimeFilter = document.getElementById("cooking-time-filter");
-  const ingredientsFilter = document.getElementById("ingredients-filter");
-  const cuisineFilter = document.getElementById("cuisine-filter");
+  let dynamicFilters = {}; // To store references to dynamically created filter elements
+  // let initialLoadComplete = false; // Flag to prevent immediate hiding on load
+  //console.log("Filter: false");
 
   // Función para generar el HTML de una tarjeta de receta
   const generateRecipeCardHtml = (recipe) => {
@@ -31,7 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
           class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
         >
           <div class="relative pb-[75%] bg-green-100">
-            ${imageUrl ? `<img src="${imageUrl}" alt="${recipe.name}" class="absolute h-full w-full object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"/>` : ``}
+            ${
+              imageUrl
+                ? `<img src="${imageUrl}" alt="${recipe.name}" class="absolute h-full w-full object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"/>`
+                : ``
+            }
             <div
               class="placeholder absolute h-full w-full bg-green-100 dark:bg-green-900 items-center justify-center"
               style="${placeholderStyle}"
@@ -40,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-12 h-12 text-green-300"
                 fill="none"
-                viewBox="0 0 24 24"
+                viewBox="0 0 24 24" 
                 stroke="currentColor"
               >
                 <path
@@ -62,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </a>
         <!-- Botón de Borrar (Solo para Admins) -->
-        <!-- Assuming user and user.role are available globally or passed differently if needed -->
         <!-- <% if (user && user.role === 'admin') { %> -->
         <!-- <button
           class="delete-recipe-btn absolute top-2 right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -84,14 +84,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Function to fetch and display search suggestions in the dropdown
   const fetchAndDisplaySuggestions = async () => {
-    console.log("fetchAndDisplaySuggestions called");
     const searchTerm = searchInput.value.toLowerCase();
     if (searchResultsContainer) {
-      searchResultsContainer.innerHTML = ''; // Clear previous results
+      searchResultsContainer.innerHTML = ""; // Clear previous results
     }
 
     if (searchTerm.length > 2) {
-      console.log("Fetching suggestions for: ", searchTerm);
       const params = new URLSearchParams();
       params.set("search", searchTerm);
 
@@ -101,22 +99,29 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const recipes = await response.json();
-        console.log("Suggestions API response:", recipes);
 
         if (searchResultsContainer) {
           if (recipes.length > 0) {
-            recipes.forEach(recipe => {
-              const link = document.createElement('a');
+            recipes.forEach((recipe) => {
+              const link = document.createElement("a");
               link.href = `/?recipe=${encodeURIComponent(recipe.name)}`;
               link.textContent = recipe.name;
-              link.classList.add("flex", "items-center", "px-3", "py-2", "text-gray-700", "dark:text-gray-300", "hover:bg-gray-200", "dark:hover:bg-gray-700", "rounded-md");
+              link.classList.add(
+                "flex",
+                "items-center",
+                "px-3",
+                "py-2",
+                "text-gray-700",
+                "dark:text-gray-300",
+                "hover:bg-gray-200",
+                "dark:hover:bg-gray-700",
+                "rounded-md"
+              );
               searchResultsContainer.appendChild(link);
             });
             searchResultsContainer.style.display = "block";
-            console.log("Suggestions displayed.");
           } else {
             searchResultsContainer.style.display = "none";
-            console.log("No suggestions found.");
           }
         }
       } catch (error) {
@@ -129,101 +134,217 @@ document.addEventListener("DOMContentLoaded", () => {
       if (searchResultsContainer) {
         searchResultsContainer.style.display = "none";
       }
-      console.log("Search term too short for suggestions.");
     }
     activeIndex = -1; // Reset selection on new suggestions
   };
 
   const filterRecipes = async () => {
-    console.log("filterRecipes called");
     const searchTerm = searchInput.value.toLowerCase();
     const params = new URLSearchParams();
 
     if (searchTerm) {
       params.set("search", searchTerm);
     }
-    if (cookingTimeFilter && cookingTimeFilter.value) {
-      params.set("time_max", cookingTimeFilter.value);
-    }
-    if (ingredientsFilter && ingredientsFilter.value) {
-      params.set("ingredients", ingredientsFilter.value);
-    }
-    if (cuisineFilter && cuisineFilter.value) {
-      params.set("cuisine", cuisineFilter.value);
+
+    // Collect values from dynamically created filters
+    for (const key in dynamicFilters) {
+      const filterElement = dynamicFilters[key];
+      if (filterElement && filterElement.value) {
+        params.set(key, filterElement.value);
+      }
     }
 
     const newUrl = `/?${params.toString()}`;
 
     if (searchResultsContainer) {
-      searchResultsContainer.innerHTML = ''; // Clear previous search results dropdown
+      searchResultsContainer.innerHTML = ""; // Clear previous search results dropdown
       searchResultsContainer.style.display = "none"; // Ensure suggestions are hidden
     }
 
     // If recipeGallery is not present, redirect to the main recipe page with search parameters
     if (!recipeGallery) {
-      console.log("Recipe gallery not found, redirecting to main page with search.");
       window.location.href = newUrl;
       return;
     }
 
     // Update URL without reloading the page (only if on index.ejs)
-    window.history.pushState({ path: newUrl }, '', newUrl);
-    console.log("URL updated to:", newUrl);
+    window.history.pushState({ path: newUrl }, "", newUrl);
 
     // Only fetch if there's a search term or active filters, or if we want to display all recipes
-    const hasActiveFilters = searchTerm.length > 0 || (cookingTimeFilter && cookingTimeFilter.value) || (ingredientsFilter && ingredientsFilter.value) || (cuisineFilter && cuisineFilter.value);
+    const hasActiveFilters = searchTerm.length > 0 || Array.from(params.keys()).some((key) => key !== "search");
 
     if (hasActiveFilters) {
-      console.log("Fetching filtered recipes for: ", params.toString());
       try {
         const response = await fetch(`/api/recipes/search?${params.toString()}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const recipes = await response.json();
-        console.log("Filtered recipes API response:", recipes);
 
-        recipeGallery.innerHTML = ''; // Clear existing recipes in the gallery
+        let newGalleryContent = "";
         if (recipes.length > 0) {
-          recipes.forEach(recipe => {
-            recipeGallery.insertAdjacentHTML('beforeend', generateRecipeCardHtml(recipe));
+          recipes.forEach((recipe) => {
+            newGalleryContent += generateRecipeCardHtml(recipe);
           });
-          console.log("Recipe gallery updated with filtered recipes.");
         } else {
-          recipeGallery.innerHTML = '<div class="text-center text-gray-500 col-span-full">No se encontraron recetas con los filtros aplicados.</div>';
-          console.log("No filtered recipes found.");
+          newGalleryContent =
+            '<div class="text-center text-gray-500 col-span-full">No se encontraron recetas con los filtros aplicados.</div>';
         }
+        recipeGallery.innerHTML = newGalleryContent;
       } catch (error) {
         console.error("Error fetching filtered recipes:", error);
         recipeGallery.innerHTML = '<div class="text-center text-gray-500 col-span-full">Error al cargar recetas.</div>';
       }
     } else {
       // If no search term or filters, fetch and display all recipes
-      console.log("No search term or filters, fetching all recipes.");
       try {
         const response = await fetch(`/api/recipes/search`); // Fetch all recipes
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const recipes = await response.json();
-        console.log("All recipes API response:", recipes);
 
-        recipeGallery.innerHTML = ''; // Clear existing recipes in the gallery
+        let newGalleryContent = "";
         if (recipes.length > 0) {
-          recipes.forEach(recipe => {
-            recipeGallery.insertAdjacentHTML('beforeend', generateRecipeCardHtml(recipe));
+          recipes.forEach((recipe) => {
+            newGalleryContent += generateRecipeCardHtml(recipe);
           });
-          console.log("Recipe gallery updated with all recipes.");
         } else {
-          recipeGallery.innerHTML = '<div class="text-center text-gray-500 col-span-full">No hay recetas para mostrar. ¡Añade alguna!</div>';
-          console.log("No recipes found in database.");
+          newGalleryContent =
+            '<div class="text-center text-gray-500 col-span-full">No hay recetas para mostrar. ¡Añade alguna!</div>';
         }
+        recipeGallery.innerHTML = newGalleryContent;
       } catch (error) {
         console.error("Error fetching all recipes:", error);
         recipeGallery.innerHTML = '<div class="text-center text-gray-500 col-span-full">Error al cargar recetas.</div>';
       }
     }
     activeIndex = -1; // Reset selection on new filter
+  };
+
+  // Function to fetch available filter options from the backend
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch("/api/recipes/filters");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const availableFilters = await response.json();
+      renderFilters(availableFilters);
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+    }
+  };
+
+  // Function to dynamically render filter elements
+  const renderFilters = (availableFilters) => {
+    if (!filterOptionsContainer) return;
+
+    // Clear existing dynamic filters
+    filterOptionsContainer.innerHTML = "";
+    dynamicFilters = {}; // Reset dynamic filters object
+
+    const filterMapping = {
+      cuisine_type: { label: "Cocina", param: "cuisine" },
+      difficulty: { label: "Dificultad", param: "difficulty" },
+      meal_type: { label: "Tipo de Comida", param: "meal_type" },
+      rating: { label: "Calificación", param: "rating" },
+      tags: { label: "Etiquetas", param: "tags" },
+      main_ingredient: { label: "Ingrediente Principal", param: "main_ingredient" },
+      equipment: { label: "Equipo", param: "equipment" },
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    for (const field in filterMapping) {
+      const { label, param } = filterMapping[field];
+      const options = availableFilters[field];
+
+      if (options && options.length > 0) {
+        const filterDiv = document.createElement("div");
+        filterDiv.className = "mb-4";
+
+        const filterLabel = document.createElement("label");
+        filterLabel.htmlFor = `filter-${param}`;
+        filterLabel.className = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+        filterLabel.textContent = label;
+        filterDiv.appendChild(filterLabel);
+
+        const selectElement = document.createElement("select");
+        selectElement.id = `filter-${param}`;
+        selectElement.name = param;
+        selectElement.className =
+          "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100";
+        selectElement.addEventListener("change", filterRecipes);
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = `Todas las ${label.toLowerCase()}`;
+        selectElement.appendChild(defaultOption);
+
+        options.forEach((option) => {
+          const optionElement = document.createElement("option");
+          optionElement.value = option;
+          optionElement.textContent = option;
+          selectElement.appendChild(optionElement);
+        });
+
+        // Set initial value from URL params
+        if (urlParams.has(param)) {
+          selectElement.value = urlParams.get(param);
+        }
+
+        filterDiv.appendChild(selectElement);
+        filterOptionsContainer.appendChild(filterDiv);
+        dynamicFilters[param] = selectElement; // Store reference
+      }
+    }
+
+    // Handle cooking time filter separately as it's a range
+    const cookingTimeFilterDiv = document.createElement("div");
+    cookingTimeFilterDiv.className = "mb-4";
+    cookingTimeFilterDiv.innerHTML = `
+      <label for="cooking-time-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tiempo Máximo de Cocción (min)</label>
+      <input
+        type="number"
+        id="cooking-time-filter"
+        name="time_max"
+        placeholder="Ej. 60"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+    `;
+    const cookingTimeFilterInput = cookingTimeFilterDiv.querySelector("#cooking-time-filter");
+    if (cookingTimeFilterInput) {
+      cookingTimeFilterInput.addEventListener("input", filterRecipes);
+      if (urlParams.has("time_max")) {
+        cookingTimeFilterInput.value = urlParams.get("time_max");
+      }
+      filterOptionsContainer.appendChild(cookingTimeFilterDiv);
+      dynamicFilters["time_max"] = cookingTimeFilterInput; // Store reference
+    }
+
+    // Handle ingredients filter separately as it's a text input for multiple values
+    const ingredientsFilterDiv = document.createElement("div");
+    ingredientsFilterDiv.className = "mb-4";
+    ingredientsFilterDiv.innerHTML = `
+      <label for="ingredients-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ingredientes (separados por coma)</label>
+      <input
+        type="text"
+        id="ingredients-filter"
+        name="ingredients"
+        placeholder="Ej. pollo, arroz"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+    `;
+    const ingredientsFilterInput = ingredientsFilterDiv.querySelector("#ingredients-filter");
+    if (ingredientsFilterInput) {
+      ingredientsFilterInput.addEventListener("input", filterRecipes);
+      if (urlParams.has("ingredients")) {
+        ingredientsFilterInput.value = urlParams.get("ingredients");
+      }
+      filterOptionsContainer.appendChild(ingredientsFilterDiv);
+      dynamicFilters["ingredients"] = ingredientsFilterInput; // Store reference
+    }
   };
 
   // Initial population of filters from URL on page load
@@ -234,40 +355,21 @@ document.addEventListener("DOMContentLoaded", () => {
     searchInput.value = urlParams.get("search");
     filtersActiveOnLoad = true;
   }
-  if (cookingTimeFilter && urlParams.has("time_max")) {
-    cookingTimeFilter.value = urlParams.get("time_max");
-    filtersActiveOnLoad = true;
-  }
-  if (ingredientsFilter && urlParams.has("ingredients")) {
-    ingredientsFilter.value = urlParams.get("ingredients");
-    filtersActiveOnLoad = true;
-  }
-  if (cuisineFilter && urlParams.has("cuisine")) {
-    cuisineFilter.value = urlParams.get("cuisine");
-    filtersActiveOnLoad = true;
-  }
-
-  // If filters were active on load, perform an initial search
-  if (filtersActiveOnLoad) {
-    console.log("Filters active on load, performing initial filterRecipes call.");
-    filterRecipes();
-  } else if (recipeGallery) {
-    // If no filters on load and on the main recipe page, ensure all recipes are displayed
-    console.log("No filters active on load, and on recipe gallery page. Fetching all recipes.");
-    filterRecipes(); // This will now fetch all recipes due to the change in filterRecipes logic
+  // Check if any filter param is present in the URL
+  for (const param of urlParams.keys()) {
+    // Exclude 'search' and 'recipe' parameters when determining if filters are active on load
+    if (param !== "search" && param !== "recipe") {
+      filtersActiveOnLoad = true;
+      break;
+    }
   }
 
   // Event Listeners
   searchInput.addEventListener("input", fetchAndDisplaySuggestions);
-  if (cookingTimeFilter) cookingTimeFilter.addEventListener("change", filterRecipes);
-  if (ingredientsFilter) ingredientsFilter.addEventListener("input", filterRecipes);
-  if (cuisineFilter) cuisineFilter.addEventListener("change", filterRecipes);
 
   searchInput.addEventListener("keydown", (e) => {
-    console.log("Keydown event detected: ", e.key);
     const currentRecipeLinks = Array.from(searchResultsContainer.getElementsByTagName("a"));
     const visibleLinks = currentRecipeLinks.filter((link) => link.style.display !== "none");
-    console.log("Active index: ", activeIndex, "Visible links: ", visibleLinks.length);
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -278,7 +380,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const realIndex = currentRecipeLinks.indexOf(visibleLinks[activeIndex]);
       updateActive(realIndex);
-      console.log("ArrowDown - new activeIndex: ", activeIndex);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (activeIndex > 0) {
@@ -288,16 +389,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const realIndex = currentRecipeLinks.indexOf(visibleLinks[activeIndex]);
       updateActive(realIndex);
-      console.log("ArrowUp - new activeIndex: ", activeIndex);
     } else if (e.key === "Enter") {
       e.preventDefault();
-      console.log("Enter key pressed. Active index: ", activeIndex);
       if (activeIndex > -1 && visibleLinks[activeIndex]) {
-        console.log("Clicking selected suggestion.");
         visibleLinks[activeIndex].click();
       } else {
-        console.log("No suggestion selected, calling filterRecipes.");
-        filterRecipes();
+        // Only call filterRecipes if on the main gallery page
+        if (recipeGallery) {
+          filterRecipes();
+        }
       }
     } else if (e.key === "Escape") {
       if (searchResultsContainer) {
@@ -307,68 +407,70 @@ document.addEventListener("DOMContentLoaded", () => {
         filterOptionsContainer.classList.add("hidden");
       }
       searchInput.blur();
-      console.log("Escape key pressed, hiding suggestions and filters.");
     }
   });
 
+  // Helper to update active class for keyboard navigation
+  const updateActive = (newIndex) => {
+    currentRecipeLinks.forEach((link, index) => {
+      if (index === newIndex) {
+        link.classList.add("bg-gray-200", "dark:bg-gray-700");
+      } else {
+        link.classList.remove("bg-gray-200", "dark:bg-gray-700");
+      }
+    });
+  };
+
   // Ocultar resultados y filtros si se hace clic fuera
   document.addEventListener("click", (e) => {
+    // Only run this logic after initial load to prevent premature hiding
+    if (!initialLoadComplete) return;
+
     const isClickInsideSearch = searchInput.contains(e.target) || (searchResultsContainer && searchResultsContainer.contains(e.target));
-    const isClickInsideFilter = filterToggleButton.contains(e.target) || (filterOptionsContainer && filterOptionsContainer.contains(e.target));
+    const isClickInsideFilter =
+      filterToggleButton.contains(e.target) || (filterOptionsContainer && filterOptionsContainer.contains(e.target));
 
     if (!isClickInsideSearch) {
       if (searchResultsContainer) {
         searchResultsContainer.style.display = "none";
       }
-      console.log("Clicked outside search, hiding suggestions.");
     }
 
     if (!isClickInsideFilter) {
       if (filterOptionsContainer) {
         filterOptionsContainer.classList.add("hidden");
       }
-      console.log("Clicked outside filter, hiding filters.");
     }
   });
 
   // Mostrar resultados al hacer focus
   searchInput.addEventListener("focus", () => {
     if (searchInput.value) {
-      console.log("Search input focused, calling fetchAndDisplaySuggestions.");
       fetchAndDisplaySuggestions(); // Show suggestions on focus if there's input
     }
   });
 
-  // --- Filter Functionality ---
-  const filterToggleButton = document.getElementById("filter-toggle-btn");
-  const filterOptionsContainer = document.getElementById("filter-options");
-
-  console.log("filterToggleButton:", filterToggleButton);
-  console.log("filterOptionsContainer:", filterOptionsContainer);
-
+  // --- Filter Toggle Functionality ---
   if (filterToggleButton && filterOptionsContainer) {
     filterToggleButton.addEventListener("click", () => {
       filterOptionsContainer.classList.toggle("hidden");
-      console.log("Filter toggle button clicked. Filter options hidden state: ", filterOptionsContainer.classList.contains("hidden"));
     });
   }
 
   // Initial state of filter options container
-  // urlParams is already declared above
-  let anyFilterParamPresent = false;
-  if (urlParams.has("search") || (cookingTimeFilter && urlParams.has("time_max")) || (ingredientsFilter && urlParams.has("ingredients")) || (cuisineFilter && urlParams.has("cuisine"))) {
-    anyFilterParamPresent = true;
-  }
-
   if (filterOptionsContainer) {
-    if (anyFilterParamPresent) {
+    if (filtersActiveOnLoad) {
       filterOptionsContainer.classList.remove("hidden");
-      console.log("Filter options shown due to URL parameters.");
     } else {
       filterOptionsContainer.classList.add("hidden");
-      console.log("Filter options hidden as no URL parameters present.");
     }
   }
 
-
+  // Fetch and render filters, then apply initial search/filters
+  fetchFilterOptions().then(() => {
+    initialLoadComplete = true; // Mark initial load as complete before rendering filters
+    if (recipeGallery && filtersActiveOnLoad) {
+      filterRecipes();
+    }
+  });
 });

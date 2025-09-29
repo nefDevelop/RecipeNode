@@ -272,13 +272,13 @@ const getShoppingListPage = (req, res) => {
 
 const getAllRecipesApi = async (req, res) => {
   try {
-    const { search, time_max, ingredients, cuisine } = req.query;
-    let sql = "SELECT name, path, cooking_time, cuisine_type FROM recipes WHERE 1=1";
+    const { search, time_max, ingredients, cuisine, difficulty, meal_type, rating, equipment, tags, main_ingredient } = req.query;
+    let sql = "SELECT name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes WHERE 1=1";
     const params = [];
 
     if (search) {
-      sql += " AND name LIKE ?";
-      params.push(`%${search}%`);
+      sql += " AND (name LIKE ? OR description LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`);
     }
     if (time_max) {
       sql += " AND cooking_time <= ?";
@@ -287,6 +287,32 @@ const getAllRecipesApi = async (req, res) => {
     if (cuisine) {
       sql += " AND cuisine_type = ?";
       params.push(cuisine);
+    }
+    if (difficulty) {
+      sql += " AND difficulty = ?";
+      params.push(difficulty);
+    }
+    if (meal_type) {
+      sql += " AND meal_type = ?";
+      params.push(meal_type);
+    }
+    if (rating) {
+      sql += " AND rating >= ?"; // Assuming rating is a number and we want >=
+      params.push(parseInt(rating));
+    }
+
+    // For array-like fields, use LIKE to search within the JSON string
+    if (equipment) {
+      sql += " AND equipment LIKE ?";
+      params.push(`%"${equipment}"%`);
+    }
+    if (tags) {
+      sql += " AND tags LIKE ?";
+      params.push(`%"${tags}"%`);
+    }
+    if (main_ingredient) {
+      sql += " AND main_ingredient LIKE ?";
+      params.push(`%"${main_ingredient}"%`);
     }
 
     // For ingredients, we'll fetch all matching recipes first and then filter by content
@@ -459,15 +485,28 @@ const createRecipeApi = async (req, res) => {
   const now = new Date().toISOString();
   let frontmatter = `---\ntitle: "${title.replace(/"/g, '\"')}"
 `;
-  if (source) frontmatter += `source: ${source}\n`;
-  if (image) frontmatter += `image: ${image}\n`;
-  frontmatter += `created: ${now}\n`;
-  frontmatter += `updated: ${now}\n`;
+  if (source) frontmatter += `source: ${source}
+`;
+  if (image) frontmatter += `image: ${image}
+`;
+  frontmatter += `created: ${now}
+`;
+  frontmatter += `updated: ${now}
+`;
 
-  // Extract cooking_time and cuisine_type from markdownContent if present in front-matter
+  // Extract all attributes from markdownContent
   const { attributes: newAttributes } = fm(frontmatter + markdownContent);
-  const cookingTime = newAttributes.time || null; // Assuming 'time' in front-matter
-  const cuisineType = newAttributes.cuisine || null; // Assuming 'cuisine' in front-matter
+
+  const cookingTime = newAttributes.time || null;
+  const cuisineType = newAttributes.cuisine || null;
+  const description = newAttributes.description || null;
+  const difficulty = newAttributes.difficulty || null;
+  const mealType = newAttributes.meal_type || null;
+  const rating = newAttributes.rating || null;
+  const equipment = newAttributes.equipment ? JSON.stringify(newAttributes.equipment) : null;
+  const tags = newAttributes.tags ? JSON.stringify(newAttributes.tags) : null;
+  const mainIngredient = newAttributes.main_ingredient ? JSON.stringify(newAttributes.main_ingredient) : null;
+
 
   frontmatter += `---
 
@@ -476,7 +515,10 @@ const createRecipeApi = async (req, res) => {
 
   try {
     await fs.promises.writeFile(filePath, fileContent, "utf8");
-    await dbRun("INSERT INTO recipes (name, path, cooking_time, cuisine_type) VALUES (?, ?, ?, ?)", [slug, filePath, cookingTime, cuisineType]);
+    await dbRun(
+      "INSERT INTO recipes (name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [slug, filePath, cookingTime, cuisineType, description, difficulty, mealType, rating, equipment, tags, mainIngredient]
+    );
 
     // Añadimos una URL de redirección a la respuesta.
     // El cliente usará esta URL para recargar la página y ver la nueva receta.
@@ -491,7 +533,6 @@ const createRecipeApi = async (req, res) => {
     return res.status(500).json({ error: "Failed to create recipe." });
   }
 };
-
 const scrapeRecipeApi = async (req, res) => {
   const { url } = req.body;
   if (!url) {
@@ -579,6 +620,68 @@ const scrapeRecipeApi = async (req, res) => {
   }
 };
 
+const getAvailableFiltersApi = async (req, res) => {
+  console.log("getAvailableFiltersApi called.");
+  try {
+    const filters = {};
+
+    // Fetch distinct values for simple fields
+    const simpleFields = ['cuisine_type', 'difficulty', 'meal_type', 'rating'];
+    for (const field of simpleFields) {
+      console.log(`Fetching distinct values for simple field: ${field}`);
+      const rows = await dbAll(`SELECT DISTINCT ${field} FROM recipes WHERE ${field} IS NOT NULL AND ${field} != ''`);
+      filters[field] = rows.map(row => row[field]);
+    }
+
+    // Fetch and process array-like fields (tags, main_ingredient, equipment)
+    const arrayFields = ['tags', 'main_ingredient', 'equipment'];
+    for (const field of arrayFields) {
+      console.log(`Fetching distinct values for array field: ${field}`);
+      const rows = await dbAll(`SELECT ${field} FROM recipes WHERE ${field} IS NOT NULL AND ${field} != ''`);
+      const allValues = new Set();
+      rows.forEach(row => {
+        try {
+          // Assuming these are stored as comma-separated strings or JSON arrays
+          let values = [];
+          if (typeof row[field] === 'string') {
+            if (row[field].startsWith('[') && row[field].endsWith(']')) {
+              // Try parsing as JSON array
+              values = JSON.parse(row[field]);
+            } else {
+              // Assume comma-separated string
+              values = row[field].split(',').map(v => v.trim());
+            }
+          } else if (Array.isArray(row[field])) {
+            values = row[field];
+          }
+          values.forEach(val => {
+            // Ensure val is a string before calling replace
+            if (typeof val === 'string' && val) {
+              allValues.add(val.replace(/[\[\]]/g, '')); // Clean up Obsidian link syntax if present
+            } else if (Array.isArray(val)) {
+              // If it's an array, flatten it and process its elements
+              val.forEach(innerVal => {
+                if (typeof innerVal === 'string' && innerVal) {
+                  allValues.add(innerVal.replace(/[\[\]]/g, ''));
+                }
+              });
+            }
+          });
+        } catch (e) {
+          console.error(`Error parsing field ${field} for row:`, row[field], e);
+        }
+      });
+      filters[field] = Array.from(allValues);
+    }
+
+    console.log("Sending filters response:", filters);
+    res.json(filters);
+  } catch (error) {
+    console.error("Error fetching available filters:", error);
+    res.status(500).json({ error: "Failed to retrieve available filters." });
+  }
+};
+
 module.exports = {
   getHomePage,
   getShoppingListPage,
@@ -586,4 +689,5 @@ module.exports = {
   getRecipeByIdApi,
   createRecipeApi,
   scrapeRecipeApi,
+  getAvailableFiltersApi,
 };
