@@ -186,18 +186,48 @@
                   <%= recipe.name %>
                 </h3>
                 <% } %>
+
+                <% if (displayFields.description && recipe.description) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate" title="<%= recipe.description %>"><%= recipe.description %></p>
+                <% } %>
+
                 <% if (displayFields.difficulty && recipe.difficulty) { %>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Dificultad: <%= recipe.difficulty %></p>
                 <% } %>
+
                 <% if (displayFields.cookingTime && recipe.cooking_time) { %>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Tiempo: <%= recipe.cooking_time %> min</p>
                 <% } %>
+
+                <% if (displayFields.cuisineType && recipe.cuisine_type) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Cocina: <%= recipe.cuisine_type %></p>
+                <% } %>
+
+                <% if (displayFields.mealType && recipe.meal_type) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Comida: <%= recipe.meal_type %></p>
+                <% } %>
+
+                <% if (displayFields.rating && recipe.rating) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Puntuación: <%= recipe.rating %>/5</p>
+                <% } %>
+
                 <% if (displayFields.tags && recipe.tags && recipe.tags.length > 0) { %>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Etiquetas: <%= recipe.tags.join(', ') %></p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">Etiquetas: <%= recipe.tags.join(', ') %></p>
                 <% } %>
-                <% if (displayFields.mainIngredient && recipe.main_ingredient) { %>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Ingrediente Principal: <%= recipe.main_ingredient %></p>
+
+                <% if (displayFields.categories && recipe.categories && recipe.categories.length > 0) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">Categorías: <%= recipe.categories.join(', ') %></p>
                 <% } %>
+
+                <% if (displayFields.mainIngredient && recipe.main_ingredient && recipe.main_ingredient.length > 0) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">Ingrediente Principal: <%= recipe.main_ingredient.join(', ') %></p>
+                <% } %>
+
+                <% if (displayFields.equipment && recipe.equipment && recipe.equipment.length > 0) { %>
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">Equipamiento: <%= recipe.equipment.join(', ') %></p>
+                <% } %>
+
+                <% if (displayFields.views) { %>
                 <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -209,7 +239,7 @@
                   </svg>
                   <span><%= recipe.views || 0 %></span>
                 </div>
-              </div>
+                <% } %>
             </a>
             <!-- Botón de Borrar (Solo para Admins) -->
             <% if (user && user.role === 'admin') { %>

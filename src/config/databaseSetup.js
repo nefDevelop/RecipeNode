@@ -107,30 +107,12 @@ function setupDatabase(db, recipesPath) {
         }
       });
 
-      // Add dietary_restrictions column if it doesn't exist
-      db.run(`ALTER TABLE recipes ADD COLUMN dietary_restrictions TEXT`, (alterErr) => {
-        if (alterErr && !alterErr.message.includes("duplicate column name")) {
-          console.error("Error adding dietary_restrictions column:", alterErr);
-        } else if (!alterErr) {
-          console.log("Added dietary_restrictions column to recipes table.");
-        }
-      });
-
       // Add meal_type column if it doesn't exist
       db.run(`ALTER TABLE recipes ADD COLUMN meal_type TEXT`, (alterErr) => {
         if (alterErr && !alterErr.message.includes("duplicate column name")) {
           console.error("Error adding meal_type column:", alterErr);
         } else if (!alterErr) {
           console.log("Added meal_type column to recipes table.");
-        }
-      });
-
-      // Add season column if it doesn't exist
-      db.run(`ALTER TABLE recipes ADD COLUMN season TEXT`, (alterErr) => {
-        if (alterErr && !alterErr.message.includes("duplicate column name")) {
-          console.error("Error adding season column:", alterErr);
-        } else if (!alterErr) {
-          console.log("Added season column to recipes table.");
         }
       });
 
@@ -179,24 +161,6 @@ function setupDatabase(db, recipesPath) {
         }
       });
 
-      // Add source_url column if it doesn't exist
-      db.run(`ALTER TABLE recipes ADD COLUMN source_url TEXT`, (alterErr) => {
-        if (alterErr && !alterErr.message.includes("duplicate column name")) {
-          console.error("Error adding source_url column:", alterErr);
-        } else if (!alterErr) {
-          console.log("Added source_url column to recipes table.");
-        }
-      });
-
-      // Add notes column if it doesn't exist
-      db.run(`ALTER TABLE recipes ADD COLUMN notes TEXT`, (alterErr) => {
-        if (alterErr && !alterErr.message.includes("duplicate column name")) {
-          console.error("Error adding notes column:", alterErr);
-        } else if (!alterErr) {
-          console.log("Added notes column to recipes table.");
-        }
-      });
-
       // Sync filesystem recipes to DB on startup
       try {
         const files = fs.readdirSync(recipesPath).filter((file) => path.extname(file) === ".md");
@@ -204,7 +168,7 @@ function setupDatabase(db, recipesPath) {
         const fm = require("front-matter"); // Importar aquí para mantener el alcance local
 
         db.serialize(() => {
-          const insertStmt = db.prepare("INSERT OR REPLACE INTO recipes (name, path, cooking_time, cuisine_type, views, description, difficulty, dietary_restrictions, meal_type, season, rating, equipment, tags, categories, main_ingredient, source_url, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          const insertStmt = db.prepare("INSERT OR REPLACE INTO recipes (name, path, cooking_time, cuisine_type, views, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
           
           files.forEach((file) => {
             const name = path.basename(file, ".md");
@@ -217,21 +181,17 @@ function setupDatabase(db, recipesPath) {
               const cuisineType = attributes.cuisine || null;
               const description = attributes.description || null;
               const difficulty = attributes.difficulty || null;
-              const dietaryRestrictions = attributes.dietary_restrictions ? JSON.stringify(attributes.dietary_restrictions) : null;
               const mealType = attributes.meal_type || null;
-              const season = attributes.season || null;
               const rating = attributes.rating || null;
               const equipment = attributes.equipment ? JSON.stringify(attributes.equipment) : null;
               const tags = attributes.tags ? JSON.stringify(attributes.tags) : null;
               const categories = attributes.categories ? JSON.stringify(attributes.categories) : null;
               const mainIngredient = attributes.main_ingredient ? JSON.stringify(attributes.main_ingredient) : null;
-              const sourceUrl = attributes.source_url || null;
-              const notes = attributes.notes || null;
 
-              insertStmt.run(name, fullPath, cookingTime, cuisineType, views, description, difficulty, dietaryRestrictions, mealType, season, rating, equipment, tags, categories, mainIngredient, sourceUrl, notes);
+              insertStmt.run(name, fullPath, cookingTime, cuisineType, views, description, difficulty, mealType, rating, equipment, tags, categories, mainIngredient);
             } catch (e) {
               console.error(`Error al leer front-matter para ${name}: ${e.message}`);
-              insertStmt.run(name, fullPath, null, null, 0, null, null, null, null, null, null, null, null, null, null, null, null); // Insertar con valores por defecto si falla
+              insertStmt.run(name, fullPath, null, null, 0, null, null, null, null, null, null, null, null); // Insertar con valores por defecto si falla
             }
           });
           insertStmt.finalize();

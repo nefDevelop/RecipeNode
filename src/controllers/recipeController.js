@@ -251,18 +251,34 @@ const getHomePage = async (req, res) => {
         settings: settings, // Pass the settings object to the template
       });
     } else {
-      const allRecipes = await dbAll("SELECT name, path, views FROM recipes ORDER BY name"); // Fetch views here
+      const allRecipes = await dbAll("SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient FROM recipes ORDER BY name");
 
-      const recipesWithImages = await Promise.all(
+      const recipesWithData = await Promise.all(
         allRecipes.map(async (recipe) => {
           try {
             const fileContent = await fs.promises.readFile(recipe.path, "utf8");
             const { attributes, body } = fm(fileContent);
             const image = extractImageFromMarkdown(attributes, body);
-            return { name: recipe.name, image, views: recipe.views }; // Include views here
+
+            // Parse JSON fields into arrays
+            const parsedRecipe = { ...recipe, image };
+            try {
+              if (parsedRecipe.tags) parsedRecipe.tags = JSON.parse(parsedRecipe.tags);
+            } catch (e) { /* ignore if not valid JSON */ }
+            try {
+              if (parsedRecipe.equipment) parsedRecipe.equipment = JSON.parse(parsedRecipe.equipment);
+            } catch (e) { /* ignore */ }
+            try {
+              if (parsedRecipe.categories) parsedRecipe.categories = JSON.parse(parsedRecipe.categories);
+            } catch (e) { /* ignore */ }
+            try {
+              if (parsedRecipe.main_ingredient) parsedRecipe.main_ingredient = JSON.parse(parsedRecipe.main_ingredient);
+            } catch (e) { /* ignore */ }
+
+            return parsedRecipe;
           } catch (e) {
             console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
-            return { name: recipe.name, image: null, views: recipe.views }; // Include views here
+            return { ...recipe, image: null }; // return DB data even if file fails
           }
         })
       );
@@ -288,7 +304,7 @@ const getHomePage = async (req, res) => {
       res.render("index", {
         title: "Recetas",
         content: null,
-        recipes: recipesWithImages,
+        recipes: recipesWithData,
         mostViewed: mostViewedRecipes,
         user: req.session,
         servings: null, // Asegurarse de que 'servings' siempre esté definido

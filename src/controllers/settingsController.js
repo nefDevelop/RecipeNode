@@ -63,7 +63,8 @@ const updateSettings = async (req, res) => {
     // Handle recipe card display settings
     const recipeCardDisplayFieldsFromForm = req.body.recipe_card_display_fields || {};
     const allPossibleDisplayFields = [
-      'image', 'name', 'difficulty', 'cookingTime', 'tags', 'mainIngredient'
+      'image', 'name', 'difficulty', 'cookingTime', 'tags', 'mainIngredient',
+      'cuisineType', 'views', 'description', 'mealType', 'rating', 'equipment', 'categories'
     ];
     const finalRecipeCardDisplaySettings = {};
     allPossibleDisplayFields.forEach(field => {
