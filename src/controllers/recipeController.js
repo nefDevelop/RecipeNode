@@ -116,6 +116,24 @@ const getHomePage = async (req, res) => {
   try {
     const recipeName = req.query.recipe;
 
+    // --- Common settings fetching logic ---
+    let recipeCardDisplaySettings = await dbAll("SELECT value FROM unit_settings WHERE id = 'recipe_card_display_fields'");
+    let settings = {};
+    if (recipeCardDisplaySettings.length > 0) {
+      settings.recipe_card_display_fields = JSON.parse(recipeCardDisplaySettings[0].value);
+    } else {
+      // Default display settings
+      settings.recipe_card_display_fields = {
+        image: true,
+        name: true,
+        difficulty: true,
+        cookingTime: true,
+        tags: true,
+        mainIngredient: true,
+      };
+    }
+    // --- End common settings fetching logic ---
+
     if (recipeName) {
       await dbRun("UPDATE recipes SET views = views + 1 WHERE name = ?", [recipeName]);
       const recipeRow = await dbGet("SELECT path, views FROM recipes WHERE name = ?", [recipeName]);
@@ -219,25 +237,7 @@ const getHomePage = async (req, res) => {
       const styleMatches = htmlContent.match(/style="[^"]+"/g) || [];
       console.log(`[Estilos] Clases CSS encontradas (${classMatches.length}):`, classMatches);
       console.log(`[Estilos] Estilos en línea encontrados (${styleMatches.length}):`, styleMatches);
-      console.log(`--- Fin del análisis ---
-`);
 
-      // Fetch recipe card display settings or provide defaults
-      let recipeCardDisplaySettings = await dbAll("SELECT value FROM unit_settings WHERE id = 'recipe_card_display_fields'");
-      let settings = {};
-      if (recipeCardDisplaySettings.length > 0) {
-        settings.recipe_card_display_fields = JSON.parse(recipeCardDisplaySettings[0].value);
-      } else {
-        // Default display settings
-        settings.recipe_card_display_fields = {
-          image: true,
-          name: true,
-          difficulty: true,
-          cookingTime: true,
-          tags: true,
-          mainIngredient: true,
-        };
-      }
 
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
@@ -283,22 +283,7 @@ const getHomePage = async (req, res) => {
         })
       );
 
-      // Fetch recipe card display settings or provide defaults
-      let recipeCardDisplaySettings = await dbAll("SELECT value FROM unit_settings WHERE id = 'recipe_card_display_fields'");
-      let settings = {};
-      if (recipeCardDisplaySettings.length > 0) {
-        settings.recipe_card_display_fields = JSON.parse(recipeCardDisplaySettings[0].value);
-      } else {
-        // Default display settings
-        settings.recipe_card_display_fields = {
-          image: true,
-          name: true,
-          difficulty: true,
-          cookingTime: true,
-          tags: true,
-          mainIngredient: true,
-        };
-      }
+
 
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
