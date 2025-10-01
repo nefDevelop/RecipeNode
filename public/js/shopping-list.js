@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const manualListItemsContainer = document.getElementById("manual-list-items"); // Contenedor UL de la lista manual
   const addManualItemForm = document.getElementById("add-manual-item-form");
   const manualItemInput = document.getElementById("manual-item-input");
+  const toggleDragBtn = document.getElementById("toggle-drag-btn");
+  const dragLockedIcon = document.getElementById("drag-locked-icon");
+  const dragUnlockedIcon = document.getElementById("drag-unlocked-icon");
   const addSeparatorBtn = document.getElementById("add-separator-btn");
 
   const STORAGE_KEY = "shoppingList";
@@ -163,9 +166,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (isSeparator) {
         li.className = "flex items-center justify-between py-2 my-2"; // Estilo para separador
-        const separatorText = item.text.replace(/---/g, '').trim();
+        const separatorText = item.text.replace(/---/g, "").trim();
         if (separatorText) {
-            li.innerHTML = `
+          li.innerHTML = `
               <div class="flex-grow flex items-center gap-2 text-gray-500 dark:text-gray-400 font-semibold tracking-wider">
                 <hr class="flex-grow border-gray-300 dark:border-gray-600">
                 <span>${separatorText}</span>
@@ -178,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
               </button>
             `;
         } else {
-            li.innerHTML = `
+          li.innerHTML = `
               <div class="flex-grow flex items-center text-gray-500 dark:text-gray-400">
                 <hr class="w-full border-gray-300 dark:border-gray-600">
               </div>
@@ -333,8 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await addManualItemToList(manualItemInput.value);
   });
 
-
-
   manualListItemsContainer.addEventListener("click", async (e) => {
     const li = e.target.closest("li");
     if (!li) return;
@@ -374,9 +375,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- Drag and Drop para la Lista Manual ---
-  new Sortable(manualListItemsContainer, {
+  const sortable = new Sortable(manualListItemsContainer, {
     animation: 150,
     ghostClass: "sortable-ghost",
+    disabled: true, // Deshabilitado por defecto
     onEnd: function (evt) {
       const items = manualListItemsContainer.querySelectorAll("li");
       const orderedIds = Array.from(items).map((item) => item.dataset.id);
@@ -387,6 +389,20 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch((err) => console.error("Error al guardar el orden:", err));
     },
   });
+
+  // --- Lógica para el botón de activar/desactivar drag ---
+  if (toggleDragBtn) {
+    toggleDragBtn.addEventListener("click", () => {
+      const isDisabled = sortable.option("disabled");
+      sortable.option("disabled", !isDisabled); // Invierte el estado
+
+      // Actualiza los iconos y el color del botón
+      dragLockedIcon.classList.toggle("hidden", isDisabled);
+      dragUnlockedIcon.classList.toggle("hidden", !isDisabled);
+      toggleDragBtn.classList.toggle("bg-green-100", isDisabled);
+      toggleDragBtn.classList.toggle("dark:bg-green-900", isDisabled);
+    });
+  }
 
   // --- Inicialización ---
   loadListFromStorage();

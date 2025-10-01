@@ -16,6 +16,13 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+/* Estilos para el modo oscuro en la vista de lista */
+.dark #recipe-gallery.list-view .recipe-card {
+  background-color: #374151; /* gray-700, para coincidir con la vista de grid */
+  border: 1px solid #4b5563; /* gray-600, un borde ligeramente más claro */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
 /* Contenedor de la imagen */
 #recipe-gallery.list-view .recipe-card .image-container {
   width: 100%;

@@ -1,1 +1,0 @@
-- Ajustes: Seleccionar que ver de la card. Segun campos del filtrado.

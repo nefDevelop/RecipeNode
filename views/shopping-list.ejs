@@ -12,7 +12,35 @@
 
       <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
       <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
-        <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold mb-4">Tu Lista de la Compra</h2>
+          <button
+            id="toggle-drag-btn"
+            title="Activar/Desactivar reordenar"
+            class="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <!-- Icono de candado cerrado por defecto -->
+            <svg id="drag-locked-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <!-- Icono de movimiento (oculto por defecto) -->
+            <svg
+              id="drag-unlocked-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 hidden"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
         <div id="list-content" class="prose dark:prose-invert max-w-none">
           <!-- El contenido se generará aquí -->
         </div>
@@ -20,7 +48,6 @@
 
       <!-- Contenedor de la Lista Manual Compartida -->
       <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-        <h2 class="text-2xl font-bold mb-4">Lista Manual Compartida</h2>
         <form id="add-manual-item-form" class="flex gap-2 mb-4">
           <input
             type="text"
