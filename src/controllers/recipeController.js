@@ -144,6 +144,7 @@ const getHomePage = async (req, res) => {
           content: `La receta "${recipeName}" no existe.`, // Corrected escaping for template literal
           recipes: null,
           user: req.session,
+          sortBy: req.query.sort_by || 'name_asc', // Ensure sortBy is always passed
         });
       }
 
@@ -249,9 +250,30 @@ const getHomePage = async (req, res) => {
         mostViewed: mostViewedRecipes,
         user: req.session,
         settings: settings, // Pass the settings object to the template
+        sortBy: req.query.sort_by || 'name_asc', // Ensure sortBy is always passed
       });
     } else {
-      const allRecipes = await dbAll("SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient FROM recipes ORDER BY name");
+      const sortBy = req.query.sort_by || 'name_asc'; // Default sorting
+      let orderByClause = '';
+
+      switch (sortBy) {
+        case 'name_asc':
+          orderByClause = 'ORDER BY name ASC';
+          break;
+        case 'name_desc':
+          orderByClause = 'ORDER BY name DESC';
+          break;
+        case 'date_added_desc':
+          orderByClause = 'ORDER BY created_at DESC';
+          break;
+        case 'views_desc':
+          orderByClause = 'ORDER BY views DESC';
+          break;
+        default:
+          orderByClause = 'ORDER BY name ASC';
+      }
+
+      const allRecipes = await dbAll(`SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient FROM recipes ${orderByClause}`);
 
       const recipesWithData = await Promise.all(
         allRecipes.map(async (recipe) => {
@@ -294,6 +316,7 @@ const getHomePage = async (req, res) => {
         user: req.session,
         servings: null, // Asegurarse de que 'servings' siempre esté definido
         settings: settings, // Pass the settings object to the template
+        sortBy: sortBy, // Pass the current sorting option to the template
       });
     }
   } catch (error) {
@@ -560,8 +583,8 @@ const createRecipeApi = async (req, res) => {
   try {
     await fs.promises.writeFile(filePath, fileContent, "utf8");
     await dbRun(
-      "INSERT INTO recipes (name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [slug, filePath, cookingTime, cuisineType, description, difficulty, mealType, rating, equipment, tags, mainIngredient]
+      "INSERT INTO recipes (name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [slug, filePath, cookingTime, cuisineType, description, difficulty, mealType, rating, equipment, tags, mainIngredient, now]
     );
 
     // Añadimos una URL de redirección a la respuesta.

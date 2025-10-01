@@ -55,6 +55,7 @@
         <!-- Estilos específicos para la vista de receta -->
         <link rel="stylesheet" href="/css/kitchen-mode.css" />
         <link rel="stylesheet" href="/css/print.css" media="print" />
+        <link rel="stylesheet" href="/css/views.css" />
 
         <!-- Si se ha seleccionado una receta, se muestra su contenido -->
         <!-- Contenedor para el Modo Cocina -->
@@ -118,7 +119,52 @@
         </div>
         <% } else { %>
         <!-- Si estamos en la página principal, mostramos la galería -->
-        <h1 class="text-3xl font-bold mb-6">Todas las Recetas</h1>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
+          <h1 class="text-3xl font-bold mb-4 sm:mb-0">Todas las Recetas</h1>
+          <div class="flex items-center space-x-4">
+            <!-- Controles de Ordenación -->
+            <div class="flex items-center">
+              <label for="sort-by" class="mr-2 text-gray-700 dark:text-gray-300">Ordenar por:</label>
+              <select
+                id="sort-by"
+                class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="name_asc" <%= sortBy === 'name_asc' ? 'selected' : '' %>>Nombre (A-Z)</option>
+                <option value="name_desc" <%= sortBy === 'name_desc' ? 'selected' : '' %>>Nombre (Z-A)</option>
+                <option value="date_added_desc" <%= sortBy === 'date_added_desc' ? 'selected' : '' %>>Más Recientes</option>
+                <option value="views_desc" <%= sortBy === 'views_desc' ? 'selected' : '' %>>Más Vistas</option>
+              </select>
+            </div>
+
+            <!-- Controles de Vista -->
+            <div class="flex space-x-2">
+              <button
+                id="grid-view-btn"
+                class="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                title="Vista de Cuadrícula"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM13 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2h-2zM13 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2z"
+                  />
+                </svg>
+              </button>
+              <button
+                id="list-view-btn"
+                class="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                title="Vista de Lista"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fill-rule="evenodd"
+                    d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 9a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM9 13a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
         <div id="recipe-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           <% if (recipes && recipes.length > 0) { %> <% recipes.forEach(recipe => { %>
           <!-- Contenedor relativo para posicionar el botón de borrado -->
@@ -427,6 +473,59 @@
 
 <!-- Script para el Modo Cocina -->
 <script src="/js/kitchen-mode.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const sortBySelect = document.getElementById("sort-by");
+    if (sortBySelect) {
+      sortBySelect.addEventListener("change", (event) => {
+        const selectedSort = event.target.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set("sort_by", selectedSort);
+        window.location.href = url.toString();
+      });
+    }
+
+    const recipeGallery = document.getElementById("recipe-gallery");
+    const gridViewBtn = document.getElementById("grid-view-btn");
+    const listViewBtn = document.getElementById("list-view-btn");
+
+    const savedView = localStorage.getItem("recipeViewType") || "grid"; // Default to grid
+
+    function applyView(viewType) {
+      if (recipeGallery) {
+        if (viewType === "list") {
+          recipeGallery.classList.remove("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4", "gap-8");
+          recipeGallery.classList.add("list-view");
+          listViewBtn.classList.add("bg-gray-300", "dark:bg-gray-600");
+          gridViewBtn.classList.remove("bg-gray-300", "dark:bg-gray-600");
+        } else {
+          recipeGallery.classList.remove("list-view");
+          recipeGallery.classList.add("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4", "gap-8");
+          gridViewBtn.classList.add("bg-gray-300", "dark:bg-gray-600");
+          listViewBtn.classList.remove("bg-gray-300", "dark:bg-gray-600");
+        }
+      }
+    }
+
+    // Apply saved view on load
+    applyView(savedView);
+
+    if (gridViewBtn) {
+      gridViewBtn.addEventListener("click", () => {
+        applyView("grid");
+        localStorage.setItem("recipeViewType", "grid");
+      });
+    }
+
+    if (listViewBtn) {
+      listViewBtn.addEventListener("click", () => {
+        applyView("list");
+        localStorage.setItem("recipeViewType", "list");
+      });
+    }
+  });
+</script>
 
 <!-- Cargar los modales y sus scripts -->
 <%- include('partials/footer') %>

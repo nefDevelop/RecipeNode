@@ -394,7 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
     searchInput.value = urlParams.get("search");
     filtersActiveOnLoad = true;
   }
-  // Check if any filter param is present in the URL
+  // Check if any filter param is present in the URL, including 'sort_by'
   for (const param of urlParams.keys()) {
     // Exclude 'search' and 'recipe' parameters when determining if filters are active on load
     if (param !== "search" && param !== "recipe") {

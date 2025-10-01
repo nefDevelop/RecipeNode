@@ -1,0 +1,104 @@
+/* Estilos para la vista de lista de recetas */
+#recipe-gallery.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espacio entre elementos de la lista */
+}
+
+#recipe-gallery.list-view > a {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start; /* Alinea los elementos al inicio del contenedor */
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+}
+
+#recipe-gallery.list-view > a:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+#recipe-gallery.list-view > a .relative.pb-\[75\%\] {
+  /* Contenedor de imagen */
+  flex-shrink: 0;
+  width: 180px; /* Ancho fijo para la imagen en vista de lista */
+  height: 120px; /* Altura fija para la imagen */
+  padding-bottom: 0; /* Eliminar padding-bottom basado en porcentaje */
+  position: relative;
+}
+
+#recipe-gallery.list-view > a img,
+#recipe-gallery.list-view > a .placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#recipe-gallery.list-view > a .p-4 {
+  /* Contenido de texto */
+  flex-grow: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Centrar verticalmente el contenido */
+}
+
+#recipe-gallery.list-view > a h3 {
+  font-size: 1.125rem; /* text-lg */
+  margin-bottom: 0.25rem;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+#recipe-gallery.list-view > a p.truncate {
+  font-size: 0.875rem; /* text-sm */
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 0.5rem;
+}
+
+#recipe-gallery.list-view > a .flex.flex-wrap.gap-1 {
+  margin-top: 0.5rem;
+}
+
+#recipe-gallery.list-view > a .delete-recipe-btn {
+  position: absolute; /* Volver a posicionar el botón de borrado */
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0; /* Ocultar por defecto */
+  transition: opacity 0.3s;
+}
+
+#recipe-gallery.list-view > a:hover .delete-recipe-btn {
+  opacity: 1; /* Mostrar al pasar el ratón */
+}
+
+/* Ocultar algunos campos en la vista de lista para mayor compacidad */
+#recipe-gallery.list-view > a p.text-sm.text-gray-500.dark\:text-gray-400.mb-1:not(:first-of-type) {
+  display: none; /* Oculta todos los párrafos de detalles excepto el primero */
+}
+
+#recipe-gallery.list-view > a .flex.flex-wrap.gap-1 {
+  display: none; /* Oculta los tags, categorías, etc. */
+}
+
+#recipe-gallery.list-view > a .mt-2.flex.items-center.text-sm.text-gray-500.dark\:text-gray-400 {
+  display: none; /* Oculta el contador de vistas */
+}

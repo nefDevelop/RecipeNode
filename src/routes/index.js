@@ -21,6 +21,9 @@ const viewRoutes = require("./viewRoutes");
 
 router.use(recipeRoutes);
 router.use(viewRoutes);
+
+// Ruta para la página de inicio (listado de recetas)
+router.get("/", isAuthenticated, recipeController.getHomePage);
 router.use(planningRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/api/auth", authRoutes); // Montar las rutas de autenticación bajo /api/auth
