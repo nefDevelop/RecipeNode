@@ -13,8 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let activeIndex = -1;
   let dynamicFilters = {}; // To store references to dynamically created filter elements
-  // let initialLoadComplete = false; // Flag to prevent immediate hiding on load
-  //console.log("Filter: false");
+  let initialLoadComplete = false;
 
   // Función para generar el HTML de una tarjeta de receta
     const generateRecipeCardHtml = (recipe) => {
@@ -394,10 +393,9 @@ document.addEventListener("DOMContentLoaded", () => {
     searchInput.value = urlParams.get("search");
     filtersActiveOnLoad = true;
   }
-  // Check if any filter param is present in the URL, including 'sort_by'
+  // Check if any filter param is present in the URL, but ignore sort_by
   for (const param of urlParams.keys()) {
-    // Exclude 'search' and 'recipe' parameters when determining if filters are active on load
-    if (param !== "search" && param !== "recipe") {
+    if (param !== "search" && param !== "recipe" && param !== "sort_by") {
       filtersActiveOnLoad = true;
       break;
     }
@@ -462,7 +460,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Ocultar resultados y filtros si se hace clic fuera
   document.addEventListener("click", (e) => {
-    // Only run this logic after initial load to prevent premature hiding
     if (!initialLoadComplete) return;
 
     const isClickInsideSearch = searchInput.contains(e.target) || (searchResultsContainer && searchResultsContainer.contains(e.target));

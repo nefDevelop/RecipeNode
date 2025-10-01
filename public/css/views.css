@@ -1,104 +1,90 @@
 /* Estilos para la vista de lista de recetas */
+
+/* Estilo base para la vista de lista (móviles y pantallas pequeñas) */
 #recipe-gallery.list-view {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Espacio entre elementos de la lista */
+  gap: 1.5rem; /* Un poco más de espacio entre tarjetas */
 }
 
-#recipe-gallery.list-view > a {
+#recipe-gallery.list-view .recipe-card {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start; /* Alinea los elementos al inicio del contenedor */
+  flex-direction: column; /* Apilado vertical en móviles */
+  overflow: hidden; /* Asegura que los bordes redondeados se apliquen a la imagen */
   background-color: #fff;
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  transition: all 0.3s ease-in-out;
-  text-decoration: none;
-  color: inherit;
+}
+
+/* Contenedor de la imagen */
+#recipe-gallery.list-view .recipe-card .image-container {
   width: 100%;
-}
-
-#recipe-gallery.list-view > a:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-
-#recipe-gallery.list-view > a .relative.pb-\[75\%\] {
-  /* Contenedor de imagen */
+  height: 180px; /* Una altura fija para las imágenes en la lista */
   flex-shrink: 0;
-  width: 180px; /* Ancho fijo para la imagen en vista de lista */
-  height: 120px; /* Altura fija para la imagen */
-  padding-bottom: 0; /* Eliminar padding-bottom basado en porcentaje */
-  position: relative;
 }
 
-#recipe-gallery.list-view > a img,
-#recipe-gallery.list-view > a .placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* La imagen dentro del contenedor */
+#recipe-gallery.list-view .recipe-card .image-container img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Rellena el contenedor sin deformarse */
 }
 
-#recipe-gallery.list-view > a .p-4 {
-  /* Contenido de texto */
+/* Contenedor del texto */
+#recipe-gallery.list-view .recipe-card .p-4 {
   flex-grow: 1;
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Centrar verticalmente el contenido */
 }
 
-#recipe-gallery.list-view > a h3 {
-  font-size: 1.125rem; /* text-lg */
-  margin-bottom: 0.25rem;
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.recipe-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  align-items: center;
 }
 
-#recipe-gallery.list-view > a p.truncate {
-  font-size: 0.875rem; /* text-sm */
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  margin-bottom: 0.5rem;
+.meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #4a5568;
 }
 
-#recipe-gallery.list-view > a .flex.flex-wrap.gap-1 {
-  margin-top: 0.5rem;
+.dark .meta-item {
+  color: #a0aec0;
 }
 
-#recipe-gallery.list-view > a .delete-recipe-btn {
-  position: absolute; /* Volver a posicionar el botón de borrado */
-  top: 0.5rem;
-  right: 0.5rem;
-  opacity: 0; /* Ocultar por defecto */
-  transition: opacity 0.3s;
+.tag-pill {
+  display: inline-block;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4a5568;
 }
 
-#recipe-gallery.list-view > a:hover .delete-recipe-btn {
-  opacity: 1; /* Mostrar al pasar el ratón */
+.dark .tag-pill {
+  background-color: #4a5568;
+  color: #e2e8f0;
 }
 
-/* Ocultar algunos campos en la vista de lista para mayor compacidad */
-#recipe-gallery.list-view > a p.text-sm.text-gray-500.dark\:text-gray-400.mb-1:not(:first-of-type) {
-  display: none; /* Oculta todos los párrafos de detalles excepto el primero */
-}
+/* Media Query para pantallas más grandes (a partir de 640px) */
+@media (min-width: 640px) {
+  #recipe-gallery.list-view .recipe-card {
+    flex-direction: row; /* Fila horizontal en pantallas grandes */
+    align-items: flex-start; /* Alinea los items al inicio */
+    gap: 1rem;
+  }
 
-#recipe-gallery.list-view > a .flex.flex-wrap.gap-1 {
-  display: none; /* Oculta los tags, categorías, etc. */
-}
+  #recipe-gallery.list-view .recipe-card .image-container {
+    width: 200px; /* Ancho fijo para la imagen */
+    height: 130px; /* Altura fija para la imagen */
+  }
 
-#recipe-gallery.list-view > a .mt-2.flex.items-center.text-sm.text-gray-500.dark\:text-gray-400 {
-  display: none; /* Oculta el contador de vistas */
+  #recipe-gallery.list-view .recipe-card .p-4 {
+    padding: 0.75rem 1rem; /* Ajuste de padding */
+  }
 }
