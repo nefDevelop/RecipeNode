@@ -148,6 +148,9 @@ const getHomePage = async (req, res) => {
         });
       }
 
+      const fileStats = await fs.promises.stat(recipeRow.path);
+      const mtime = fileStats.mtime;
+
       const fileContent = await fs.promises.readFile(recipeRow.path, "utf8");
       let { attributes, body: rawBody } = fm(fileContent);
 

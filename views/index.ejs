@@ -115,6 +115,11 @@
 
           <!-- Contenido de la receta -->
           <article class="prose dark:prose-invert lg:prose-xl max-w-none"><%- content %></article>
+          <% if (typeof mtime !== 'undefined') { %>
+            <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+              Last Update: <%= new Date(mtime).toLocaleDateString('en-CA') %>
+            </div>
+          <% } %>
         </div>
         <% } else { %>
         <!-- Si estamos en la página principal, mostramos la galería -->
