@@ -19,17 +19,40 @@ document.addEventListener("DOMContentLoaded", () => {
   const manualListItemsContainer = document.getElementById("manual-list-items"); // Contenedor UL de la lista manual
   const addManualItemForm = document.getElementById("add-manual-item-form");
   const manualItemInput = document.getElementById("manual-item-input");
-  const toggleDragBtn = document.getElementById("toggle-drag-btn");
-  const dragLockedIcon = document.getElementById("drag-locked-icon");
-  const dragUnlockedIcon = document.getElementById("drag-unlocked-icon");
+  const toggleGeneratedDragBtn = document.getElementById("toggle-generated-drag-btn");
+  const generatedDragLockedIcon = document.getElementById("generated-drag-locked-icon");
+  const generatedDragUnlockedIcon = document.getElementById("generated-drag-unlocked-icon");
+  const toggleManualDragBtn = document.getElementById("toggle-manual-drag-btn");
+  const manualDragLockedIcon = document.getElementById("manual-drag-locked-icon");
+  const manualDragUnlockedIcon = document.getElementById("manual-drag-unlocked-icon");
   const addSeparatorBtn = document.getElementById("add-separator-btn");
 
   const STORAGE_KEY = "shoppingList";
   let currentMode = "weekly";
   let currentMonthDate = new Date();
   let currentWeekStartDate;
+  let generatedListSortable = null; // Variable para la instancia de Sortable de la lista generada
+  let manualListSortable = null; // Variable para la instancia de Sortable de la lista manual
 
   // --- Funciones de persistencia de datos (Lista Generada) ---
+
+  const setupGeneratedListDragToggle = () => {
+    if (toggleGeneratedDragBtn && generatedListSortable) {
+      // Eliminar listener anterior para evitar duplicados si se llama varias veces
+      toggleGeneratedDragBtn.replaceWith(toggleGeneratedDragBtn.cloneNode(true));
+      const newToggleBtn = document.getElementById("toggle-generated-drag-btn");
+
+      newToggleBtn.addEventListener("click", () => {
+        const isDisabled = generatedListSortable.option("disabled");
+        generatedListSortable.option("disabled", !isDisabled); // Invierte el estado
+
+        document.getElementById("generated-drag-locked-icon").classList.toggle("hidden", isDisabled);
+        document.getElementById("generated-drag-unlocked-icon").classList.toggle("hidden", !isDisabled);
+        newToggleBtn.classList.toggle("bg-green-100", isDisabled);
+        newToggleBtn.classList.toggle("dark:bg-green-900", isDisabled);
+      });
+    }
+  };
 
   const saveListToStorage = (listData) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(listData));
@@ -63,9 +86,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Drag and Drop para la Lista Generada ---
     const generatedListUl = document.getElementById("generated-list-ul");
     if (generatedListUl) {
-      new Sortable(generatedListUl, {
+      generatedListSortable = new Sortable(generatedListUl, {
         animation: 150,
         ghostClass: "sortable-ghost",
+        disabled: true, // Deshabilitado por defecto
         onEnd: function (evt) {
           const listItems = generatedListUl.querySelectorAll("li");
           const orderedTexts = Array.from(listItems).map((li) => li.dataset.itemText);
@@ -81,6 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       });
     }
+
+    // Configurar el botón de drag-and-drop para la lista recién renderizada
+    setupGeneratedListDragToggle();
   };
 
   const loadListFromStorage = () => {
@@ -375,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- Drag and Drop para la Lista Manual ---
-  const sortable = new Sortable(manualListItemsContainer, {
+  manualListSortable = new Sortable(manualListItemsContainer, {
     animation: 150,
     ghostClass: "sortable-ghost",
     disabled: true, // Deshabilitado por defecto
@@ -390,17 +417,17 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
-  // --- Lógica para el botón de activar/desactivar drag ---
-  if (toggleDragBtn) {
-    toggleDragBtn.addEventListener("click", () => {
-      const isDisabled = sortable.option("disabled");
-      sortable.option("disabled", !isDisabled); // Invierte el estado
+  if (toggleManualDragBtn) {
+    toggleManualDragBtn.addEventListener("click", () => {
+      if (!manualListSortable) return;
+      const isDisabled = manualListSortable.option("disabled");
+      manualListSortable.option("disabled", !isDisabled); // Invierte el estado
 
       // Actualiza los iconos y el color del botón
-      dragLockedIcon.classList.toggle("hidden", isDisabled);
-      dragUnlockedIcon.classList.toggle("hidden", !isDisabled);
-      toggleDragBtn.classList.toggle("bg-green-100", isDisabled);
-      toggleDragBtn.classList.toggle("dark:bg-green-900", isDisabled);
+      manualDragLockedIcon.classList.toggle("hidden", isDisabled);
+      manualDragUnlockedIcon.classList.toggle("hidden", !isDisabled);
+      toggleManualDragBtn.classList.toggle("bg-green-100", isDisabled);
+      toggleManualDragBtn.classList.toggle("dark:bg-green-900", isDisabled);
     });
   }
 
