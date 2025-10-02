@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       generatedListSortable = new Sortable(generatedListUl, {
         animation: 150,
         ghostClass: "sortable-ghost",
+        filter: ".delete-manual-item-btn, #toggle-generated-drag-btn", // Ignorar clics en estos elementos
         disabled: true, // Deshabilitado por defecto
         onEnd: function (evt) {
           const listItems = generatedListUl.querySelectorAll("li");
@@ -405,6 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
   manualListSortable = new Sortable(manualListItemsContainer, {
     animation: 150,
     ghostClass: "sortable-ghost",
+    filter: ".delete-manual-item-btn, #toggle-manual-drag-btn", // Ignorar clics en estos elementos
     disabled: true, // Deshabilitado por defecto
     onEnd: function (evt) {
       const items = manualListItemsContainer.querySelectorAll("li");
