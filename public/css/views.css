@@ -46,10 +46,10 @@
 }
 
 .recipe-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
-  align-items: center;
+  align-items: center; /* Mantiene la alineación vertical */
 }
 
 .meta-item {
@@ -93,5 +93,6 @@
 
   #recipe-gallery.list-view .recipe-card .p-4 {
     padding: 0.75rem 1rem; /* Ajuste de padding */
+    min-width: 0; /* Soluciona el problema de desbordamiento de flexbox */
   }
 }
