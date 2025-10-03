@@ -49,7 +49,7 @@ app.set("views", path.join(__dirname, "views"));
 
 // Middlewares
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/_resources", express.static(path.join(__dirname, "recetas/_resources")));
+app.use("/resources", express.static(path.join(__dirname, "recetas/_resources")));
 app.use("/attachment", express.static(path.join(__dirname, "recetas/attachment")));
 app.use(express.json()); // Para parsear JSON en las peticiones API
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios

@@ -68,48 +68,51 @@ const admonitionTypes = {
  * @returns {string|null} La URL de la imagen o null si no se encuentra.
  */
 function extractImageFromMarkdown(attributes, body) {
+  let imageUrl = null;
+
   // 1. Buscar en el frontmatter
   if (attributes && (attributes.image || attributes.cover)) {
-    return attributes.image || attributes.cover;
+    imageUrl = attributes.image || attributes.cover;
   }
 
-  if (!body) return null;
+  // 2. Si no se encuentra en el frontmatter, buscar en el cuerpo del texto
+  if (!imageUrl && body) {
+    const ingredientsIndex = body.toLowerCase().indexOf("ingredientes");
+    const searchBody = ingredientsIndex !== -1 ? body.substring(0, ingredientsIndex) : body;
 
-  // 2. Limitar la búsqueda al contenido ANTES de la sección de ingredientes
-  const ingredientsIndex = body.toLowerCase().indexOf("ingredientes");
-  const searchBody = ingredientsIndex !== -1 ? body.substring(0, ingredientsIndex) : body;
+    let match;
 
-  // 3. Buscar en el cuerpo del texto (en orden de prioridad)
-
-  // Formato HTML: <img src="..."
-  let match = searchBody.match(/<img[^>]+src="([^"]+)"/);
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-
-  // Formato Obsidian: ![[imagen.jpg]]
-  match = searchBody.match(/!\[\[(.*?)(?:\|.*)?\]\]/);
-  if (match && match[1]) {
-    const imageName = match[1].trim();
-    // Normalizar la ruta si es un adjunto local
-    const resourcesIndex = imageName.indexOf("_resources");
-    if (resourcesIndex !== -1) {
-      return "/" + imageName.substring(resourcesIndex);
+    // Formato HTML: <img src="..."
+    match = searchBody.match(/<img[^>]+src="([^"]+)"/);
+    if (match && match[1]) {
+      imageUrl = match[1].trim();
     }
-    const attachmentIndex = imageName.indexOf("attachment");
-    if (attachmentIndex !== -1) {
-      return "/" + imageName.substring(attachmentIndex);
+    // Formato Obsidian: ![[imagen.jpg]]
+    else {
+      match = searchBody.match(/!\[\[(.*?)(?:\|.*)?\]\]/);
+      if (match && match[1]) {
+        const imageName = match[1].trim();
+        if (!imageName.startsWith("http") && !imageName.startsWith("/")) {
+          imageUrl = `/resources/${imageName.split("/").pop()}`;
+        } else {
+          imageUrl = imageName;
+        }
+      }
+      // Formato Markdown estándar: ![alt](src)
+      else {
+        match = searchBody.match(/!\[.*?\((.*?)\)/);
+        if (match && match[1]) {
+          imageUrl = match[1].trim();
+        }
+      }
     }
-    return imageName;
   }
 
-  // Formato Markdown estándar: ![alt](src)
-  match = searchBody.match(/!\[.*?\]\((.*?)\)/);
-  if (match && match[1]) {
-    return match[1].trim();
+  if (imageUrl && !imageUrl.startsWith("http") && !imageUrl.startsWith("/")) {
+    return `/resources/${imageUrl.split("/").pop()}`;
   }
 
-  return null;
+  return imageUrl;
 }
 
 const getHomePage = async (req, res) => {
