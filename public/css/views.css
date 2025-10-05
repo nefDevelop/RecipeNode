@@ -96,3 +96,27 @@
     min-width: 0; /* Soluciona el problema de desbordamiento de flexbox */
   }
 }
+
+/* Nuevos estilos para la cabecera de la tarjeta de receta */
+.recipe-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.recipe-card-header h3 {
+  flex-grow: 1;
+  min-width: 0; /* Evita que el título empuje al tiempo de cocción */
+}
+
+.recipe-card-header .cooking-time {
+  flex-shrink: 0; /* Evita que el tiempo de cocción se encoja */
+  white-space: nowrap;
+}
+
+/* Ajustes para la cuadrícula de metadatos en la vista de lista */
+#recipe-gallery.list-view .recipe-meta-grid {
+    margin-top: 0.5rem;
+    gap: 1rem;
+}
