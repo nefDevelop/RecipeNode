@@ -314,6 +314,7 @@ const getHomePage = async (req, res) => {
 
 
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
+      console.log("Recipe data for index:", JSON.stringify(recipesWithData, null, 2));
       res.render("index", {
         title: "Recetas",
         content: null,
