@@ -15,6 +15,16 @@
 
         <% if (user && user.role === 'admin') { %> <% } %>
 
+        <h2 class="text-2xl font-bold mt-8 mb-4">Configuración de Carpeta de Imágenes</h2>
+        <form action="/settings/image-folder" method="POST" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-inner">
+          <div class="mb-4">
+            <label for="image_folder" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Ruta a la carpeta de imágenes</label>
+            <input type="text" id="image_folder" name="image_folder" value="<%= settings.image_folder %>" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">La ruta a la carpeta que contiene las imágenes de las recetas. Por defecto es `_resources`.</p>
+          </div>
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Guardar Carpeta de Imágenes</button>
+        </form>
+
         <h2 class="text-2xl font-bold mt-8 mb-4">Configuración de Tarjetas de Receta</h2>
         <form action="/settings" method="POST" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-inner">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

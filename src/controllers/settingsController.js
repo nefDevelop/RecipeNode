@@ -33,6 +33,9 @@ const getSettingsPage = async (req, res) => {
       };
     }
 
+    const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
+    settings.image_folder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : '_resources';
+
     return res.render("settings", {
       title: "Ajustes",
       settings,
@@ -86,7 +89,19 @@ const updateSettings = async (req, res) => {
   }
 };
 
+const updateImageFolder = async (req, res) => {
+  const { image_folder } = req.body;
+  try {
+    await dbRun("INSERT OR REPLACE INTO unit_settings (id, value) VALUES (?, ?)", ["image_folder", image_folder]);
+    res.redirect("/settings");
+  } catch (error) {
+    console.error("Error al guardar la carpeta de imágenes:", error.message);
+    res.status(500).send("Error al guardar la carpeta de imágenes.");
+  }
+};
+
 module.exports = {
   getSettingsPage,
   updateSettings,
+  updateImageFolder,
 };

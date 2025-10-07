@@ -67,7 +67,7 @@ const admonitionTypes = {
  * @param {string} body - El cuerpo del archivo markdown.
  * @returns {string|null} La URL de la imagen o null si no se encuentra.
  */
-function extractImageFromMarkdown(attributes, body) {
+function extractImageFromMarkdown(attributes, body, imageFolder) {
   let imageUrl = null;
 
   // 1. Buscar en el frontmatter
@@ -93,7 +93,7 @@ function extractImageFromMarkdown(attributes, body) {
       if (match && match[1]) {
         const imageName = match[1].trim();
         if (!imageName.startsWith("http") && !imageName.startsWith("/")) {
-          imageUrl = `/resources/${imageName.split("/").pop()}`;
+          imageUrl = `/images/${imageName.split("/").pop()}`;
         } else {
           imageUrl = imageName;
         }
@@ -109,7 +109,7 @@ function extractImageFromMarkdown(attributes, body) {
   }
 
   if (imageUrl && !imageUrl.startsWith("http") && !imageUrl.startsWith("/")) {
-    return `/resources/${imageUrl.split("/").pop()}`;
+    return `/images/${imageUrl.split("/").pop()}`;
   }
 
   return imageUrl;
@@ -136,6 +136,9 @@ const getHomePage = async (req, res) => {
       };
     }
     // --- End common settings fetching logic ---
+
+    const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
+    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : '_resources';
 
     if (recipeName) {
       await dbRun("UPDATE recipes SET views = views + 1 WHERE name = ?", [recipeName]);
@@ -180,7 +183,7 @@ const getHomePage = async (req, res) => {
         .replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
           const cleanName = imageName.trim();
           const finalImageName = cleanName.split("/").pop();
-          return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+          return `<img src="/images/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
         })
         // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
         .replace(/\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]/g, (match, linkTarget, linkText) => {
@@ -223,7 +226,7 @@ const getHomePage = async (req, res) => {
 
       // 4. Post-procesar el HTML para corregir rutas de imágenes que no eran de tipo ![[...]]
       // Esto arregla rutas como <img src="../_resources/"> o !alt
-      htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
+      htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, `src="/images/$2"`);
       // 5. Habilitar los checkboxes de las listas de tareas eliminando el atributo 'disabled'.
       // Esto permite que los usuarios los marquen mientras cocinan.
       htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
@@ -286,7 +289,7 @@ const getHomePage = async (req, res) => {
           try {
             const fileContent = await fs.promises.readFile(recipe.path, "utf8");
             const { attributes, body } = fm(fileContent);
-            const image = extractImageFromMarkdown(attributes, body);
+            const image = extractImageFromMarkdown(attributes, body, imageFolder);
 
             // Parse JSON fields into arrays
             const parsedRecipe = { ...recipe, image };
@@ -454,6 +457,9 @@ const getRecipeByIdApi = async (req, res) => {
       await fs.promises.writeFile(recipeRow.path, updatedFrontMatter + rawBody, "utf8");
     }
 
+    const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
+    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : '_resources';
+
     // Lógica de renderizado consistente con getHomePage
     let markdownContent = rawBody
       .replace(/%%.*?%%/g, "")
@@ -467,7 +473,7 @@ const getRecipeByIdApi = async (req, res) => {
       .replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
         const cleanName = imageName.trim();
         const finalImageName = cleanName.split("/").pop();
-        return `<img src="/resources/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+        return `<img src="/images/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
       })
       // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
       .replace(/\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]/g, (match, linkTarget, linkText) => {
@@ -504,7 +510,7 @@ const getRecipeByIdApi = async (req, res) => {
       breaks: false,
     };
     let htmlContent = marked.parse(processedMarkdown, markedOptions);
-    htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, 'src="/resources/$2"');
+    htmlContent = htmlContent.replace(/src="(\.\.\/)?_resources\/(.*?)"/g, `src="/images/$2"`);
     // Habilitar los checkboxes de las listas de tareas eliminando el atributo 'disabled'.
     htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 

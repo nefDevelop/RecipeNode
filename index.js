@@ -49,7 +49,7 @@ app.set("views", path.join(__dirname, "views"));
 
 // Middlewares
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/resources", express.static(path.join(__dirname, "recetas/_resources")));
+
 app.use("/attachment", express.static(path.join(__dirname, "recetas/attachment")));
 app.use(express.json()); // Para parsear JSON en las peticiones API
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios
@@ -198,6 +198,22 @@ app.use(async (req, res, next) => {
 
 // Ruta para evitar el error 404 del favicon en las logs del navegador
 app.get("/favicon.ico", (req, res) => res.status(204).send());
+
+// Middleware para servir la carpeta de imágenes dinámicamente
+app.use(async (req, res, next) => {
+  try {
+    const imageFolderSetting = await dbGet("SELECT value FROM unit_settings WHERE id = 'image_folder'");
+    const imageFolder = imageFolderSetting ? imageFolderSetting.value : '_resources';
+    const imageFolderPath = path.join(__dirname, imageFolder);
+
+    // Servir la carpeta de imágenes dinámicamente
+    app.use("/images", express.static(imageFolderPath));
+    next();
+  } catch (error) {
+    console.error("Error al servir la carpeta de imágenes:", error);
+    next();
+  }
+});
 
 // Usar el enrutador principal
 app.use("/", routes);

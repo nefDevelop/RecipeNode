@@ -5,5 +5,6 @@ const { isAuthenticated, isAuthenticatedView } = require("../middlewares/authMid
 
 router.get("/", isAuthenticatedView, getSettingsPage);
 router.post("/", isAuthenticated, updateSettings);
+router.post("/image-folder", isAuthenticated, updateImageFolder);
 
 module.exports = router;
