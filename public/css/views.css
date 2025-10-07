@@ -115,7 +115,8 @@
 
   #recipe-gallery.list-view .recipe-card .image-container {
     width: 200px; /* Ancho fijo para la imagen */
-    height: 130px; /* Altura fija para la imagen */
+    /* height: 130px; /* Eliminamos la altura fija */
+    align-self: stretch; /* Hacemos que el contenedor se estire */
   }
 
   #recipe-gallery.list-view .recipe-card .p-4 {
@@ -146,4 +147,13 @@
 #recipe-gallery.list-view .recipe-meta-grid {
   margin-top: 0.5rem;
   gap: 1rem;
+}
+
+/* Contenedor para la cabecera de la vista de receta individual (visitas y botones) */
+.recipe-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Espacio antes del contenido de la receta */
+  flex-wrap: wrap; /* Asegura que se vea bien en pantallas pequeñas */
 }

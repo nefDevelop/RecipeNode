@@ -73,6 +73,12 @@ function extractImageFromMarkdown(attributes, body, imageFolder) {
   // 1. Buscar en el frontmatter
   if (attributes && (attributes.image || attributes.cover)) {
     imageUrl = attributes.image || attributes.cover;
+    // Limpiar la sintaxis de Obsidian si está presente en el frontmatter
+    // ej: image: "[[path/to/image.jpg]]"
+    const obsidianMatch = imageUrl.match(/\[\[(.*?)]]/);
+    if (obsidianMatch) {
+      imageUrl = obsidianMatch[1];
+    }
   }
 
   // 2. Si no se encuentra en el frontmatter, buscar en el cuerpo del texto
@@ -92,11 +98,7 @@ function extractImageFromMarkdown(attributes, body, imageFolder) {
       match = searchBody.match(/!\[\[(.*?)(?:\|.*)?\]\]/);
       if (match && match[1]) {
         const imageName = match[1].trim();
-        if (!imageName.startsWith("http") && !imageName.startsWith("/")) {
-          imageUrl = `/images/${imageName.split("/").pop()}`;
-        } else {
-          imageUrl = imageName;
-        }
+        imageUrl = imageName; // Keep the full path for now
       }
       // Formato Markdown estándar: ![alt](src)
       else {
@@ -109,7 +111,13 @@ function extractImageFromMarkdown(attributes, body, imageFolder) {
   }
 
   if (imageUrl && !imageUrl.startsWith("http") && !imageUrl.startsWith("/")) {
-    return `/images/${imageUrl.split("/").pop()}`;
+    // Asegurarse de que la URL final sea limpia y apunte a la ruta /images
+    const imageName = imageUrl.split("/").pop();
+    const imagePathInFolder = path.join(imageFolder, imageName);
+    if (fs.existsSync(path.join(__dirname, "../../", imagePathInFolder))) {
+      return `/images/${imageName}`;
+    }
+    return `/images/${imageName}`; // Fallback to the simple path
   }
 
   return imageUrl;
@@ -138,7 +146,7 @@ const getHomePage = async (req, res) => {
     // --- End common settings fetching logic ---
 
     const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
-    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : '_resources';
+    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : "_resources";
 
     if (recipeName) {
       await dbRun("UPDATE recipes SET views = views + 1 WHERE name = ?", [recipeName]);
@@ -150,7 +158,7 @@ const getHomePage = async (req, res) => {
           content: `La receta "${recipeName}" no existe.`, // Corrected escaping for template literal
           recipes: null,
           user: req.session,
-          sortBy: req.query.sort_by || 'name_asc', // Ensure sortBy is always passed
+          sortBy: req.query.sort_by || "name_asc", // Ensure sortBy is always passed
         });
       }
 
@@ -164,7 +172,9 @@ const getHomePage = async (req, res) => {
       attributes.views = (attributes.views || 0) + 1;
 
       // Reconstruct front-matter and content
-      const updatedFrontMatter = `---\n${Object.entries(attributes).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n`;
+      const updatedFrontMatter = `---\n${Object.entries(attributes)
+        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+        .join("\n")}\n---\n`;
       const updatedFileContent = updatedFrontMatter + rawBody;
 
       // Write updated content back to file
@@ -183,7 +193,7 @@ const getHomePage = async (req, res) => {
         .replace(/!\[\[(.*?)(?:\|.*)?\]\]/g, (match, imageName) => {
           const cleanName = imageName.trim();
           const finalImageName = cleanName.split("/").pop();
-          return `<img src="/images/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md">`;
+          return `<img src="/images/${finalImageName}" alt="${finalImageName}" class="mx-auto my-4 rounded-md shadow-md recipe-image">`;
         })
         // Convierte enlaces a notas [[Otra Receta]] a enlaces <a>
         .replace(/\[\[([^\]|\n]+)(?:\|([^\]|\n]+))?\]\]/g, (match, linkTarget, linkText) => {
@@ -199,7 +209,7 @@ const getHomePage = async (req, res) => {
           }
 
           // Limpiar el contenido del admonition
-          const cleanedContent = content.replace(/>\s?/g, '').trim();
+          const cleanedContent = content.replace(/>\s?/g, "").trim();
           const parsedContent = marked.parse(cleanedContent);
 
           return `
@@ -219,6 +229,7 @@ const getHomePage = async (req, res) => {
       // `marked` procesará la sintaxis de markdown y dejará intactas las etiquetas <img> que hemos insertado.
       const markedOptions = {
         gfm: true, // Habilitar GitHub Flavored Markdown para reconocer las task lists
+        // Asegurarse de que `marked` no altere las URLs de las imágenes que ya hemos procesado.
         pedantic: false,
         breaks: false,
       };
@@ -234,20 +245,22 @@ const getHomePage = async (req, res) => {
       // 6. Identificar y envolver patrones de tiempo para temporizadores interactivos
       htmlContent = htmlContent.replace(/(\d+)\s+(minuto|segundo)s?/gi, (match, number, unit) => {
         let duration = parseInt(number, 10);
-        if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
+        if (unit.toLowerCase().startsWith("minut")) {
+          // 'minuto' or 'minutos'
           duration *= 60;
         }
         return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
       });
 
       // --- LOGS DE ESTILOS ---
-      console.log(`\n--- [RECETA: ${recipeName}] Análisis de Estilos en HTML ---
-`);
-      const classMatches = htmlContent.match(/class="[^"]+"/g) || [];
-      const styleMatches = htmlContent.match(/style="[^"]+"/g) || [];
-      console.log(`[Estilos] Clases CSS encontradas (${classMatches.length}):`, classMatches);
-      console.log(`[Estilos] Estilos en línea encontrados (${styleMatches.length}):`, styleMatches);
-
+      console.log(`\n--- [RECETA INDIVIDUAL: ${recipeName}] ---`);
+      const imagesInHtml = htmlContent.match(/<img[^>]+src="([^"]+)"/g) || [];
+      if (imagesInHtml.length > 0) {
+        console.log(`[IMAGENES ENCONTRADAS EN HTML]:`);
+        imagesInHtml.forEach((imgTag) => console.log(`  - ${imgTag}`));
+      } else {
+        console.log(`[IMAGENES ENCONTRADAS EN HTML]: Ninguna`);
+      }
 
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       res.render("index", {
@@ -259,30 +272,32 @@ const getHomePage = async (req, res) => {
         mostViewed: mostViewedRecipes,
         user: req.session,
         settings: settings, // Pass the settings object to the template
-        sortBy: req.query.sort_by || 'name_asc', // Ensure sortBy is always passed
+        sortBy: req.query.sort_by || "name_asc", // Ensure sortBy is always passed
       });
     } else {
-      const sortBy = req.query.sort_by || 'name_asc'; // Default sorting
-      let orderByClause = '';
+      const sortBy = req.query.sort_by || "name_asc"; // Default sorting
+      let orderByClause = "";
 
       switch (sortBy) {
-        case 'name_asc':
-          orderByClause = 'ORDER BY name ASC';
+        case "name_asc":
+          orderByClause = "ORDER BY name ASC";
           break;
-        case 'name_desc':
-          orderByClause = 'ORDER BY name DESC';
+        case "name_desc":
+          orderByClause = "ORDER BY name DESC";
           break;
-        case 'date_added_desc':
-          orderByClause = 'ORDER BY created_at DESC';
+        case "date_added_desc":
+          orderByClause = "ORDER BY created_at DESC";
           break;
-        case 'views_desc':
-          orderByClause = 'ORDER BY views DESC';
+        case "views_desc":
+          orderByClause = "ORDER BY views DESC";
           break;
         default:
-          orderByClause = 'ORDER BY name ASC';
+          orderByClause = "ORDER BY name ASC";
       }
 
-      const allRecipes = await dbAll(`SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient FROM recipes ${orderByClause}`);
+      const allRecipes = await dbAll(
+        `SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient FROM recipes ${orderByClause}`
+      );
 
       const recipesWithData = await Promise.all(
         allRecipes.map(async (recipe) => {
@@ -290,21 +305,30 @@ const getHomePage = async (req, res) => {
             const fileContent = await fs.promises.readFile(recipe.path, "utf8");
             const { attributes, body } = fm(fileContent);
             const image = extractImageFromMarkdown(attributes, body, imageFolder);
+            // console.log(`[INDEX PAGE] Receta: "${recipe.name}", Ruta de imagen extraída: ${image}`);
 
             // Parse JSON fields into arrays
             const parsedRecipe = { ...recipe, image };
             try {
               if (parsedRecipe.tags) parsedRecipe.tags = JSON.parse(parsedRecipe.tags);
-            } catch (e) { /* ignore if not valid JSON */ }
+            } catch (e) {
+              /* ignore if not valid JSON */
+            }
             try {
               if (parsedRecipe.equipment) parsedRecipe.equipment = JSON.parse(parsedRecipe.equipment);
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+              /* ignore */
+            }
             try {
               if (parsedRecipe.categories) parsedRecipe.categories = JSON.parse(parsedRecipe.categories);
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+              /* ignore */
+            }
             try {
               if (parsedRecipe.main_ingredient) parsedRecipe.main_ingredient = JSON.parse(parsedRecipe.main_ingredient);
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+              /* ignore */
+            }
 
             return parsedRecipe;
           } catch (e) {
@@ -314,10 +338,8 @@ const getHomePage = async (req, res) => {
         })
       );
 
-
-
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
-      console.log("Recipe data for index:", JSON.stringify(recipesWithData, null, 2));
+      // console.log("Recipe data for index:", JSON.stringify(recipesWithData, null, 2));
       res.render("index", {
         title: "Recetas",
         content: null,
@@ -343,7 +365,8 @@ const getShoppingListPage = (req, res) => {
 const getAllRecipesApi = async (req, res) => {
   try {
     const { search, time_max, ingredients, cuisine, difficulty, meal_type, rating, equipment, tags, main_ingredient } = req.query;
-    let sql = "SELECT name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes WHERE 1=1";
+    let sql =
+      "SELECT name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes WHERE 1=1";
     const params = [];
 
     if (search) {
@@ -389,7 +412,7 @@ const getAllRecipesApi = async (req, res) => {
     let filteredRecipes = await dbAll(sql + " ORDER BY name", params);
 
     if (ingredients) {
-      const ingredientList = ingredients.split(",").map(item => item.trim().toLowerCase());
+      const ingredientList = ingredients.split(",").map((item) => item.trim().toLowerCase());
       const recipesWithContent = await Promise.all(
         filteredRecipes.map(async (recipe) => {
           try {
@@ -401,9 +424,9 @@ const getAllRecipesApi = async (req, res) => {
           }
         })
       );
-      filteredRecipes = recipesWithContent.filter(recipe => {
+      filteredRecipes = recipesWithContent.filter((recipe) => {
         if (!recipe || !recipe.content) return false;
-        return ingredientList.every(ingredient => recipe.content.toLowerCase().includes(ingredient));
+        return ingredientList.every((ingredient) => recipe.content.toLowerCase().includes(ingredient));
       });
     }
 
@@ -453,12 +476,14 @@ const getRecipeByIdApi = async (req, res) => {
     // Sincronizar el contador de la BD al archivo .md
     if (attributes.views !== recipeRow.views) {
       attributes.views = recipeRow.views;
-      const updatedFrontMatter = `---\n${Object.entries(attributes).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n`;
+      const updatedFrontMatter = `---\n${Object.entries(attributes)
+        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+        .join("\n")}\n---\n`;
       await fs.promises.writeFile(recipeRow.path, updatedFrontMatter + rawBody, "utf8");
     }
 
     const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
-    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : '_resources';
+    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : "_resources";
 
     // Lógica de renderizado consistente con getHomePage
     let markdownContent = rawBody
@@ -489,7 +514,7 @@ const getRecipeByIdApi = async (req, res) => {
         }
 
         // Limpiar el contenido del admonition
-        const cleanedContent = content.replace(/>\s?/g, '').trim();
+        const cleanedContent = content.replace(/>\s?/g, "").trim();
         const parsedContent = marked.parse(cleanedContent);
 
         return `
@@ -515,21 +540,21 @@ const getRecipeByIdApi = async (req, res) => {
     htmlContent = htmlContent.replace(/<input disabled=""/g, "<input");
 
     // 6. Identificar y envolver patrones de tiempo para temporizadores interactivos
-    htmlContent = htmlContent.replace(/(\d+)\s+(minuto|segundo)s?/gi, (match, number, unit) => {
-      let duration = parseInt(number, 10);
-      if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
-        duration *= 60;
-      }
-      return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
-    });
+    // htmlContent = htmlContent.replace(/(\d+)\s+(minuto|segundo)s?/gi, (match, number, unit) => {
+    //   let duration = parseInt(number, 10);
+    //   if (unit.toLowerCase().startsWith('minut')) { // 'minuto' or 'minutos'
+    //     duration *= 60;
+    //   }
+    //   return `<span class="timer-trigger" data-duration="${duration}">${match}</span>`;
+    // });
 
     // --- LOGS DE ESTILOS ---
-    console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---
-`);
-    console.log(`[Estilos] Clases CSS encontradas:`, htmlContent.match(/class="[^"]+"/g) || []);
-    console.log(`[Estilos] Estilos en línea encontrados:`, htmlContent.match(/style="[^"]+"/g) || []);
-    console.log(`--- Fin del análisis ---
-`);
+    // console.log(`\n--- [API RECETA: ${recipeName}] Análisis de Estilos en HTML ---
+    // `);
+    // console.log(`[Estilos] Clases CSS encontradas:`, htmlContent.match(/class="[^"]+"/g) || []);
+    // console.log(`[Estilos] Estilos en línea encontrados:`, htmlContent.match(/style="[^"]+"/g) || []);
+    // console.log(`--- Fin del análisis ---
+    // `);
 
     attributes.views = recipeRow.views;
 
@@ -563,11 +588,13 @@ const createRecipeApi = async (req, res) => {
   }
 
   const now = new Date().toISOString();
-  let frontmatter = `---\ntitle: "${title.replace(/"/g, '\"')}"
+  let frontmatter = `---\ntitle: "${title.replace(/"/g, '"')}"
 `;
-  if (source) frontmatter += `source: ${source}
+  if (source)
+    frontmatter += `source: ${source}
 `;
-  if (image) frontmatter += `image: ${image}
+  if (image)
+    frontmatter += `image: ${image}
 `;
   frontmatter += `created: ${now}
 `;
@@ -586,7 +613,6 @@ const createRecipeApi = async (req, res) => {
   const equipment = newAttributes.equipment ? JSON.stringify(newAttributes.equipment) : null;
   const tags = newAttributes.tags ? JSON.stringify(newAttributes.tags) : null;
   const mainIngredient = newAttributes.main_ingredient ? JSON.stringify(newAttributes.main_ingredient) : null;
-
 
   frontmatter += `---
 
@@ -701,48 +727,48 @@ const scrapeRecipeApi = async (req, res) => {
 };
 
 const getAvailableFiltersApi = async (req, res) => {
-  console.log("getAvailableFiltersApi called.");
+  // console.log("getAvailableFiltersApi called."); // Removed
   try {
     const filters = {};
 
     // Fetch distinct values for simple fields
-    const simpleFields = ['cuisine_type', 'difficulty', 'meal_type', 'rating'];
+    const simpleFields = ["cuisine_type", "difficulty", "meal_type", "rating"];
     for (const field of simpleFields) {
-      console.log(`Fetching distinct values for simple field: ${field}`);
+      // console.log(`Fetching distinct values for simple field: ${field}`); // Removed
       const rows = await dbAll(`SELECT DISTINCT ${field} FROM recipes WHERE ${field} IS NOT NULL AND ${field} != ''`);
-      filters[field] = rows.map(row => row[field]);
+      filters[field] = rows.map((row) => row[field]);
     }
 
     // Fetch and process array-like fields (tags, main_ingredient, equipment)
-    const arrayFields = ['tags', 'main_ingredient', 'equipment'];
+    const arrayFields = ["tags", "main_ingredient", "equipment"];
     for (const field of arrayFields) {
-      console.log(`Fetching distinct values for array field: ${field}`);
+      // console.log(`Fetching distinct values for array field: ${field}`); // Removed
       const rows = await dbAll(`SELECT ${field} FROM recipes WHERE ${field} IS NOT NULL AND ${field} != ''`);
       const allValues = new Set();
-      rows.forEach(row => {
+      rows.forEach((row) => {
         try {
           // Assuming these are stored as comma-separated strings or JSON arrays
           let values = [];
-          if (typeof row[field] === 'string') {
-            if (row[field].startsWith('[') && row[field].endsWith(']')) {
+          if (typeof row[field] === "string") {
+            if (row[field].startsWith("[") && row[field].endsWith("]")) {
               // Try parsing as JSON array
               values = JSON.parse(row[field]);
             } else {
               // Assume comma-separated string
-              values = row[field].split(',').map(v => v.trim());
+              values = row[field].split(",").map((v) => v.trim());
             }
           } else if (Array.isArray(row[field])) {
             values = row[field];
           }
-          values.forEach(val => {
+          values.forEach((val) => {
             // Ensure val is a string before calling replace
-            if (typeof val === 'string' && val) {
-              allValues.add(val.replace(/[\[\]]/g, '')); // Clean up Obsidian link syntax if present
+            if (typeof val === "string" && val) {
+              allValues.add(val.replace(/[\[\]]/g, "")); // Clean up Obsidian link syntax if present
             } else if (Array.isArray(val)) {
               // If it's an array, flatten it and process its elements
-              val.forEach(innerVal => {
-                if (typeof innerVal === 'string' && innerVal) {
-                  allValues.add(innerVal.replace(/[\[\]]/g, ''));
+              val.forEach((innerVal) => {
+                if (typeof innerVal === "string" && innerVal) {
+                  allValues.add(innerVal.replace(/[\[\]]/g, ""));
                 }
               });
             }
@@ -754,7 +780,7 @@ const getAvailableFiltersApi = async (req, res) => {
       filters[field] = Array.from(allValues);
     }
 
-    console.log("Sending filters response:", filters);
+    // console.log("Sending filters response:", filters); // Removed
     res.json(filters);
   } catch (error) {
     console.error("Error fetching available filters:", error);

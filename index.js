@@ -33,7 +33,6 @@ db.run("ALTER TABLE manual_shopping_items ADD COLUMN order_index INTEGER", (err)
   }
 });
 
-
 // Migración: Añadir la columna 'created_at' a la tabla 'recipes' si no existe.
 db.run("ALTER TABLE recipes ADD COLUMN created_at DATETIME", (err) => {
   if (err && !err.message.includes("duplicate column name")) {
@@ -199,19 +198,24 @@ app.use(async (req, res, next) => {
 // Ruta para evitar el error 404 del favicon en las logs del navegador
 app.get("/favicon.ico", (req, res) => res.status(204).send());
 
-// Middleware para servir la carpeta de imágenes dinámicamente
-app.use(async (req, res, next) => {
+// Middleware dinámico para servir imágenes desde la carpeta configurada en la base de datos.
+// Se activa solo para las rutas que comienzan con /images.
+app.use("/images", async (req, res, next) => {
   try {
     const imageFolderSetting = await dbGet("SELECT value FROM unit_settings WHERE id = 'image_folder'");
-    const imageFolder = imageFolderSetting ? imageFolderSetting.value : '_resources';
+    const imageFolder = imageFolderSetting ? imageFolderSetting.value : "_resources";
     const imageFolderPath = path.join(__dirname, imageFolder);
+    // console.log(`[Static Middleware] Sirviendo desde: ${imageFolderPath} para la ruta ${req.path}`);
 
-    // Servir la carpeta de imágenes dinámicamente
-    app.use("/images", express.static(imageFolderPath));
-    next();
+    // Creamos un middleware estático "al vuelo" y lo ejecutamos inmediatamente.
+    // Esto es más eficiente que usar app.use() en cada petición.
+    const staticMiddleware = express.static(imageFolderPath);
+    staticMiddleware(req, res, next);
   } catch (error) {
-    console.error("Error al servir la carpeta de imágenes:", error);
-    next();
+    console.error("Error en el middleware de imágenes dinámicas:", error);
+    // Si hay un error, simplemente pasamos al siguiente middleware,
+    // lo que probablemente resultará en un 404 para la imagen.
+    next(error);
   }
 });
 
