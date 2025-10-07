@@ -1,24 +1,64 @@
-/* --- Estilos de Impresión --- */
-
 @media print {
-  /* 1. Ocultar la cabecera y la barra lateral de forma contundente */
-  header,
-  #sidebar {
+  /*
+   * Regla para la página de impresión.
+   * Al definir los márgenes, le indicamos al navegador que tome el control
+   * y esto generalmente suprime los encabezados y pies de página automáticos.
+   */
+  @page {
+    size: auto; /* Permite que el contenido determine el tamaño */
+    margin: 1rem; /* Eliminamos completamente los márgenes de la página */
+  }
+
+  /* 1. Ocultar todo el cuerpo por defecto */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Mostrar solo el contenedor de la receta y su contenido */
+  #recipe-content-wrapper,
+  #recipe-content-wrapper * {
+    visibility: visible;
+  }
+
+  /* 3. Asegurarse de que el contenedor de la receta ocupe toda la página */
+  #recipe-content-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    padding-top: 1cm;
+    padding-right: 1cm;
+    padding-bottom: 1cm; /* Este es el margen inferior */
+    padding-left: 1cm;
+    margin: 0;
+    box-sizing: border-box; /* Asegura que el padding no desborde el ancho */
+  }
+
+  /* 4. Ocultar elementos específicos que no queremos en la impresión */
+  .recipe-view-header,
+  #servings-scaler,
+  #exit-kitchen-mode-btn {
     display: none !important;
   }
 
-  /* 2. Hacer que el contenedor principal de la receta ocupe toda la página */
-  .container {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  /* 5. Usar columnas para el contenido de la receta */
+  .recipe-print-content .prose {
+    column-count: 2; /* Crear dos columnas */
+    column-gap: 2rem; /* Espacio entre columnas */
+    font-size: 11pt; /* Un tamaño de fuente legible para impresión */
+    text-align: justify; /* Justificar el texto */
   }
 
-  /* 3. Asegurarse de que el contenido principal y su wrapper se expandan */
-  main,
-  #recipe-content-wrapper {
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  /* 6. Forzar un salto de columna antes de los pasos de preparación */
+  /* Esto asume que los pasos vienen bajo un h2 o h3 */
+  .recipe-print-content .prose h2,
+  .recipe-print-content .prose h3 {
+    break-before: column; /* ¡La clave está aquí! */
+  }
+
+  /* Evitar que el primer título (Ingredientes) cree un salto innecesario */
+  .recipe-print-content .prose h2:first-child,
+  .recipe-print-content .prose h3:first-child {
+    break-before: avoid;
   }
 }

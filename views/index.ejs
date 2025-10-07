@@ -13,6 +13,10 @@
         <!-- Si se ha seleccionado una receta, se muestra su contenido -->
         <!-- Contenedor para el Modo Cocina -->
         <div id="recipe-content-wrapper" class="relative">
+          <!-- Estilos específicos para la vista de receta (Modo Cocina e Impresión) -->
+          <link rel="stylesheet" href="/css/kitchen-mode.css" />
+          <link rel="stylesheet" href="/css/print.css" media="print" />
+
           <div class="recipe-view-header">
             <% if (typeof views !== 'undefined' && views > 0) { %>
             <div class="flex items-center text-gray-500 dark:text-gray-400 text-sm">
@@ -84,7 +88,9 @@
           </div>
 
           <!-- Contenido de la receta -->
-          <article class="prose dark:prose-invert lg:prose-xl max-w-none"><%- content %></article>
+          <div class="recipe-print-content">
+             <article class="prose dark:prose-invert lg:prose-xl max-w-none"><%- content %></article>
+          </div>
           
         </div>
         <% } else { %>
