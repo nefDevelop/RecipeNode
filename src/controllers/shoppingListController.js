@@ -40,20 +40,24 @@ const addManualItem = async (req, res) => {
   }
 
   try {
-    // Primero, obtenemos el índice de orden más alto para asignar al nuevo elemento.
-    const row = await dbGet("SELECT MAX(order_index) as max_order FROM manual_shopping_items");
-    const newOrderIndex = row && row.max_order !== null ? row.max_order + 1 : 0;
+    // Para añadir el nuevo elemento al principio, incrementamos el order_index de todos los elementos existentes.
+    await dbRun("BEGIN TRANSACTION");
+    await dbRun("UPDATE manual_shopping_items SET order_index = order_index + 1");
 
-    const sql = "INSERT INTO manual_shopping_items (text, order_index) VALUES (?, ?)";
-    const result = await dbRun(sql, [text.trim(), newOrderIndex]);
+    // Luego, insertamos el nuevo elemento con order_index = 0.
+    const sql = "INSERT INTO manual_shopping_items (text, order_index) VALUES (?, 0)";
+    const result = await dbRun(sql, [text.trim()]);
+
+    await dbRun("COMMIT");
 
     res.status(201).json({
       id: result.lastID,
       text: text.trim(),
       checked: false,
+      order_index: 0,
     });
   } catch (error) {
-    console.error("Error al añadir artículo a la lista manual:", error);
+    await dbRun("ROLLBACK");
     return res.status(500).json({ error: "Error al guardar el artículo." });
   }
 };
@@ -218,7 +222,7 @@ const generateShoppingList = async (req, res) => {
     }, {});
 
     // 6. Filter out items with 0 quantity and 0 recipe count
-    const filteredAggregated = Object.values(aggregated).filter(ing => !(ing.totalQuantity === 0 && ing.recipeCount === 0));
+    const filteredAggregated = Object.values(aggregated).filter((ing) => !(ing.totalQuantity === 0 && ing.recipeCount === 0));
 
     // 7. Format final list and sort alphabetically
     const finalList = filteredAggregated.map((ing) => {
