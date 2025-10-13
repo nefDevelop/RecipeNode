@@ -16,8 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const pageTitle = document.getElementById("page-title");
   const generatorTitle = document.getElementById("generator-title");
   const manualListSection = document.getElementById("manual-list-section");
-  const manualListItemsContainer = document.getElementById("manual-list-items"); // Contenedor UL de la lista manual
-  const addManualItemForm = document.getElementById("add-manual-item-form");
   const manualItemInput = document.getElementById("manual-item-input");
   const toggleGeneratedDragBtn = document.getElementById("toggle-generated-drag-btn");
   const generatedDragLockedIcon = document.getElementById("generated-drag-locked-icon");
@@ -25,26 +23,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleManualDragBtn = document.getElementById("toggle-manual-drag-btn");
   const manualDragLockedIcon = document.getElementById("manual-drag-locked-icon");
   const manualDragUnlockedIcon = document.getElementById("manual-drag-unlocked-icon");
-  const addSeparatorBtn = document.getElementById("add-separator-btn");
+
+  // Nuevos selectores para la lista con pestañas
+  const manualListTabsNav = document.getElementById("manual-list-tabs-nav");
+  const manualListItemsContainer = document.getElementById("manual-list-items-container");
+  const addManualItemForm = document.getElementById("add-manual-item-form");
 
   const STORAGE_KEY = "shoppingList";
   let currentMode = "weekly";
   let currentMonthDate = new Date();
   let currentWeekStartDate;
-  let generatedListSortable = null; // Variable para la instancia de Sortable de la lista generada
-  let manualListSortable = null; // Variable para la instancia de Sortable de la lista manual
+  let generatedListSortable = null;
+
+  // --- Estado de la Lista Manual ---
+  let manualListTabs = [];
+  let manualListItems = [];
+  let activeManualTabId = null;
+  let manualListSortable = null;
+
+  // --- WebSocket Connection ---
+  const socket = io();
 
   // --- Funciones de persistencia de datos (Lista Generada) ---
-
   const setupGeneratedListDragToggle = () => {
     if (toggleGeneratedDragBtn && generatedListSortable) {
-      // Eliminar listener anterior para evitar duplicados si se llama varias veces
       toggleGeneratedDragBtn.replaceWith(toggleGeneratedDragBtn.cloneNode(true));
       const newToggleBtn = document.getElementById("toggle-generated-drag-btn");
 
       newToggleBtn.addEventListener("click", () => {
         const isDisabled = generatedListSortable.option("disabled");
-        generatedListSortable.option("disabled", !isDisabled); // Invierte el estado
+        generatedListSortable.option("disabled", !isDisabled);
 
         document.getElementById("generated-drag-locked-icon").classList.toggle("hidden", isDisabled);
         document.getElementById("generated-drag-unlocked-icon").classList.toggle("hidden", !isDisabled);
@@ -59,8 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const renderGeneratedList = (listData) => {
-    // Aseguramos que 'ingredients' sea siempre un array,
-    // ya sea que listData sea el array mismo o un objeto que lo contenga.
     const ingredients = Array.isArray(listData) ? listData : listData.ingredients;
 
     if (!ingredients || ingredients.length === 0) {
@@ -72,9 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .map(
         (item) => `
           <li class="flex items-center py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md" data-item-text="${item.text}">
-            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1" ${
-              item.checked ? "checked" : ""
-            }>
+            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1" ${item.checked ? "checked" : ""}>
             <span class="flex-1">${item.text}</span>
           </li>
         `
@@ -83,19 +87,15 @@ document.addEventListener("DOMContentLoaded", () => {
     listContent.innerHTML = `<ul id="generated-list-ul" class="list-none p-0">${itemsHtml}</ul>`;
     listContainer.classList.remove("hidden");
 
-    // --- Drag and Drop para la Lista Generada ---
     const generatedListUl = document.getElementById("generated-list-ul");
     if (generatedListUl) {
       generatedListSortable = new Sortable(generatedListUl, {
         animation: 150,
         ghostClass: "sortable-ghost",
-        filter: ".delete-manual-item-btn, #toggle-generated-drag-btn", // Ignorar clics en estos elementos
-        disabled: true, // Deshabilitado por defecto
+        disabled: true,
         onEnd: function (evt) {
           const listItems = generatedListUl.querySelectorAll("li");
           const orderedTexts = Array.from(listItems).map((li) => li.dataset.itemText);
-
-          // Reordenar y guardar en localStorage
           const savedListJSON = localStorage.getItem(STORAGE_KEY);
           if (!savedListJSON) return;
           const listData = JSON.parse(savedListJSON);
@@ -106,8 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       });
     }
-
-    // Configurar el botón de drag-and-drop para la lista recién renderizada
     setupGeneratedListDragToggle();
   };
 
@@ -116,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedListJSON) {
       try {
         const savedList = JSON.parse(savedListJSON);
-        // Aseguramos que renderGeneratedList reciba el array de ingredientes si está anidado
         const ingredientsToRender = savedList.ingredients || savedList;
         renderGeneratedList(ingredientsToRender);
         manualListSection.parentNode.insertBefore(manualListSection, generatorTitle);
@@ -128,17 +125,158 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // --- Funciones de UI (Generador) ---
+  // --- Lógica de la Lista Manual Compartida (Reescrita para Pestañas) ---
 
+  const escapeHTML = (str) => {
+    const p = document.createElement("p");
+    p.appendChild(document.createTextNode(str));
+    return p.innerHTML;
+  };
+
+  const renderManualTabs = () => {
+    manualListTabsNav.innerHTML = "";
+    if (manualListTabs.length === 0) {
+        manualListTabsNav.innerHTML = `<p class="text-gray-500 dark:text-gray-400 p-2">No hay pestañas. Créalas en <a href="/settings" class="text-green-600 hover:underline">Ajustes</a>.</p>`;
+        addManualItemForm.classList.add('hidden');
+        return;
+    }
+    addManualItemForm.classList.remove('hidden');
+
+    const nav = document.createElement("nav");
+    nav.className = "flex space-x-4";
+
+    manualListTabs.forEach(tab => {
+        const button = document.createElement('button');
+        button.dataset.tabId = tab.id;
+        button.textContent = escapeHTML(tab.name);
+        button.className = `manual-tab-btn py-2 px-4 font-semibold text-sm rounded-t-lg`;
+        if (tab.id === activeManualTabId) {
+            button.classList.add("border-b-2", "border-green-600", "text-green-600");
+        } else {
+            button.classList.add("text-gray-500", "hover:text-gray-700", "dark:text-gray-400", "dark:hover:text-gray-200");
+        }
+        nav.appendChild(button);
+    });
+    manualListTabsNav.appendChild(nav);
+  };
+
+  const renderManualItemLists = () => {
+    manualListItemsContainer.innerHTML = "";
+    manualListTabs.forEach(tab => {
+        const ul = document.createElement('ul');
+        ul.id = `manual-list-tab-${tab.id}`;
+        ul.className = "list-none p-0 manual-list-ul";
+        if (tab.id !== activeManualTabId) {
+            ul.classList.add('hidden');
+        }
+
+        const itemsForTab = manualListItems.filter(item => item.tabId === tab.id);
+        if (itemsForTab.length === 0) {
+            ul.innerHTML = `<li><p class="text-gray-500 p-4">No hay artículos en esta pestaña.</p></li>`;
+        } else {
+            itemsForTab.forEach(item => {
+                const li = document.createElement("li");
+                li.dataset.id = item.id;
+                li.className = "flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md";
+                li.innerHTML = `
+                    <div class="flex items-center flex-grow">
+                        <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1 manual-item-checkbox" ${item.checked ? "checked" : ""}>
+                        <span class="flex-1 ${item.checked ? "line-through text-gray-400" : ""}">${escapeHTML(item.text)}</span>
+                    </div>
+                    <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                ul.appendChild(li);
+            });
+        }
+        manualListItemsContainer.appendChild(ul);
+    });
+    setupManualListDragAndDrop();
+  };
+
+  const switchManualTab = (tabId) => {
+    activeManualTabId = tabId;
+    renderManualTabs(); // Re-render tabs to update active state
+    document.querySelectorAll('.manual-list-ul').forEach(ul => {
+        ul.classList.toggle('hidden', ul.id !== `manual-list-tab-${activeManualTabId}`);
+    });
+    setupManualListDragAndDrop(); // Re-initialize sortable for the new active list
+  };
+
+  const initManualList = async () => {
+    try {
+        const [tabsRes, itemsRes] = await Promise.all([
+            axios.get("/api/tabs"),
+            axios.get("/api/shopping-list/manual")
+        ]);
+
+        manualListTabs = tabsRes.data;
+        manualListItems = itemsRes.data;
+
+        if (manualListTabs.length > 0 && !activeManualTabId) {
+            activeManualTabId = manualListTabs[0].id;
+        }
+
+        renderManualTabs();
+        renderManualItemLists();
+
+    } catch (error) {
+        console.error("Error al inicializar la lista manual:", error);
+        manualListItemsContainer.innerHTML = `<li><p class="text-red-500">No se pudo cargar la lista de la compra manual.</p></li>`;
+    }
+  };
+
+  const addManualItemToList = async (text, tabId) => {
+    const trimmedText = text.trim();
+    if (!trimmedText || !tabId) return;
+
+    try {
+      // La UI se actualizará a través del evento de socket
+      await axios.post("/api/shopping-list/manual", { text: trimmedText, tabId });
+      manualItemInput.value = "";
+    } catch (error) {
+      console.error("Error al añadir el artículo:", error);
+      alert("No se pudo añadir el artículo.");
+    }
+  };
+
+  const setupManualListDragAndDrop = () => {
+    if (manualListSortable) {
+        manualListSortable.destroy();
+    }
+    const activeList = document.getElementById(`manual-list-tab-${activeManualTabId}`);
+    if (!activeList) return;
+
+    manualListSortable = new Sortable(activeList, {
+        animation: 150,
+        ghostClass: "sortable-ghost",
+        disabled: true, // Disabled by default
+        onEnd: function (evt) {
+            const items = activeList.querySelectorAll("li");
+            const orderedIds = Array.from(items).map((item) => item.dataset.id);
+
+            axios.put("/api/shopping-list/manual/order", { orderedIds, tabId: activeManualTabId })
+                .catch((err) => console.error("Error al guardar el orden:", err));
+        },
+    });
+
+    // Reset drag toggle state
+    manualListSortable.option("disabled", true);
+    manualDragLockedIcon.classList.remove("hidden");
+    manualDragUnlockedIcon.classList.add("hidden");
+    toggleManualDragBtn.classList.remove("bg-green-100", "dark:bg-green-900");
+  };
+
+  // --- Funciones de UI (Generador) ---
   const updateWeekDisplay = () => {
     const startDate = new Date(currentWeekStartDate);
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
     const options = { day: "numeric", month: "long" };
-    weekRangeDisplay.textContent = `Del ${startDate.toLocaleDateString("es-ES", options)} al ${endDate.toLocaleDateString(
-      "es-ES",
-      options
-    )}`;
+    weekRangeDisplay.textContent = `Del ${startDate.toLocaleDateString("es-ES", options)} al ${endDate.toLocaleDateString("es-ES", options)}`;
     weekRangeDisplay.dataset.startDate = startDate.toISOString().split("T")[0];
     weekRangeDisplay.dataset.endDate = endDate.toISOString().split("T")[0];
   };
@@ -153,9 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const updateMonthDisplay = () => {
-    monthDisplay.textContent = currentMonthDate
-      .toLocaleDateString("es-ES", { month: "long", year: "numeric" })
-      .replace(/^\w/, (c) => c.toUpperCase());
+    monthDisplay.textContent = currentMonthDate.toLocaleDateString("es-ES", { month: "long", year: "numeric" }).replace(/^\w/, (c) => c.toUpperCase());
     monthDisplay.dataset.year = currentMonthDate.getFullYear();
     monthDisplay.dataset.month = currentMonthDate.getMonth();
   };
@@ -177,121 +313,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // --- Lógica de la Lista Manual Compartida ---
-
-  const renderManualList = (items) => {
-    manualListItemsContainer.innerHTML = ""; // Limpiar antes de renderizar
-    if (!items || items.length === 0) {
-      manualListItemsContainer.innerHTML = '<li><p class="text-gray-500">No hay artículos en la lista manual.</p></li>';
-      return;
-    }
-    items.forEach((item) => {
-      // Detectar si el item es un separador
-      const isSeparator = item.text.includes("---");
-
-      const li = document.createElement("li");
-      li.dataset.id = item.id;
-
-      if (isSeparator) {
-        li.className = "flex items-center justify-between py-2 my-2"; // Estilo para separador
-        const separatorText = item.text.replace(/---/g, "").trim();
-        if (separatorText) {
-          li.innerHTML = `
-              <div class="flex-grow flex items-center gap-2 text-gray-500 dark:text-gray-400 font-semibold tracking-wider">
-                <hr class="flex-grow border-gray-300 dark:border-gray-600">
-                <span>${separatorText}</span>
-                <hr class="flex-grow border-gray-300 dark:border-gray-600">
-              </div>
-              <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            `;
-        } else {
-          li.innerHTML = `
-              <div class="flex-grow flex items-center text-gray-500 dark:text-gray-400">
-                <hr class="w-full border-gray-300 dark:border-gray-600">
-              </div>
-              <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            `;
-        }
-      } else {
-        li.className = "flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"; // Estilo para item normal
-        li.innerHTML = `
-          <div class="flex items-center flex-grow">
-            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 mr-3 ml-1 manual-item-checkbox" ${
-              item.checked ? "checked" : ""
-            }>
-            <span class="flex-1 ${item.checked ? "line-through text-gray-400" : ""}">${item.text}</span>
-          </div>
-          <button class="delete-manual-item-btn text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-full flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        `;
-      }
-      manualListItemsContainer.appendChild(li);
-    });
-  };
-
-  const fetchManualList = async () => {
-    try {
-      const response = await axios.get("/api/shopping-list/manual");
-      renderManualList(response.data);
-    } catch (error) {
-      console.error("Error al cargar la lista manual:", error);
-      manualListItemsContainer.innerHTML = '<li><p class="text-red-500">No se pudo cargar la lista.</p></li>';
-    }
-  };
-
-  // Función helper para añadir un artículo (o separador) a la lista manual
-  const addManualItemToList = async (text) => {
-    const trimmedText = text.trim();
-    if (!trimmedText) return;
-
-    try {
-      await axios.post("/api/shopping-list/manual", { text: trimmedText });
-      manualItemInput.value = ""; // Limpiar el input
-      fetchManualList(); // Recargar la lista para mostrar el nuevo artículo
-    } catch (error) {
-      console.error("Error al añadir el artículo:", error);
-      alert("No se pudo añadir el artículo.");
-    }
-  };
-
   // --- Event Listeners ---
-
-  // Generador de lista
-  prevWeekBtn.addEventListener("click", () => {
-    currentWeekStartDate.setDate(currentWeekStartDate.getDate() - 7);
-    updateWeekDisplay();
-  });
-  nextWeekBtn.addEventListener("click", () => {
-    currentWeekStartDate.setDate(currentWeekStartDate.getDate() + 7);
-    updateWeekDisplay();
-  });
+  prevWeekBtn.addEventListener("click", () => { currentWeekStartDate.setDate(currentWeekStartDate.getDate() - 7); updateWeekDisplay(); });
+  nextWeekBtn.addEventListener("click", () => { currentWeekStartDate.setDate(currentWeekStartDate.getDate() + 7); updateWeekDisplay(); });
   weeklyTab.addEventListener("click", () => switchTab("weekly"));
   monthlyTab.addEventListener("click", () => switchTab("monthly"));
-  prevMonthBtn.addEventListener("click", () => {
-    currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
-    updateMonthDisplay();
-  });
-  nextMonthBtn.addEventListener("click", () => {
-    currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
-    updateMonthDisplay();
-  });
+  prevMonthBtn.addEventListener("click", () => { currentMonthDate.setMonth(currentMonthDate.getMonth() - 1); updateMonthDisplay(); });
+  nextMonthBtn.addEventListener("click", () => { currentMonthDate.setMonth(currentMonthDate.getMonth() + 1); updateMonthDisplay(); });
 
   generateBtn.addEventListener("click", async () => {
     if (localStorage.getItem(STORAGE_KEY) && !confirm("Esto reemplazará tu lista actual. ¿Estás seguro?")) {
       return;
     }
-
     let startDate, endDate;
     if (currentMode === "weekly") {
       startDate = new Date(weekRangeDisplay.dataset.startDate);
@@ -304,28 +337,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const isoStartDate = startDate.toISOString().split("T")[0];
     const isoEndDate = endDate.toISOString().split("T")[0];
-
     listContainer.classList.remove("hidden");
     listContent.innerHTML = "<p>Generando lista...</p>";
-
     const response = await fetch(`/api/shopping-list?startDate=${isoStartDate}&endDate=${isoEndDate}`);
     const data = await response.json();
-
     if (!data || typeof data.ingredients === "undefined") {
       listContent.innerHTML = "<p>No se encontraron ingredientes para el periodo seleccionado o hubo un error.</p>";
       return;
     }
-
-    // La API ahora devuelve un array plano de strings. Lo convertimos a objetos.
     const newListData = data.ingredients.map((itemText) => ({ text: itemText, checked: false }));
     saveListToStorage(newListData);
-    renderGeneratedList(newListData); // Añadido para renderizar la lista
+    renderGeneratedList(newListData);
     manualListSection.parentNode.insertBefore(manualListSection, generatorTitle);
     generatorTitle.textContent = "Generar Nueva Lista (reemplazará la actual)";
     pageTitle.scrollIntoView({ behavior: "smooth" });
   });
 
-  // Lista generada (marcar/desmarcar)
   listContent.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
@@ -342,101 +369,131 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!savedListJSON) return;
       try {
         const listData = JSON.parse(savedListJSON);
-        // Aseguramos que trabajamos con el array de ingredientes
         const ingredients = Array.isArray(listData) ? listData : listData.ingredients;
         const itemText = e.target.nextElementSibling.textContent;
         const item = ingredients.find((i) => i.text === itemText);
-        if (item) {
-          item.checked = e.target.checked;
-        }
-        saveListToStorage(ingredients); // Guardamos siempre el array plano
+        if (item) { item.checked = e.target.checked; }
+        saveListToStorage(ingredients);
       } catch (err) {
         console.error("Error al actualizar el estado de la lista:", err);
       }
     }
   });
 
-  // Lista Manual (Añadir, Marcar, Borrar)
+  // --- Event Listeners para la Lista Manual ---
+  manualListTabsNav.addEventListener('click', (e) => {
+    if (e.target.matches('.manual-tab-btn')) {
+        const tabId = Number(e.target.dataset.tabId);
+        switchManualTab(tabId);
+    }
+  });
 
-  // Añadir un artículo normal al enviar el formulario
   addManualItemForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    await addManualItemToList(manualItemInput.value);
+    if (!activeManualTabId) {
+        alert("Por favor, crea y selecciona una pestaña primero.");
+        return;
+    }
+    await addManualItemToList(manualItemInput.value, activeManualTabId);
   });
 
   manualListItemsContainer.addEventListener("click", async (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const id = li.dataset.id;
-    const checkbox = li.querySelector(".manual-item-checkbox");
-
-    // Si es un separador (no tiene checkbox) y no se está borrando, no hacer nada.
-    if (!checkbox && !e.target.closest(".delete-manual-item-btn")) return;
 
     if (e.target.closest(".delete-manual-item-btn")) {
-      // Lógica para el botón de borrar
       if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
         try {
           await axios.delete(`/api/shopping-list/manual/${id}`);
-          fetchManualList();
         } catch (error) {
           console.error("Error al eliminar el artículo:", error);
           alert("No se pudo eliminar el artículo.");
         }
       }
-    } else {
-      // Lógica para marcar/desmarcar al hacer clic en cualquier otra parte del <li>
-      // Si el clic no fue directamente en el checkbox, invertimos su estado
-      if (e.target !== checkbox) {
-        checkbox.checked = !checkbox.checked;
-      }
-      try {
-        await axios.put(`/api/shopping-list/manual/${id}`, { checked: checkbox.checked });
-        li.querySelector("span").classList.toggle("line-through", checkbox.checked);
-        li.querySelector("span").classList.toggle("text-gray-400", checkbox.checked);
-      } catch (error) {
-        console.error("Error al actualizar el artículo:", error);
-        alert("No se pudo actualizar el artículo.");
-        checkbox.checked = !checkbox.checked; // Revertir en caso de error
-      }
+    } else if (e.target.matches(".manual-item-checkbox")) {
+        const checkbox = e.target;
+        try {
+            await axios.put(`/api/shopping-list/manual/${id}`, { checked: checkbox.checked });
+        } catch (error) {
+            console.error("Error al actualizar el artículo:", error);
+            alert("No se pudo actualizar el artículo.");
+        }
     }
-  });
-
-  // --- Drag and Drop para la Lista Manual ---
-  manualListSortable = new Sortable(manualListItemsContainer, {
-    animation: 150,
-    ghostClass: "sortable-ghost",
-    filter: ".delete-manual-item-btn, #toggle-manual-drag-btn", // Ignorar clics en estos elementos
-    disabled: true, // Deshabilitado por defecto
-    onEnd: function (evt) {
-      const items = manualListItemsContainer.querySelectorAll("li");
-      const orderedIds = Array.from(items).map((item) => item.dataset.id);
-
-      axios
-        .put("/api/shopping-list/manual/order", { orderedIds })
-        .then((response) => console.log(response.data.message))
-        .catch((err) => console.error("Error al guardar el orden:", err));
-    },
   });
 
   if (toggleManualDragBtn) {
     toggleManualDragBtn.addEventListener("click", () => {
       if (!manualListSortable) return;
       const isDisabled = manualListSortable.option("disabled");
-      manualListSortable.option("disabled", !isDisabled); // Invierte el estado
+      manualListSortable.option("disabled", !isDisabled);
 
-      // Actualiza los iconos y el color del botón
       manualDragLockedIcon.classList.toggle("hidden", isDisabled);
       manualDragUnlockedIcon.classList.toggle("hidden", !isDisabled);
       toggleManualDragBtn.classList.toggle("bg-green-100", isDisabled);
       toggleManualDragBtn.classList.toggle("dark:bg-green-900", isDisabled);
     });
   }
+  
+  // --- WebSocket Event Listeners ---
+  socket.on("tab:created", (newTab) => {
+    manualListTabs.push(newTab);
+    if (!activeManualTabId) {
+      activeManualTabId = newTab.id;
+    }
+    renderManualTabs();
+    renderManualItemLists();
+  });
+
+  socket.on("tab:renamed", (updatedTab) => {
+    const tab = manualListTabs.find(t => t.id == updatedTab.id);
+    if (tab) {
+      tab.name = updatedTab.name;
+      renderManualTabs();
+    }
+  });
+
+  socket.on("tab:deleted", (deletedTab) => {
+    manualListTabs = manualListTabs.filter(t => t.id != deletedTab.id);
+    if (activeManualTabId == deletedTab.id) {
+      activeManualTabId = manualListTabs.length > 0 ? manualListTabs[0].id : null;
+    }
+    renderManualTabs();
+    renderManualItemLists();
+  });
+
+  socket.on("item:added", (newItem) => {
+    manualListItems.push(newItem);
+    renderManualItemLists();
+  });
+
+  socket.on("item:updated", (updatedItem) => {
+    const item = manualListItems.find(i => i.id == updatedItem.id);
+    if (item) {
+      item.checked = updatedItem.checked;
+      renderManualItemLists();
+    }
+  });
+
+  socket.on("item:deleted", (deletedItem) => {
+    manualListItems = manualListItems.filter(i => i.id != deletedItem.id);
+    renderManualItemLists();
+  });
+
+  socket.on("items:reordered", ({ orderedIds, tabId }) => {
+    if (tabId == activeManualTabId) {
+      const itemMap = new Map(manualListItems.map(item => [item.id.toString(), item]));
+      const reorderedItems = orderedIds.map(id => itemMap.get(id));
+      const otherItems = manualListItems.filter(item => item.tabId !== tabId);
+      manualListItems = [...reorderedItems, ...otherItems];
+      renderManualItemLists();
+    }
+  });
 
   // --- Inicialización ---
   loadListFromStorage();
   setInitialWeek();
   updateMonthDisplay();
   switchTab("monthly");
-  fetchManualList();
+  initManualList();
 });

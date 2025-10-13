@@ -18,6 +18,9 @@ const planningRoutes = require("./planningRoutes");
 const settingsRoutes = require("./settingsRoutes");
 const authRoutes = require("./authRoutes");
 const viewRoutes = require("./viewRoutes");
+const tabRoutes = require("./tabRoutes");
+const shoppingListRoutes = require("./shoppingListRoutes");
+
 
 router.use(recipeRoutes);
 router.use(viewRoutes);
@@ -27,11 +30,7 @@ router.get("/", isAuthenticated, recipeController.getHomePage);
 router.use(planningRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/api/auth", authRoutes); // Montar las rutas de autenticación bajo /api/auth
-
-// Rutas de la API de la lista de la compra manual (para asegurar que estén registradas)
-router.get("/api/shopping-list/manual", isAuthenticated, shoppingListController.getManualList);
-router.post("/api/shopping-list/manual", isAuthenticated, shoppingListController.addManualItem);
-router.put("/api/shopping-list/manual/:id", isAuthenticated, shoppingListController.updateManualItem);
-router.delete("/api/shopping-list/manual/:id", isAuthenticated, shoppingListController.deleteManualItem);
+router.use("/api/tabs", tabRoutes); // Montar las rutas de pestañas bajo /api/tabs
+router.use("/api/shopping-list", shoppingListRoutes); // Montar las rutas de la lista de la compra bajo /api/shopping-list
 
 module.exports = router;

@@ -15,6 +15,25 @@ function setupDatabase(db, recipesPath) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Crear tabla para las pestañas de la lista de la compra
+    db.run(`
+      CREATE TABLE IF NOT EXISTS shopping_list_tabs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Añadir columna tab_id a la tabla de items
+    db.run(`ALTER TABLE manual_shopping_items ADD COLUMN tab_id INTEGER`, (alterErr) => {
+      if (alterErr && !alterErr.message.includes("duplicate column name")) {
+        console.error("Error adding tab_id column to manual_shopping_items:", alterErr);
+      } else if (!alterErr) {
+        console.log("Added tab_id column to manual_shopping_items table.");
+      }
+    });
     const defaultUnits = [
       { id: "kg-to-g", value: 1000 },
       { id: "l-to-ml", value: 1000 },

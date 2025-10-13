@@ -75,6 +75,12 @@
             </svg>
           </button>
         </div>
+
+        <!-- Navegación de Pestañas -->
+        <div id="manual-list-tabs-nav" class="border-b border-gray-200 dark:border-gray-700 mb-4">
+          <!-- Las pestañas se generarán aquí -->
+        </div>
+
         <form id="add-manual-item-form" class="flex gap-2 mb-4">
           <input
             type="text"
@@ -89,12 +95,10 @@
             </svg>
           </button>
         </form>
-        <!-- Cerramos el primer formulario aquí -->
-        <!-- Envolvemos la lista en un div con las clases 'prose' para unificar el estilo -->
-        <div class="prose dark:prose-invert max-w-none">
-          <ul id="manual-list-items" class="list-none p-0">
-            <!-- El contenido se generará aquí dinámicamente -->
-          </ul>
+        
+        <!-- Contenedor para las listas de cada pestaña -->
+        <div id="manual-list-items-container" class="prose dark:prose-invert max-w-none">
+          <!-- Las listas UL para cada pestaña se generarán aquí -->
         </div>
       </div>
 

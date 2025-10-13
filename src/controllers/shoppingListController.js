@@ -3,6 +3,7 @@ const fm = require("front-matter");
 const db = require("../config/database");
 const { parseIngredient, normalizeIngredient } = require("../utils/ingredientParser");
 const { extractIngredients } = require("../utils/recipeUtils");
+const { getIO } = require("../socket");
 
 // --- Database Promise Wrappers ---
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row))));
@@ -20,9 +21,9 @@ const dbRun = (sql, params = []) =>
  */
 const getManualList = async (req, res) => {
   try {
-    const rows = await dbAll("SELECT id, text, checked FROM manual_shopping_items ORDER BY order_index ASC");
+    const rows = await dbAll("SELECT id, text, checked, tab_id FROM manual_shopping_items ORDER BY order_index ASC");
     // Convertir 'checked' de 0/1 a booleano para el frontend
-    const items = rows.map((item) => ({ ...item, checked: !!item.checked }));
+    const items = rows.map((item) => ({ ...item, checked: !!item.checked, tabId: item.tab_id }));
     res.json(items);
   } catch (error) {
     console.error("Error al obtener la lista manual:", error);
@@ -34,30 +35,37 @@ const getManualList = async (req, res) => {
  * Añade un nuevo artículo a la lista de la compra manual.
  */
 const addManualItem = async (req, res) => {
-  const { text } = req.body;
+  const { text, tabId } = req.body;
   if (!text || typeof text !== "string" || text.trim() === "") {
     return res.status(400).json({ error: "El texto del artículo es requerido." });
   }
+  if (!tabId) {
+    return res.status(400).json({ error: "El ID de la pestaña es requerido." });
+  }
 
   try {
-    // Para añadir el nuevo elemento al principio, incrementamos el order_index de todos los elementos existentes.
+    // Para añadir el nuevo elemento al principio, incrementamos el order_index de todos los elementos existentes en la misma pestaña.
     await dbRun("BEGIN TRANSACTION");
-    await dbRun("UPDATE manual_shopping_items SET order_index = order_index + 1");
+    await dbRun("UPDATE manual_shopping_items SET order_index = order_index + 1 WHERE tab_id = ?", [tabId]);
 
-    // Luego, insertamos el nuevo elemento con order_index = 0.
-    const sql = "INSERT INTO manual_shopping_items (text, order_index) VALUES (?, 0)";
-    const result = await dbRun(sql, [text.trim()]);
+    // Luego, insertamos el nuevo elemento con order_index = 0 en su pestaña.
+    const sql = "INSERT INTO manual_shopping_items (text, order_index, tab_id) VALUES (?, 0, ?)";
+    const result = await dbRun(sql, [text.trim(), tabId]);
 
     await dbRun("COMMIT");
 
-    res.status(201).json({
+    const newItem = {
       id: result.lastID,
       text: text.trim(),
       checked: false,
       order_index: 0,
-    });
+      tabId: tabId,
+    };
+    getIO().emit("item:added", newItem);
+    res.status(201).json(newItem);
   } catch (error) {
     await dbRun("ROLLBACK");
+    console.error("Error al guardar el artículo manual:", error);
     return res.status(500).json({ error: "Error al guardar el artículo." });
   }
 };
@@ -79,6 +87,8 @@ const updateManualItem = async (req, res) => {
     if (result.changes === 0) {
       return res.status(404).json({ error: "Artículo no encontrado." });
     }
+    const updatedItem = { id: id, checked: checked };
+    getIO().emit("item:updated", updatedItem);
     res.status(200).json({ message: "Artículo actualizado correctamente." });
   } catch (error) {
     console.error("Error al actualizar el artículo:", error);
@@ -97,6 +107,7 @@ const deleteManualItem = async (req, res) => {
     if (result.changes === 0) {
       return res.status(404).json({ error: "Artículo no encontrado." });
     }
+    getIO().emit("item:deleted", { id: id });
     res.status(204).send(); // 204 No Content
   } catch (error) {
     console.error("Error al eliminar el artículo:", error);
@@ -108,10 +119,13 @@ const deleteManualItem = async (req, res) => {
  * Actualiza el orden de los artículos de la lista manual.
  */
 const updateManualListOrder = async (req, res) => {
-  const { orderedIds } = req.body;
+  const { orderedIds, tabId } = req.body;
 
   if (!Array.isArray(orderedIds)) {
     return res.status(400).json({ error: "Se esperaba un array de IDs." });
+  }
+  if (!tabId) {
+    return res.status(400).json({ error: "El ID de la pestaña es requerido." });
   }
 
   // Usar una transacción para asegurar la atomicidad
@@ -122,6 +136,8 @@ const updateManualListOrder = async (req, res) => {
     );
     await Promise.all(updatePromises);
     await dbRun("COMMIT");
+
+    getIO().emit("items:reordered", { orderedIds, tabId });
     res.status(200).json({ message: "Orden actualizado correctamente." });
   } catch (error) {
     await dbRun("ROLLBACK");

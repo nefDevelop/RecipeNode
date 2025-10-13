@@ -15,6 +15,25 @@
 
         <% if (user && user.role === 'admin') { %> <% } %>
 
+        <h2 class="text-2xl font-bold mt-8 mb-4">Gestionar Pestañas de la Lista de Compra</h2>
+        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-inner mb-6">
+          <form id="create-tab-form" class="flex gap-2">
+            <input
+              type="text"
+              id="new-tab-name"
+              placeholder="Nombre de la nueva pestaña"
+              class="flex-grow p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+              required
+            />
+            <button type="submit" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-sm hover:bg-blue-600">
+              Crear Pestaña
+            </button>
+          </form>
+          <div id="tabs-list" class="mt-4">
+            <!-- Las pestañas existentes se cargarán aquí -->
+          </div>
+        </div>
+
         <h2 class="text-2xl font-bold mt-8 mb-4">Configuración de Carpeta de Imágenes</h2>
         <form action="/settings/image-folder" method="POST" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-inner">
           <div class="mb-4">
@@ -73,3 +92,4 @@
   </div>
   <%- include('partials/footer') %>
 </div>
+<script src="/js/settings-tabs.js"></script>

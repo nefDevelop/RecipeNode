@@ -9,6 +9,8 @@ const session = require("express-session");
 const shoppingListController = require("./src/controllers/shoppingListController");
 const settingsController = require("./src/controllers/settingsController");
 const SQLiteStore = require("connect-sqlite3")(session);
+const http = require('http');
+const { init: initSocket } = require('./src/socket');
 
 const app = express();
 const port = 8214;
@@ -222,6 +224,9 @@ app.use("/images", async (req, res, next) => {
 // Usar el enrutador principal
 app.use("/", routes);
 
-app.listen(port, () => {
+const httpServer = http.createServer(app);
+const io = initSocket(httpServer);
+
+httpServer.listen(port, () => {
   console.log(`Aplicación de recetas escuchando en http://localhost:${port}`);
 });
