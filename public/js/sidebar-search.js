@@ -16,15 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
   let initialLoadComplete = false;
 
   // Función para generar el HTML de una tarjeta de receta
-    const generateRecipeCardHtml = (recipe) => {
-      const imageUrl = recipe.image || "";
-      const placeholderStyle = recipe.image ? "display: none;" : "display: flex;";
-      const displaySettings = window.recipeCardDisplaySettings || {}; // Get display settings
-  
-      let cardContentHtml = ``;
-  
-      if (displaySettings.image) {
-        cardContentHtml += `
+  const generateRecipeCardHtml = (recipe) => {
+    const imageUrl = recipe.image || "";
+    const placeholderStyle = recipe.image ? "display: none;" : "display: flex;";
+    const displaySettings = window.recipeCardDisplaySettings || {}; // Get display settings
+
+    let cardContentHtml = ``;
+
+    if (displaySettings.image) {
+      cardContentHtml += `
           <div class="relative pb-[75%] bg-green-100">
             ${
               imageUrl
@@ -52,12 +52,12 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>
         `;
-      }
-  
-      cardContentHtml += `<div class="p-4">`;
-  
-      if (displaySettings.name) {
-        cardContentHtml += `
+    }
+
+    cardContentHtml += `<div class="p-4">`;
+
+    if (displaySettings.name) {
+      cardContentHtml += `
           <h3
             class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate"
             title="${recipe.name}"
@@ -65,35 +65,49 @@ document.addEventListener("DOMContentLoaded", () => {
             ${recipe.name}
           </h3>
         `;
-      }
-  
-      if (displaySettings.difficulty && recipe.difficulty) {
-        cardContentHtml += `
+    }
+
+    if (displaySettings.difficulty && recipe.difficulty) {
+      cardContentHtml += `
           <p class="text-sm text-gray-500 dark:text-gray-400">Dificultad: ${recipe.difficulty}</p>
         `;
-      }
-  
-      if (displaySettings.cookingTime && recipe.cooking_time) {
-        cardContentHtml += `
+    }
+
+    if (displaySettings.cookingTime && recipe.cooking_time) {
+      cardContentHtml += `
           <p class="text-sm text-gray-500 dark:text-gray-400">Tiempo: ${recipe.cooking_time} min</p>
         `;
-      }
-  
-      if (displaySettings.tags && recipe.tags && recipe.tags.length > 0) {
-        cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Etiquetas: ${recipe.tags.join(', ')}</p>
+    }
+
+    if (displaySettings.tags && recipe.tags && recipe.tags.length > 0) {
+      cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Etiquetas: ${recipe.tags.join(", ")}</p>
         `;
-      }
-  
-      if (displaySettings.mainIngredient && recipe.main_ingredient) {
-        cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Ingrediente Principal: ${recipe.main_ingredient}</p>
+    }
+
+    if (displaySettings.cuisineType && recipe.cuisine_type) {
+      cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Cocina: ${recipe.cuisine_type}</p>
         `;
-      }
-  
-      cardContentHtml += `</div>`; // Close p-4 div
-  
-      return `
+    }
+
+    if (displaySettings.mainIngredient && recipe.main_ingredient && recipe.main_ingredient.length > 0) {
+      const ingredients = Array.isArray(recipe.main_ingredient) ? recipe.main_ingredient.join(", ") : recipe.main_ingredient;
+      cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Principal: ${ingredients}</p>
+        `;
+    }
+
+    if (displaySettings.equipment && recipe.equipment && recipe.equipment.length > 0) {
+      const equipment = Array.isArray(recipe.equipment) ? recipe.equipment.join(", ") : recipe.equipment;
+      cardContentHtml += `
+          <p class="text-sm text-gray-500 dark:text-gray-400">Equipo: ${equipment}</p>
+        `;
+    }
+
+    cardContentHtml += `</div>`; // Close p-4 div
+
+    return `
         <div class="relative group">
           <a
             href="/?recipe=${encodeURIComponent(recipe.name)}"
@@ -119,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <!-- <% } %> -->
         </div>
       `;
-    };
+  };
   // Function to fetch and display search suggestions in the dropdown
   const fetchAndDisplaySuggestions = async () => {
     const searchTerm = searchInput.value.toLowerCase();
@@ -248,8 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
             newGalleryContent += generateRecipeCardHtml(recipe);
           });
         } else {
-          newGalleryContent =
-            '<div class="text-center text-gray-500 col-span-full">No hay recetas para mostrar. ¡Añade alguna!</div>';
+          newGalleryContent = '<div class="text-center text-gray-500 col-span-full">No hay recetas para mostrar. ¡Añade alguna!</div>';
         }
         recipeGallery.innerHTML = newGalleryContent;
       } catch (error) {

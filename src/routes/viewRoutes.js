@@ -14,6 +14,7 @@ router.get("/shopping-list", (req, res) => {
   // por lo que están disponibles automáticamente en la vista.
   res.render("shopping-list", {
     title: "Lista de la Compra",
+    metadataOptions: res.locals.metadataOptions, // Asegurarse de que los modales tengan las opciones
   });
 });
 

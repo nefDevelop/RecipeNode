@@ -10,6 +10,62 @@
     <main class="w-full md:w-3/4">
       <h1 id="page-title" class="text-3xl font-bold mb-6">Lista de la Compra</h1>
 
+      <!-- Contenedor de la Lista Manual Compartida -->
+      <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold">Lista Manual Compartida</h2>
+          <button
+            id="toggle-manual-drag-btn"
+            title="Activar/Desactivar reordenar"
+            class="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <svg id="manual-drag-locked-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <svg
+              id="manual-drag-unlocked-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 hidden"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="add-manual-item-form" class="flex gap-2 mb-4">
+          <input
+            type="text"
+            id="manual-item-input"
+            placeholder="Añadir un artículo..."
+            class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+          <button type="submit" class="w-11 h-11 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </form>
+
+        <!-- Navegación de Pestañas -->
+        <div id="manual-list-tabs-nav" class="border-b border-gray-200 dark:border-gray-700 mb-4">
+          <!-- Las pestañas se generarán aquí -->
+        </div>
+
+        <!-- Contenedor para las listas de cada pestaña -->
+        <div id="manual-list-items-container" class="prose dark:prose-invert max-w-none">
+          <!-- Las listas UL para cada pestaña se generarán aquí -->
+        </div>
+      </div>
+
       <!-- Contenedor de la Lista de la Compra (se muestra si existe una guardada) -->
       <div id="shopping-list-container" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 hidden">
         <div class="flex items-center justify-between mb-4">
@@ -43,62 +99,6 @@
         </div>
         <div id="list-content" class="prose dark:prose-invert max-w-none">
           <!-- El contenido se generará aquí -->
-        </div>
-      </div>
-
-      <!-- Contenedor de la Lista Manual Compartida -->
-      <div id="manual-list-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-bold">Lista Manual Compartida</h2>
-          <button
-            id="toggle-manual-drag-btn"
-            title="Activar/Desactivar reordenar"
-            class="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <svg id="manual-drag-locked-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <svg
-              id="manual-drag-unlocked-icon"
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 hidden"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Navegación de Pestañas -->
-        <div id="manual-list-tabs-nav" class="border-b border-gray-200 dark:border-gray-700 mb-4">
-          <!-- Las pestañas se generarán aquí -->
-        </div>
-
-        <form id="add-manual-item-form" class="flex gap-2 mb-4">
-          <input
-            type="text"
-            id="manual-item-input"
-            placeholder="Añadir un artículo..."
-            class="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-            required
-          />
-          <button type="submit" class="w-11 h-11 flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-        </form>
-        
-        <!-- Contenedor para las listas de cada pestaña -->
-        <div id="manual-list-items-container" class="prose dark:prose-invert max-w-none">
-          <!-- Las listas UL para cada pestaña se generarán aquí -->
         </div>
       </div>
 
@@ -140,13 +140,19 @@
           </div>
         </div>
 
-        <!-- Botón de Generar -->
-        <div class="text-center mt-6">
+        <!-- Botones de Acción -->
+        <div class="text-center mt-6 flex justify-center gap-4">
           <button
             id="generate-list-btn"
             class="px-6 py-3 rounded text-white inline-block shadow-lg bg-green-500 hover:bg-green-600 focus:bg-green-700"
           >
             Generar Lista
+          </button>
+          <button
+            id="clear-generated-list-btn"
+            class="px-6 py-3 rounded text-white inline-block shadow-lg bg-red-500 hover:bg-red-600 focus:bg-red-700"
+          >
+            Limpiar Lista
           </button>
         </div>
       </div>

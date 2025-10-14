@@ -296,7 +296,7 @@ const getHomePage = async (req, res) => {
       }
 
       const allRecipes = await dbAll(
-        `SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, categories, main_ingredient FROM recipes ${orderByClause}`
+        `SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes ${orderByClause}`
       );
 
       const recipesWithData = await Promise.all(
@@ -316,11 +316,6 @@ const getHomePage = async (req, res) => {
             }
             try {
               if (parsedRecipe.equipment) parsedRecipe.equipment = JSON.parse(parsedRecipe.equipment);
-            } catch (e) {
-              /* ignore */
-            }
-            try {
-              if (parsedRecipe.categories) parsedRecipe.categories = JSON.parse(parsedRecipe.categories);
             } catch (e) {
               /* ignore */
             }
@@ -739,7 +734,7 @@ const getAvailableFiltersApi = async (req, res) => {
       filters[field] = rows.map((row) => row[field]);
     }
 
-    // Fetch and process array-like fields (tags, main_ingredient, equipment)
+    // Fetch and process array-like fields (tags, main_ingredient, equipment, categories)
     const arrayFields = ["tags", "main_ingredient", "equipment"];
     for (const field of arrayFields) {
       // console.log(`Fetching distinct values for array field: ${field}`); // Removed

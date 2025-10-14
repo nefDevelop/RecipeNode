@@ -9,8 +9,8 @@ const session = require("express-session");
 const shoppingListController = require("./src/controllers/shoppingListController");
 const settingsController = require("./src/controllers/settingsController");
 const SQLiteStore = require("connect-sqlite3")(session);
-const http = require('http');
-const { init: initSocket } = require('./src/socket');
+const http = require("http");
+const { init: initSocket } = require("./src/socket");
 
 const app = express();
 const port = 8214;
@@ -188,11 +188,66 @@ app.use((req, res, next) => {
 // Middleware to pass all recipe titles to all templates for search functionality
 app.use(async (req, res, next) => {
   try {
-    const recipeRows = await dbAll("SELECT name FROM recipes ORDER BY name");
+    const [recipeRows, difficulties, equipments, mealTypes, cuisineTypes, tags] = await Promise.all([
+      dbAll("SELECT name FROM recipes ORDER BY name"),
+      dbAll("SELECT DISTINCT difficulty FROM recipes WHERE difficulty IS NOT NULL AND difficulty != '' ORDER BY difficulty"),
+      dbAll("SELECT DISTINCT equipment FROM recipes WHERE equipment IS NOT NULL AND equipment != '' ORDER BY equipment"),
+      dbAll("SELECT DISTINCT meal_type FROM recipes WHERE meal_type IS NOT NULL AND meal_type != '' ORDER BY meal_type"),
+      dbAll("SELECT DISTINCT cuisine_type FROM recipes WHERE cuisine_type IS NOT NULL AND cuisine_type != '' ORDER BY cuisine_type"),
+      dbAll("SELECT tags FROM recipes WHERE tags IS NOT NULL AND tags != ''"),
+    ]);
+
+    const processField = (rows, fieldName) => {
+      const allValues = new Set();
+      rows.forEach((row) => {
+        const value = row[fieldName];
+        if (value) {
+          value.split(",").forEach((part) => {
+            const trimmedPart = part.trim();
+            if (trimmedPart) allValues.add(trimmedPart);
+          });
+        }
+      });
+      return Array.from(allValues).sort();
+    };
+
+    const processJsonArrayField = (rows, fieldName) => {
+      const allValues = new Set();
+      rows.forEach((row) => {
+        const value = row[fieldName];
+        if (value) {
+          try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((item) => item && allValues.add(item.trim()));
+            }
+          } catch (e) {
+            /* Ignorar si no es un JSON válido */
+          }
+        }
+      });
+      return Array.from(allValues).sort();
+    };
+
     res.locals.recipeTitles = recipeRows.map((r) => r.name);
+    res.locals.metadataOptions = {
+      difficulties: processField(difficulties, "difficulty"),
+      equipments: processField(equipments, "equipment"),
+      mealTypes: processField(mealTypes, "meal_type"),
+      cuisineTypes: processField(cuisineTypes, "cuisine_type"),
+      tags: processJsonArrayField(tags, "tags"),
+    };
   } catch (error) {
+    console.error("Error fetching layout data:", error);
     console.error("Error fetching recipe titles for layout:", error);
     res.locals.recipeTitles = [];
+    res.locals.metadataOptions = {
+      difficulties: [],
+      equipments: [],
+      mealTypes: [],
+      cuisineTypes: [],
+      tags: [],
+    };
   }
   next();
 });

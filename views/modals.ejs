@@ -12,7 +12,7 @@
           type="text"
           id="recipe-title"
           name="title"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500"
           required
         />
       </div>
@@ -20,39 +20,40 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label for="recipe-difficulty" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dificultad</label>
-          <input type="text" id="recipe-difficulty" name="difficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+          <input type="text" id="recipe-difficulty" name="difficulty" list="difficulty-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500">
+          <datalist id="difficulty-options"></datalist>
         </div>
         <div>
           <label for="recipe-cookingTime" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tiempo de Cocción</label>
-          <input type="text" id="recipe-cookingTime" name="cookingTime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: 45 min">
+          <input type="text" id="recipe-cookingTime" name="cookingTime" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: 45 min">
         </div>
         <div>
           <label for="recipe-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Etiquetas</label>
-          <input type="text" id="recipe-tags" name="tags" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: postre, vegano, rápido">
+          <input type="text" id="recipe-tags" name="tags" list="tags-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: postre, vegano, rápido">
+          <datalist id="tags-options"></datalist>
         </div>
         <div>
           <label for="recipe-rating" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Puntuación (1-5)</label>
-          <input type="number" id="recipe-rating" name="rating" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+          <input type="number" id="recipe-rating" name="rating" min="1" max="5" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500">
         </div>
         <div>
           <label for="recipe-mealType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Comida</label>
-          <input type="text" id="recipe-mealType" name="mealType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Almuerzo, Cena">
+          <input type="text" id="recipe-mealType" name="mealType" list="mealType-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: Almuerzo, Cena">
+          <datalist id="mealType-options"></datalist>
         </div>
         <div>
           <label for="recipe-cuisineType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Cocina</label>
-          <input type="text" id="recipe-cuisineType" name="cuisineType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Mediterránea">
+          <input type="text" id="recipe-cuisineType" name="cuisineType" list="cuisineType-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: Mediterránea">
+          <datalist id="cuisineType-options"></datalist>
         </div>
         <div class="md:col-span-2">
           <label for="recipe-mainIngredient" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ingrediente Principal</label>
-          <input type="text" id="recipe-mainIngredient" name="mainIngredient" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+          <input type="text" id="recipe-mainIngredient" name="mainIngredient" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500">
         </div>
         <div class="md:col-span-2">
           <label for="recipe-equipment" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Equipamiento</p>
-          <input type="text" id="recipe-equipment" name="equipment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Horno, Batidora">
-        </div>
-         <div class="md:col-span-2">
-          <label for="recipe-categories" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categorías</p>
-          <input type="text" id="recipe-categories" name="categories" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Recetas de Verano">
+          <input type="text" id="recipe-equipment" name="equipment" list="equipment-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: Horno, Batidora">
+          <datalist id="equipment-options"></datalist>
         </div>
       </div>
 
@@ -62,7 +63,7 @@
           id="recipe-content"
           name="markdownContent"
           rows="10"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500"
           required
         ></textarea>
       </div>
@@ -97,7 +98,7 @@
         <input
           type="url"
           id="scrape-url"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500"
           placeholder="https://www.ejemplo.com/receta..."
         />
         <button
@@ -117,7 +118,7 @@
         <input
           type="text"
           id="scraped-title"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          class="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 focus:border-green-500 focus:ring focus:ring-green-500/50 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500"
         />
       </div>
 
@@ -125,39 +126,35 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label for="scraped-recipe-difficulty" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dificultad</label>
-          <input type="text" id="scraped-recipe-difficulty" name="difficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+          <input type="text" id="scraped-recipe-difficulty" name="difficulty" list="difficulty-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500">
         </div>
         <div>
           <label for="scraped-recipe-cookingTime" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tiempo de Cocción</label>
-          <input type="text" id="scraped-recipe-cookingTime" name="cookingTime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: 45 min">
+          <input type="text" id="scraped-recipe-cookingTime" name="cookingTime" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: 45 min">
         </div>
         <div>
           <label for="scraped-recipe-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Etiquetas</label>
-          <input type="text" id="scraped-recipe-tags" name="tags" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: postre, vegano, rápido">
+          <input type="text" id="scraped-recipe-tags" name="tags" list="tags-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: postre, vegano, rápido">
         </div>
         <div>
           <label for="scraped-recipe-rating" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Puntuación (1-5)</label>
-          <input type="number" id="scraped-recipe-rating" name="rating" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+          <input type="number" id="scraped-recipe-rating" name="rating" min="1" max="5" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500">
         </div>
         <div>
           <label for="scraped-recipe-mealType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Comida</label>
-          <input type="text" id="scraped-recipe-mealType" name="mealType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Almuerzo, Cena">
+          <input type="text" id="scraped-recipe-mealType" name="mealType" list="mealType-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: Almuerzo, Cena">
         </div>
         <div>
           <label for="scraped-recipe-cuisineType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Cocina</label>
-          <input type="text" id="scraped-recipe-cuisineType" name="cuisineType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Mediterránea">
+          <input type="text" id="scraped-recipe-cuisineType" name="cuisineType" list="cuisineType-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: Mediterránea">
         </div>
         <div class="md:col-span-2">
           <label for="scraped-recipe-mainIngredient" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ingrediente Principal</label>
-          <input type="text" id="scraped-recipe-mainIngredient" name="mainIngredient" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+          <input type="text" id="scraped-recipe-mainIngredient" name="mainIngredient" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500">
         </div>
         <div class="md:col-span-2">
           <label for="scraped-recipe-equipment" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Equipamiento</p>
-          <input type="text" id="scraped-recipe-equipment" name="equipment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Horno, Batidora">
-        </div>
-         <div class="md:col-span-2">
-          <label for="scraped-recipe-categories" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categorías</p>
-          <input type="text" id="scraped-recipe-categories" name="categories" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" placeholder="Ej: Recetas de Verano">
+          <input type="text" id="scraped-recipe-equipment" name="equipment" list="equipment-options" class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500" placeholder="Ej: Horno, Batidora">
         </div>
       </div>
 
@@ -214,7 +211,7 @@
         <textarea
           id="scraped-ingredients"
           rows="8"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500"
           placeholder="Aquí aparecerán los ingredientes..."
         ></textarea>
       </div>
@@ -248,7 +245,7 @@
         <textarea
           id="scraped-steps"
           rows="8"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+          class="mt-1 block w-full p-2.5 rounded-lg border-gray-300 bg-gray-50 text-base focus:border-green-500 focus:ring focus:ring-green-500/50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500/50 dark:focus:border-green-500"
           placeholder="Aquí aparecerán los pasos de la preparación..."
         ></textarea>
       </div>
@@ -268,6 +265,24 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    // --- Lógica para poblar los datalists de autocompletado ---
+    const metadataOptions = <%- JSON.stringify(metadataOptions || {}) %>;
+
+    function populateDatalist(id, options) {
+      const datalist = document.getElementById(id);
+      if (datalist && options) {
+        datalist.innerHTML = '';
+        options.forEach(option => {
+          datalist.innerHTML += `<option value="${option}"></option>`;
+        });
+      }
+    }
+    populateDatalist('difficulty-options', metadataOptions.difficulties);
+    populateDatalist('equipment-options', metadataOptions.equipments);
+    populateDatalist('mealType-options', metadataOptions.mealTypes);
+    populateDatalist('cuisineType-options', metadataOptions.cuisineTypes);
+    populateDatalist('tags-options', metadataOptions.tags);
+
     // --- Lógica para abrir/cerrar modales y dropdown ---
     const createModal = document.getElementById("create-modal");
     const scrapeModal = document.getElementById("scrape-modal");
@@ -317,14 +332,13 @@
         cuisineType: document.getElementById("recipe-cuisineType").value,
         mainIngredient: document.getElementById("recipe-mainIngredient").value,
         equipment: document.getElementById("recipe-equipment").value,
-        categories: document.getElementById("recipe-categories").value,
       };
 
       let frontmatter = '---\n';
       for (const [key, value] of Object.entries(metadata)) {
         if (value) { // Only add fields that have a value
           // For fields that are intended as lists, format them as YAML lists
-          if (['tags', 'equipment', 'categories', 'mainIngredient'].includes(key) && value.includes(',')) {
+          if (['tags', 'equipment', 'mainIngredient'].includes(key) && value.includes(',')) {
             const listItems = value.split(',').map(item => item.trim());
             frontmatter += `${key}:\n`;
             listItems.forEach(item => {
@@ -593,13 +607,12 @@
         cuisineType: document.getElementById("scraped-recipe-cuisineType").value,
         mainIngredient: document.getElementById("scraped-recipe-mainIngredient").value,
         equipment: document.getElementById("scraped-recipe-equipment").value,
-        categories: document.getElementById("scraped-recipe-categories").value,
       };
 
       let frontmatter = '---\n';
       for (const [key, value] of Object.entries(metadata)) {
         if (value) { // Only add fields that have a value
-          if (['tags', 'equipment', 'categories', 'mainIngredient'].includes(key) && value.includes(',')) {
+          if (['tags', 'equipment', 'mainIngredient'].includes(key) && value.includes(',')) {
             const listItems = value.split(',').map(item => item.trim());
             frontmatter += `${key}:\n`;
             listItems.forEach(item => {

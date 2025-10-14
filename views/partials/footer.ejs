@@ -1,5 +1,3 @@
-<%- include('../modals') %>
-
 <script src="/socket.io/socket.io.js"></script>
 <script id="recipe-data" type="application/json">
   <%- JSON.stringify({ recipeTitles: recipeTitles || [] }) %>
@@ -63,5 +61,7 @@
   }
 </script>
 
+<!-- Cargar los modales y sus scripts -->
+<%- include('../modals') %>
 </body>
 </html>
