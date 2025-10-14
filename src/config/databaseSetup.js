@@ -34,6 +34,15 @@ function setupDatabase(db, recipesPath) {
         console.log("Added tab_id column to manual_shopping_items table.");
       }
     });
+
+    // Añadir columna order_index a la tabla de items
+    db.run(`ALTER TABLE manual_shopping_items ADD COLUMN order_index INTEGER DEFAULT 0`, (alterErr) => {
+      if (alterErr && !alterErr.message.includes("duplicate column name")) {
+        console.error("Error adding order_index column to manual_shopping_items:", alterErr);
+      } else if (!alterErr) {
+        console.log("Added order_index column to manual_shopping_items table.");
+      }
+    });
     const defaultUnits = [
       { id: "kg-to-g", value: 1000 },
       { id: "l-to-ml", value: 1000 },
