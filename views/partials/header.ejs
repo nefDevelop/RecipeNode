@@ -222,13 +222,13 @@
           >
             <a
               href="#"
-              id="show-create-modal-btn"
+              id="open-create-modal-btn"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
               >Crear Manualmente</a
             >
             <a
               href="#"
-              id="show-scrape-modal-btn-header"
+              id="open-scrape-modal-btn"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
               >Importar desde URL</a
             >
@@ -253,23 +253,6 @@
           if (!addRecipeDropdown?.contains(e.target) && !addRecipeDropdownBtn?.contains(e.target)) {
             addRecipeDropdown?.classList.add("hidden");
           }
-        });
-
-        // --- Lógica para abrir el modal unificado desde el header ---
-        const createModal = document.getElementById("create-recipe-modal");
-        const manualBtn = document.getElementById("show-create-modal-btn");
-        const scrapeBtn = document.getElementById("show-scrape-modal-btn-header");
-
-        manualBtn?.addEventListener("click", (e) => {
-          e.preventDefault();
-          createModal?.classList.remove("hidden");
-          document.getElementById("manual-tab")?.click(); // Activa la pestaña manual
-        });
-
-        scrapeBtn?.addEventListener("click", (e) => {
-          e.preventDefault();
-          createModal?.classList.remove("hidden");
-          document.getElementById("scrape-tab")?.click(); // Activa la pestaña de importar
         });
       });
     </script>
