@@ -76,6 +76,16 @@
   color: #a0aec0;
 }
 
+.meta-item svg {
+  width: 1rem; /* 16px */
+  height: 1rem; /* 16px */
+  color: #6b7280; /* gray-500 */
+}
+
+.dark .meta-item svg {
+  color: #9ca3af; /* gray-400 */
+}
+
 .tag-pill {
   display: inline-block;
   background-color: #e2e8f0;
