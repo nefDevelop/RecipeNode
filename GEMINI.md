@@ -1,1 +1,0 @@
-- [ ] Campos modales de nueva receta, mejor css, y adaptar a los contenidos.
