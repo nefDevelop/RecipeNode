@@ -61,7 +61,8 @@ const admonitionTypes = {
 
 const truncateText = (text, length = 100) => {
   if (!text) return "";
-  return text.length > length ? text.substring(0, length) + "..." : text;
+  const cleanText = text.replace(/(\r\n|\n|\r)/gm, " ");
+  return cleanText.length > length ? cleanText.substring(0, length) + "..." : cleanText;
 };
 
 /**
@@ -281,70 +282,13 @@ const getHomePage = async (req, res) => {
       });
     } else {
       const sortBy = req.query.sort_by || "name_asc"; // Default sorting
-      let orderByClause = "";
-
-      switch (sortBy) {
-        case "name_asc":
-          orderByClause = "ORDER BY name ASC";
-          break;
-        case "name_desc":
-          orderByClause = "ORDER BY name DESC";
-          break;
-        case "date_added_desc":
-          orderByClause = "ORDER BY created_at DESC";
-          break;
-        case "views_desc":
-          orderByClause = "ORDER BY views DESC";
-          break;
-        default:
-          orderByClause = "ORDER BY name ASC";
-      }
-
-      const allRecipes = await dbAll(
-        `SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes ${orderByClause}`,
-      );
-
-      const recipesWithData = await Promise.all(
-        allRecipes.map(async (recipe) => {
-          try {
-            const fileContent = await fs.promises.readFile(recipe.path, "utf8");
-            const { attributes, body } = fm(fileContent);
-            const image = extractImageFromMarkdown(attributes, body, imageFolder);
-            // console.log(`[INDEX PAGE] Receta: "${recipe.name}", Ruta de imagen extraída: ${image}`);
-
-            // Parse JSON fields into arrays
-            const parsedRecipe = { ...recipe, image };
-            parsedRecipe.description = truncateText(parsedRecipe.description);
-            try {
-              if (parsedRecipe.tags) parsedRecipe.tags = JSON.parse(parsedRecipe.tags);
-            } catch (e) {
-              /* ignore if not valid JSON */
-            }
-            try {
-              if (parsedRecipe.equipment) parsedRecipe.equipment = JSON.parse(parsedRecipe.equipment);
-            } catch (e) {
-              /* ignore */
-            }
-            try {
-              if (parsedRecipe.main_ingredient) parsedRecipe.main_ingredient = JSON.parse(parsedRecipe.main_ingredient);
-            } catch (e) {
-              /* ignore */
-            }
-
-            return parsedRecipe;
-          } catch (e) {
-            console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
-            return { ...recipe, image: null }; // return DB data even if file fails
-          }
-        }),
-      );
 
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
       // console.log("Recipe data for index:", JSON.stringify(recipesWithData, null, 2));
       res.render("index", {
         title: "Recetas",
         content: null,
-        recipes: recipesWithData,
+        recipes: [],
         mostViewed: mostViewedRecipes,
         user: req.session,
         servings: null, // Asegurarse de que 'servings' siempre esté definido
@@ -368,7 +312,7 @@ const getAllRecipesApi = async (req, res) => {
     const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
     const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : "_resources";
 
-    const { search, time_max, ingredients, cuisine, difficulty, meal_type, rating, equipment, tags, main_ingredient } = req.query;
+    const { search, time_max, ingredients, cuisine, difficulty, meal_type, rating, equipment, tags, main_ingredient, sort_by } = req.query;
 
     // Select all fields needed for the recipe cards, including views
     let sql =
@@ -414,8 +358,17 @@ const getAllRecipesApi = async (req, res) => {
       params.push(`%"${main_ingredient}"%`);
     }
 
+    let orderBy = "ORDER BY name ASC";
+    if (sort_by === "name_desc") {
+      orderBy = "ORDER BY name DESC";
+    } else if (sort_by === "date_added_desc") {
+      orderBy = "ORDER BY created_at DESC";
+    } else if (sort_by === "views_desc") {
+      orderBy = "ORDER BY views DESC";
+    }
+
     // For ingredients, we'll fetch all matching recipes first and then filter by content
-    let filteredRecipes = await dbAll(sql + " ORDER BY name", params);
+    let filteredRecipes = await dbAll(sql + " " + orderBy, params);
 
     if (ingredients) {
       const ingredientList = ingredients.split(",").map((item) => item.trim().toLowerCase());
