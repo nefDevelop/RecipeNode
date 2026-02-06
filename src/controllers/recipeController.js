@@ -296,7 +296,7 @@ const getHomePage = async (req, res) => {
       }
 
       const allRecipes = await dbAll(
-        `SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes ${orderByClause}`
+        `SELECT name, path, views, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes ${orderByClause}`,
       );
 
       const recipesWithData = await Promise.all(
@@ -330,7 +330,7 @@ const getHomePage = async (req, res) => {
             console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
             return { ...recipe, image: null }; // return DB data even if file fails
           }
-        })
+        }),
       );
 
       const mostViewedRecipes = await dbAll("SELECT name, views FROM recipes ORDER BY views DESC, name ASC LIMIT 5");
@@ -359,9 +359,14 @@ const getShoppingListPage = (req, res) => {
 
 const getAllRecipesApi = async (req, res) => {
   try {
+    const imageFolderSetting = await dbAll("SELECT value FROM unit_settings WHERE id = 'image_folder'");
+    const imageFolder = imageFolderSetting.length > 0 ? imageFolderSetting[0].value : "_resources";
+
     const { search, time_max, ingredients, cuisine, difficulty, meal_type, rating, equipment, tags, main_ingredient } = req.query;
+
+    // Select all fields needed for the recipe cards, including views
     let sql =
-      "SELECT name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient FROM recipes WHERE 1=1";
+      "SELECT name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient, views FROM recipes WHERE 1=1";
     const params = [];
 
     if (search) {
@@ -417,7 +422,7 @@ const getAllRecipesApi = async (req, res) => {
             console.error(`Error reading file for ingredient filter ${recipe.name}: ${e.message}`);
             return null;
           }
-        })
+        }),
       );
       filteredRecipes = recipesWithContent.filter((recipe) => {
         if (!recipe || !recipe.content) return false;
@@ -430,20 +435,34 @@ const getAllRecipesApi = async (req, res) => {
         try {
           const fileContent = await fs.promises.readFile(recipe.path, "utf8");
           const { attributes, body } = fm(fileContent);
-          const image = extractImageFromMarkdown(attributes, body);
-          return {
-            name: recipe.name,
-            image,
-            difficulty: recipe.difficulty,
-            cooking_time: recipe.cooking_time,
-            tags: recipe.tags ? JSON.parse(recipe.tags) : [], // Parse tags if they are JSON strings
-            main_ingredient: recipe.main_ingredient,
-          };
+          const image = extractImageFromMarkdown(attributes, body, imageFolder);
+
+          // Return all fields from the recipe object, and add the extracted image
+          const fullRecipeData = { ...recipe, image };
+
+          // Safely parse JSON fields that are stored as strings
+          try {
+            if (fullRecipeData.tags) fullRecipeData.tags = JSON.parse(fullRecipeData.tags);
+          } catch (e) {
+            /* ignore */
+          }
+          try {
+            if (fullRecipeData.equipment) fullRecipeData.equipment = JSON.parse(fullRecipeData.equipment);
+          } catch (e) {
+            /* ignore */
+          }
+          try {
+            if (fullRecipeData.main_ingredient) fullRecipeData.main_ingredient = JSON.parse(fullRecipeData.main_ingredient);
+          } catch (e) {
+            /* ignore */
+          }
+
+          return fullRecipeData;
         } catch (e) {
           console.error(`Error processing recipe ${recipe.name}: ${e.message}`);
-          return { name: recipe.name, image: null };
+          return { ...recipe, image: null }; // Return DB data even if file fails
         }
-      })
+      }),
     );
 
     res.json(recipesWithImages);
@@ -618,7 +637,7 @@ const createRecipeApi = async (req, res) => {
     await fs.promises.writeFile(filePath, fileContent, "utf8");
     await dbRun(
       "INSERT INTO recipes (name, path, cooking_time, cuisine_type, description, difficulty, meal_type, rating, equipment, tags, main_ingredient, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [slug, filePath, cookingTime, cuisineType, description, difficulty, mealType, rating, equipment, tags, mainIngredient, now]
+      [slug, filePath, cookingTime, cuisineType, description, difficulty, mealType, rating, equipment, tags, mainIngredient, now],
     );
 
     // Añadimos una URL de redirección a la respuesta.
