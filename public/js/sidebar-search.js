@@ -602,7 +602,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Fetch and render filters, then apply initial search/filters
   fetchFilterOptions().then(() => {
     initialLoadComplete = true; // Mark initial load as complete before rendering filters
-    if (recipeGallery && filtersActiveOnLoad) {
+    // Forzamos la actualización de las recetas al cargar para asegurar que los iconos coincidan con la versión JS
+    if (recipeGallery) {
       filterRecipes();
     }
   });
