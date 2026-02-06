@@ -67,44 +67,78 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
+    // Contenedor de metadatos (Grid)
+    cardContentHtml += `<div class="recipe-meta-grid mt-2">`;
+
     if (displaySettings.difficulty && recipe.difficulty) {
       cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Dificultad: ${recipe.difficulty}</p>
+          <div class="meta-item" title="Dificultad">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span>${recipe.difficulty}</span>
+          </div>
         `;
     }
 
     if (displaySettings.cookingTime && recipe.cooking_time) {
       cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Tiempo: ${recipe.cooking_time} min</p>
-        `;
-    }
-
-    if (displaySettings.tags && recipe.tags && recipe.tags.length > 0) {
-      cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Etiquetas: ${recipe.tags.join(", ")}</p>
+          <div class="meta-item" title="Tiempo de cocción">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>${recipe.cooking_time} min</span>
+          </div>
         `;
     }
 
     if (displaySettings.cuisineType && recipe.cuisine_type) {
       cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Cocina: ${recipe.cuisine_type}</p>
+          <div class="meta-item" title="Tipo de cocina">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <span>${recipe.cuisine_type}</span>
+          </div>
+        `;
+    }
+
+    if (displaySettings.tags && recipe.tags && recipe.tags.length > 0) {
+      cardContentHtml += `
+          <div class="meta-item" title="Etiquetas">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            <span class="truncate max-w-[150px]">${recipe.tags.join(", ")}</span>
+          </div>
         `;
     }
 
     if (displaySettings.mainIngredient && recipe.main_ingredient && recipe.main_ingredient.length > 0) {
       const ingredients = Array.isArray(recipe.main_ingredient) ? recipe.main_ingredient.join(", ") : recipe.main_ingredient;
       cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Principal: ${ingredients}</p>
+          <div class="meta-item" title="Ingrediente principal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span class="truncate max-w-[150px]">${ingredients}</span>
+          </div>
         `;
     }
 
     if (displaySettings.equipment && recipe.equipment && recipe.equipment.length > 0) {
       const equipment = Array.isArray(recipe.equipment) ? recipe.equipment.join(", ") : recipe.equipment;
       cardContentHtml += `
-          <p class="text-sm text-gray-500 dark:text-gray-400">Equipo: ${equipment}</p>
+          <div class="meta-item" title="Equipo necesario">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <span class="truncate max-w-[150px]">${equipment}</span>
+          </div>
         `;
     }
 
+    cardContentHtml += `</div>`; // Cierre de recipe-meta-grid
     cardContentHtml += `</div>`; // Close p-4 div
 
     return `
@@ -167,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "dark:text-gray-300",
                 "hover:bg-gray-200",
                 "dark:hover:bg-gray-700",
-                "rounded-md"
+                "rounded-md",
               );
               searchResultsContainer.appendChild(link);
             });
