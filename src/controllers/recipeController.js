@@ -59,6 +59,11 @@ const admonitionTypes = {
   },
 };
 
+const truncateText = (text, length = 100) => {
+  if (!text) return "";
+  return text.length > length ? text.substring(0, length) + "..." : text;
+};
+
 /**
  * Extrae la primera imagen de una receta, buscando en el frontmatter y luego en el cuerpo
  * del texto antes de la sección de "Ingredientes".
@@ -309,6 +314,7 @@ const getHomePage = async (req, res) => {
 
             // Parse JSON fields into arrays
             const parsedRecipe = { ...recipe, image };
+            parsedRecipe.description = truncateText(parsedRecipe.description);
             try {
               if (parsedRecipe.tags) parsedRecipe.tags = JSON.parse(parsedRecipe.tags);
             } catch (e) {
@@ -439,6 +445,7 @@ const getAllRecipesApi = async (req, res) => {
 
           // Return all fields from the recipe object, and add the extracted image
           const fullRecipeData = { ...recipe, image };
+          fullRecipeData.description = truncateText(fullRecipeData.description);
 
           // Safely parse JSON fields that are stored as strings
           try {
