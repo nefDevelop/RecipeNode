@@ -199,9 +199,43 @@
             </div>
             <% } %>
             <div class="p-4 flex flex-col flex-grow min-w-0">
-              <div class="recipe-card-header">
-                <% if (displayFields.name) { %> <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate" title="<%= recipe.name %>"><%= recipe.name %></h3> <% } %>
+              <% if (displayFields.name) { %>
+              <div class="mb-2">
+                <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-200 group-hover:text-green-600 truncate" title="<%= recipe.name %>"><%= recipe.name %></h3>
               </div>
+              <% } %>
+
+              <!-- Fila de Vistas y Tiempo -->
+              <div class="flex justify-between items-center mb-2 text-sm text-gray-500 dark:text-gray-400">
+                <% if (displayFields.views && typeof recipe.views !== 'undefined') { %>
+                <div class="flex items-center gap-1" title="Vistas">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span><%= recipe.views %></span>
+                </div>
+                <% } else { %>
+                <div></div>
+                <% } %>
+
+                <% if (displayFields.cookingTime && recipe.cooking_time) { %>
+                <div class="flex items-center gap-1" title="Tiempo de cocción">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span><%= recipe.cooking_time %> min</span>
+                </div>
+                <% } else { %>
+                <div></div>
+                <% } %>
+              </div>
+
+              <% if (displayFields.description && recipe.description) { %>
+              <div class="text-sm text-gray-600 dark:text-gray-300 mb-3" title="Descripción">
+                <span><%= recipe.description %></span>
+              </div>
+              <% } %>
 
               <!-- Primary Metadata Grid -->
               <div class="recipe-meta-grid mt-2">
@@ -213,14 +247,6 @@
                     <span><%= recipe.difficulty %></span>
                   </div>
                 <% } %>
-                <% if (displayFields.cookingTime && recipe.cooking_time) { %>
-                  <div class="meta-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span><%= recipe.cooking_time %> min</span>
-                  </div>
-                <% } %>
                 <% if (displayFields.rating && recipe.rating) { %>
                   <div class="meta-item">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -230,12 +256,6 @@
                   </div>
                 <% } %>
               </div>
-
-              <% if (displayFields.description && recipe.description) { %>
-              <p class="recipe-card-description mt-2" title="<%= recipe.description %>">
-                <%= recipe.description %>
-              </p>
-              <% } %>
 
               <!-- Compact Pills for Categorization -->
               <div class="recipe-icon-pills mt-3">
@@ -343,7 +363,7 @@
 </div>
 
 <script>
-  window.recipeCardDisplaySettings = <%- JSON.stringify(settings.recipe_card_display_fields || {}) %>;
+  window.recipeCardDisplaySettings = JSON.parse('<%- JSON.stringify(settings.recipe_card_display_fields || {}) %>');
 
   document.addEventListener("DOMContentLoaded", () => {
     // --- Lógica para Borrar Recetas (Admin) ---

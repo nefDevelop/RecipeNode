@@ -398,7 +398,7 @@ const getAllRecipesApi = async (req, res) => {
 
           // Return all fields from the recipe object, and add the extracted image
           const fullRecipeData = { ...recipe, image };
-          fullRecipeData.description = truncateText(fullRecipeData.description);
+          fullRecipeData.description = fullRecipeData.description || "";
 
           // Safely parse JSON fields that are stored as strings
           try {

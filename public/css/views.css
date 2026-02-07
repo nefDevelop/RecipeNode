@@ -13,14 +13,18 @@
   overflow: hidden; /* Asegura que los bordes redondeados se apliquen a la imagen */
   background-color: #fff;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Estilos para el modo oscuro en la vista de lista */
 .dark #recipe-gallery.list-view .recipe-card {
   background-color: #374151; /* gray-700, para coincidir con la vista de grid */
   border: 1px solid #4b5563; /* gray-600, un borde ligeramente más claro */
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* Contenedor de la imagen */
@@ -106,6 +110,25 @@
   color: #4a5568; /* gray-700 */
   margin-top: 0.5rem; /* 8px */
   flex-shrink: 1; /* Permite que la descripción se encoja si es necesario */
+  width: 100%;
+}
+
+/* Estilos específicos para la descripción dentro de los meta-items */
+.meta-item[title="Descripción"] {
+  width: 100%;
+}
+
+.meta-item[title="Descripción"] span,
+.meta-item.col-span-full span {
+  white-space: normal; /* Sobrescribe la clase truncate */
+}
+
+.meta-item[title="Descripción"] svg,
+.meta-item.col-span-full svg,
+.recipe-card .p-4 > div:first-child svg,
+.recipe-card .flex.items-center.gap-2.mb-1 svg,
+.recipe-card-description svg {
+  display: none !important;
 }
 
 .dark .recipe-card-description {

@@ -11,17 +11,17 @@
     </div>
 
     <div class="space-y-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
-      <a href="/" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+      <a href="/" class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Recetas</a
       >
       <a
         href="/planning"
-        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Planificación</a
       >
       <a
         href="/shopping-list"
-        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Lista de la Compra</a
       >
     </div>
@@ -60,23 +60,23 @@
       <% if (user && user.userId) { %>
       <a
         href="/settings"
-        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Ajustes</a
       >
       <a
         href="/api/auth/logout"
-        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Logout</a
       >
       <% } else { %>
       <a
         href="/login"
-        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Login</a
       >
       <a
         href="/register"
-        class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Registro</a
       >
       <% } %>
