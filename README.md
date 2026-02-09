@@ -16,6 +16,25 @@ RecipeNode transforma una simple carpeta de archivos Markdown en un potente gest
 - **Interfaz Limpia y Adaptable:** Diseño responsive que funciona de maravilla en ordenadores, tabletas y móviles.
 - **Configuración Flexible:** Personaliza la ubicación de tus recursos, como la carpeta de imágenes, directamente desde la configuración de la aplicación.
 
+## 📸 Capturas de Pantalla
+
+### Vista Principal
+![Vista Principal](assets_readme/main.png)
+
+### Vista de Cuadrícula
+![Vista de Cuadrícula](assets_readme/main-grid.png)
+
+### Planificador de Comidas
+![Planificador](assets_readme/planner.png)
+
+![Asignar Comidas](assets_readme/assign_meals.png)
+
+### Lista de la Compra
+![Lista de la Compra](assets_readme/buy.png)
+
+### Ajustes
+![Ajustes](assets_readme/settings.png)
+
 ## 🏗️ Arquitectura del Proyecto
 
 - **Backend:** `Node.js` y `Express.js` forman el núcleo de la aplicación, manejando el enrutamiento, la lógica de negocio y la API REST.

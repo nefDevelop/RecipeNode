@@ -146,7 +146,7 @@
           <!-- Contenedor relativo para posicionar el botón de borrado -->
           <div
             data-url="/?recipe=<%= encodeURIComponent(recipe.name) %>"
-            class="recipe-card relative group bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            class="recipe-card relative group flex flex-col h-full bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
           >
             <% const displayFields = settings.recipe_card_display_fields || {}; %>
             <% if (displayFields.image) { %>
@@ -256,6 +256,7 @@
               </div>
               <% } %>
 
+              <div class="mt-auto">
               <!-- Primary Metadata Grid -->
               <div class="recipe-meta-grid mt-2">
                 <% if (displayFields.difficulty && recipe.difficulty) { %>
@@ -313,7 +314,7 @@
               </div>
 
               <% if (displayFields.tags && recipe.tags && recipe.tags.length > 0) { %>
-              <div class="mt-auto pt-3">
+              <div class="pt-3">
                 <div class="flex flex-wrap gap-1">
                   <% recipe.tags.slice(0, 3).forEach(tag => { %>
                   <span class="tag-pill"><%= tag %></span>
@@ -321,6 +322,7 @@
                 </div>
               </div>
               <% } %>
+              </div>
             </div>
             <!-- Botón de Borrar (Solo para Admins) -->
             <% if (user && user.role === 'admin') { %>

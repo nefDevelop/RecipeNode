@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
-    cardContentHtml += `<div class="p-4">`;
+    cardContentHtml += `<div class="p-4 flex flex-col flex-grow min-w-0">`;
 
     if (displaySettings.name) {
       cardContentHtml += `
@@ -136,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Contenedor de metadatos (Grid)
-    cardContentHtml += `<div class="recipe-meta-grid mt-2">`;
+    cardContentHtml += `<div class="recipe-meta-grid mt-auto">`;
 
     if (displaySettings.difficulty && recipe.difficulty) {
       cardContentHtml += `
@@ -221,10 +221,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cardContentHtml += `</div>`; // Close p-4 div
 
     return `
-        <div class="relative group">
+        <div class="relative group h-full">
           <a
             href="/?recipe=${encodeURIComponent(recipe.name)}"
-            class="recipe-card block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            class="recipe-card flex flex-col h-full bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
           >
             ${cardContentHtml}
           </a>
