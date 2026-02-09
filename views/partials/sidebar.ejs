@@ -4,24 +4,24 @@
 >
   <!-- Contenido interno de la barra lateral -->
   <div class="h-full overflow-y-auto flex flex-col">
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-4 md:hidden">
       <!-- <h2 class="text-xl font-bold"></h2> -->
       <!-- Close button for mobile -->
       <button id="close-sidebar-btn" class="md:hidden text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
     </div>
 
     <div class="space-y-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
-      <a href="/" class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+      <a href="/" class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Recetas</a
       >
       <a
         href="/planning"
-        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Planificación</a
       >
       <a
         href="/shopping-list"
-        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Lista de la Compra</a
       >
     </div>
@@ -60,39 +60,27 @@
       <% if (user && user.userId) { %>
       <a
         href="/settings"
-        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Ajustes</a
       >
       <a
         href="/api/auth/logout"
-        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Logout</a
       >
       <% } else { %>
       <a
         href="/login"
-        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Login</a
       >
       <a
         href="/register"
-        class="flex items-center px-3 py-2 -mx-3 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Registro</a
       >
       <% } %>
     </div>
 
-    <!-- Theme switcher -->
-    <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
-      <div class="flex items-center justify-between">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Modo Oscuro</span>
-        <label for="theme-toggle" class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="theme-toggle" class="sr-only peer" />
-          <div
-            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"
-          ></div>
-        </label>
-      </div>
-    </div>
   </div>
 </aside>

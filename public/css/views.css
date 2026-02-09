@@ -16,6 +16,7 @@
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 /* Estilos para el modo oscuro en la vista de lista */
@@ -27,11 +28,18 @@
     0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
+#recipe-gallery.list-view .recipe-card:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
 /* Contenedor de la imagen */
 #recipe-gallery.list-view .recipe-card .image-container {
   width: 100%;
   height: 180px; /* Una altura fija para las imágenes en la lista */
   flex-shrink: 0;
+  padding-bottom: 0 !important; /* Override Tailwind pb-[75%] */
 }
 
 /* La imagen dentro del contenedor */

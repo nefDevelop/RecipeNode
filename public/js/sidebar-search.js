@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const recipeGallery = document.getElementById("recipe-gallery");
   const filterOptionsContainer = document.getElementById("filter-options");
   const filterToggleButton = document.getElementById("filter-toggle-btn");
+  const sortBySelect = document.getElementById("sort-by");
 
   // Only initialize if the search input is present
   if (!searchInput) {
@@ -25,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (displaySettings.image) {
       cardContentHtml += `
-          <div class="relative pb-[75%] bg-green-100">
+          <div class="image-container relative pb-[75%] bg-green-100">
             ${
               imageUrl
                 ? `<img src="${imageUrl}" alt="${recipe.name}" class="absolute h-full w-full object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';"/>`
@@ -50,6 +51,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 />
               </svg>
             </div>
+            ${
+              displaySettings.views && recipe.views !== undefined
+                ? `<div class="absolute bottom-2 left-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm z-10" title="Vistas">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span>${recipe.views}</span>
+            </div>`
+                : ""
+            }
+            ${
+              displaySettings.cookingTime && recipe.cooking_time
+                ? `<div class="absolute bottom-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm z-10" title="Tiempo de cocción">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>${String(recipe.cooking_time).toLowerCase().includes("min") ? recipe.cooking_time : `${recipe.cooking_time} min`}</span>
+            </div>`
+                : ""
+            }
           </div>
         `;
     }
@@ -70,10 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Fila de Vistas y Tiempo
-    cardContentHtml += `<div class="flex justify-between items-center mb-2 text-sm text-gray-500 dark:text-gray-400">`;
+    if (!displaySettings.image) {
+      cardContentHtml += `<div class="flex justify-between items-center mb-2 text-sm text-gray-500 dark:text-gray-400">`;
 
-    if (displaySettings.views && recipe.views !== undefined) {
-      cardContentHtml += `
+      if (displaySettings.views && recipe.views !== undefined) {
+        cardContentHtml += `
           <div class="flex items-center gap-1" title="Vistas">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -82,23 +105,27 @@ document.addEventListener("DOMContentLoaded", () => {
             <span>${recipe.views}</span>
           </div>
         `;
-    } else {
-      cardContentHtml += `<div></div>`;
-    }
+      } else {
+        cardContentHtml += `<div></div>`;
+      }
 
-    if (displaySettings.cookingTime && recipe.cooking_time) {
-      cardContentHtml += `
+      if (displaySettings.cookingTime && recipe.cooking_time) {
+        const cookingTimeDisplay = String(recipe.cooking_time).toLowerCase().includes("min")
+          ? recipe.cooking_time
+          : `${recipe.cooking_time} min`;
+        cardContentHtml += `
           <div class="flex items-center gap-1" title="Tiempo de cocción">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>${recipe.cooking_time} min</span>
+            <span>${cookingTimeDisplay}</span>
           </div>
         `;
-    } else {
-      cardContentHtml += `<div></div>`;
+      } else {
+        cardContentHtml += `<div></div>`;
+      }
+      cardContentHtml += `</div>`;
     }
-    cardContentHtml += `</div>`;
 
     if (displaySettings.description && recipe.description) {
       cardContentHtml += `
@@ -197,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="relative group">
           <a
             href="/?recipe=${encodeURIComponent(recipe.name)}"
-            class="block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            class="recipe-card block bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
           >
             ${cardContentHtml}
           </a>
@@ -282,6 +309,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (searchTerm) {
       params.set("search", searchTerm);
+    }
+
+    if (sortBySelect) {
+      params.set("sort_by", sortBySelect.value);
     }
 
     // Collect values from dynamically created filters
@@ -411,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectElement.id = `filter-${param}`;
         selectElement.name = param;
         selectElement.className =
-          "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100";
+          "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-gray-50 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100";
         selectElement.addEventListener("change", filterRecipes);
 
         const defaultOption = document.createElement("option");
@@ -447,7 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
         id="cooking-time-filter"
         name="time_max"
         placeholder="Ej. 60"
-        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-gray-50 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
       />
     `;
     const cookingTimeFilterInput = cookingTimeFilterDiv.querySelector("#cooking-time-filter");
@@ -470,7 +501,7 @@ document.addEventListener("DOMContentLoaded", () => {
         id="ingredients-filter"
         name="ingredients"
         placeholder="Ej. pollo, arroz"
-        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-gray-50 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
       />
     `;
     const ingredientsFilterInput = ingredientsFilterDiv.querySelector("#ingredients-filter");
@@ -502,6 +533,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event Listeners
   searchInput.addEventListener("input", fetchAndDisplaySuggestions);
+
+  if (sortBySelect) {
+    sortBySelect.addEventListener("change", filterRecipes);
+  }
 
   searchInput.addEventListener("keydown", (e) => {
     const currentRecipeLinks = Array.from(searchResultsContainer.getElementsByTagName("a"));

@@ -196,6 +196,23 @@
                 </svg>
               </div>
               <% } %>
+              <% if (displayFields.views && typeof recipe.views !== 'undefined') { %>
+              <div class="absolute bottom-2 left-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm z-10" title="Vistas">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span><%= recipe.views %></span>
+              </div>
+              <% } %>
+              <% if (displayFields.cookingTime && recipe.cooking_time) { %>
+              <div class="absolute bottom-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm z-10" title="Tiempo de cocción">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span><%= String(recipe.cooking_time).toLowerCase().includes('min') ? recipe.cooking_time : recipe.cooking_time + ' min' %></span>
+              </div>
+              <% } %>
             </div>
             <% } %>
             <div class="p-4 flex flex-col flex-grow min-w-0">
@@ -206,6 +223,7 @@
               <% } %>
 
               <!-- Fila de Vistas y Tiempo -->
+              <% if (!displayFields.image) { %>
               <div class="flex justify-between items-center mb-2 text-sm text-gray-500 dark:text-gray-400">
                 <% if (displayFields.views && typeof recipe.views !== 'undefined') { %>
                 <div class="flex items-center gap-1" title="Vistas">
@@ -224,12 +242,13 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span><%= recipe.cooking_time %> min</span>
+                  <span><%= String(recipe.cooking_time).toLowerCase().includes('min') ? recipe.cooking_time : recipe.cooking_time + ' min' %></span>
                 </div>
                 <% } else { %>
                 <div></div>
                 <% } %>
               </div>
+              <% } %>
 
               <% if (displayFields.description && recipe.description) { %>
               <div class="text-sm text-gray-600 dark:text-gray-300 mb-3" title="Descripción">
@@ -479,16 +498,6 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const sortBySelect = document.getElementById("sort-by");
-    if (sortBySelect) {
-      sortBySelect.addEventListener("change", (event) => {
-        const selectedSort = event.target.value;
-        const url = new URL(window.location.href);
-        url.searchParams.set("sort_by", selectedSort);
-        window.location.href = url.toString();
-      });
-    }
-
     const recipeGallery = document.getElementById("recipe-gallery");
     const gridViewBtn = document.getElementById("grid-view-btn");
     const listViewBtn = document.getElementById("list-view-btn");
@@ -496,25 +505,17 @@
     const savedView = localStorage.getItem("recipeViewType") || "grid"; // Default to grid
 
     function applyView(viewType) {
-      const imageContainers = document.querySelectorAll(".recipe-card .image-container");
-
       if (recipeGallery) {
         if (viewType === "list") {
           recipeGallery.classList.remove("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4", "gap-8");
           recipeGallery.classList.add("list-view");
           listViewBtn.classList.add("bg-gray-300", "dark:bg-gray-600");
           gridViewBtn.classList.remove("bg-gray-300", "dark:bg-gray-600");
-          imageContainers.forEach(container => {
-            container.classList.remove("pb-[75%]");
-          });
         } else {
           recipeGallery.classList.remove("list-view");
           recipeGallery.classList.add("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4", "gap-8");
           gridViewBtn.classList.add("bg-gray-300", "dark:bg-gray-600");
           listViewBtn.classList.remove("bg-gray-300", "dark:bg-gray-600");
-          imageContainers.forEach(container => {
-            container.classList.add("pb-[75%]");
-          });
         }
       }
     }

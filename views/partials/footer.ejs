@@ -8,21 +8,30 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     // --- Theme Switcher ---
-    const themeToggle = document.getElementById("theme-toggle");
+    const themeToggleBtn = document.getElementById("theme-toggle-btn");
+    const themeToggleDarkIcon = document.getElementById("theme-toggle-dark-icon");
+    const themeToggleLightIcon = document.getElementById("theme-toggle-light-icon");
 
     // Sincroniza el toggle con el estado actual al cargar la página
     if (localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      if (themeToggle) themeToggle.checked = true;
+      themeToggleLightIcon?.classList.remove("hidden");
+    } else {
+      themeToggleDarkIcon?.classList.remove("hidden");
     }
 
-    if (themeToggle) {
-      themeToggle.addEventListener("change", function () {
-        if (this.checked) {
-          document.documentElement.classList.add("dark");
-          localStorage.theme = "dark";
-        } else {
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", function () {
+        // toggle icons inside button
+        themeToggleDarkIcon?.classList.toggle("hidden");
+        themeToggleLightIcon?.classList.toggle("hidden");
+
+        // if set via local storage previously
+        if (localStorage.theme === "dark") {
           document.documentElement.classList.remove("dark");
           localStorage.theme = "light";
+        } else {
+          document.documentElement.classList.add("dark");
+          localStorage.theme = "dark";
         }
       });
     }
