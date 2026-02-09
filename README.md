@@ -19,20 +19,25 @@ RecipeNode transforma una simple carpeta de archivos Markdown en un potente gest
 ## 📸 Capturas de Pantalla
 
 ### Vista Principal
+
 ![Vista Principal](assets_readme/main.png)
 
 ### Vista de Cuadrícula
+
 ![Vista de Cuadrícula](assets_readme/main-grid.png)
 
 ### Planificador de Comidas
+
 ![Planificador](assets_readme/planner.png)
 
 ![Asignar Comidas](assets_readme/assign_meals.png)
 
 ### Lista de la Compra
+
 ![Lista de la Compra](assets_readme/buy.png)
 
 ### Ajustes
+
 ![Ajustes](assets_readme/settings.png)
 
 ## 🏗️ Arquitectura del Proyecto
@@ -170,12 +175,6 @@ Para ejecutar el conjunto de pruebas automatizadas:
 npm test
 ```
 
-## 🤝 Contribuyendo
-
-Las contribuciones son lo que hacen que la comunidad de código abierto sea un lugar increíble para aprender, inspirar y crear. Cualquier contribución que hagas será **muy apreciada**.
-
-Por favor, lee `CONTRIBUTING.md` (si existe) para más detalles sobre nuestro código de conducta y el proceso para enviarnos pull requests.
-
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia (Tu Licencia) - mira el archivo `LICENSE.md` para más detalles.
+Este proyecto está bajo la licencia MIT
