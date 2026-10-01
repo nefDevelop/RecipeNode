@@ -1,0 +1,41 @@
+services:
+  recipernode:
+    build: .
+    container_name: reciperNode
+    ports:
+      - "8214:8214"
+    environment:
+      - NODE_ENV=production
+      - PORT=8214
+      # Sin .env en el repo, asi que el compose las pasa de forma explicita.
+      # ADMIN_PASSWORD y SESSION_SECRET estan vacias a proposito: rellenaselas
+      # en un .env o exportandolas antes de `docker compose up` si quieres dejar
+      # de usar los valores por defecto que tiene el codigo.
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - SESSION_SECRET=${SESSION_SECRET:-}
+    volumes:
+      # Solo se montan las rutas con datos, no el proyecto entero. El codigo
+      # resuelve las bases de datos y las recetas con rutas relativas a
+      # __dirname (ver src/config/database.js y index.js), asi que van a los
+      # mismos sitios de siempre, dentro de /app.
+      #
+      # No se monta ./node_modules a proposito: el del host lo tiene compilado
+      # para el Node nativo (glibc) y al meterlo en alpine (musl) el binding de
+      # sqlite3 casca con SIGSEGV. El del build ya viene bien, y por eso
+      # .dockerignore excluye node_modules del contexto de build.
+      - ./database.db:/app/database.db
+      - ./sessions.db:/app/sessions.db
+      - ./recetas:/app/recetas
+      - ./assets_readme:/app/assets_readme
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8214/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

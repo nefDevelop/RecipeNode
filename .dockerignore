@@ -1,0 +1,16 @@
+# Dependencias: se instalan dentro de la imagen con "npm install". Si se
+# copiaran aqui, traerian el binario nativo de sqlite3 compilado para el Node
+# del host (glibc) y el contenedor, que es alpine/musl, casca con SIGSEGV.
+node_modules
+
+# Datos y secretos: viven en volumenes, no en la imagen.
+.env
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+.git
+.gitignore
+Dockerfile
+docker-compose.yml

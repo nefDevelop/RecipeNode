@@ -14,6 +14,13 @@
 *.db
 sessions.db
 *.db-journal
+*.db-shm
+*.db-wal
+
+# Dumps de memoria
+# Los genera Node cuando el proceso casca por un fallo nativo. No sirven para
+# nada y pueden pesar bastante, asi que no se suben.
+core.*
 
 # Logs
 # Archivos de registro generados por Node/npm o la aplicación.
