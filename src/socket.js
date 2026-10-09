@@ -3,11 +3,16 @@ const { Server } = require("socket.io");
 let io;
 
 function init(httpServer) {
+  // Sin dominio aún: solo mismo origen. Para proxy con dominio,
+  // definir CORS_ORIGIN=https://tu-dominio.
+  const corsOrigin = process.env.CORS_ORIGIN || false;
   io = new Server(httpServer, {
-    cors: {
-      origin: "*", // TODO: Adjust for production
-      methods: ["GET", "POST"]
-    }
+    cors: corsOrigin
+      ? {
+          origin: corsOrigin.split(",").map((s) => s.trim()),
+          methods: ["GET", "POST"],
+        }
+      : undefined,
   });
 
   io.on("connection", (socket) => {

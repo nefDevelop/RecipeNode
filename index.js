@@ -1,6 +1,10 @@
 const express = require("express");
 const path = require("path");
 require("dotenv").config(); // Carga las variables de entorno desde .env
+const env = require("./src/config/env");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
 const db = require("./src/config/database"); // Asegúrate que esto inicializa la DB
 const fs = require("fs");
 const { setupDatabase } = require("./src/config/databaseSetup");
@@ -13,7 +17,27 @@ const http = require("http");
 const { init: initSocket } = require("./src/socket");
 
 const app = express();
-const port = 8214;
+const port = env.port;
+
+// Detrás de Caddy/Traefik/Nginx pon TRUST_PROXY=1 para IP real y cookies secure.
+if (env.trustProxy === "1") {
+  app.set("trust proxy", 1);
+}
+
+// Cabeceras seguras + logs HTTP mínimos para prod.
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(morgan(env.isProd ? "combined" : "dev"));
+
+// Anti brute-force solo en auth, para no romper la UI.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos, prueba más tarde." },
+});
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
 // --- Database Promise Wrappers ---
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row))));
@@ -41,7 +65,7 @@ db.run("ALTER TABLE recipes ADD COLUMN created_at DATETIME", (err) => {
     console.error("Error al migrar la tabla recipes (created_at):", err);
   }
 });
-const recipesPath = path.join(__dirname, "recetas");
+const recipesPath = env.recipesDir;
 setupDatabase(db, recipesPath);
 
 // Configurar EJS como motor de plantillas
@@ -51,21 +75,24 @@ app.set("views", path.join(__dirname, "views"));
 // Middlewares
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/attachment", express.static(path.join(__dirname, "recetas/attachment")));
+app.use("/attachment", express.static(path.join(env.recipesDir, "attachment")));
 app.use(express.json()); // Para parsear JSON en las peticiones API
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios
 app.use(
   session({
     store: new SQLiteStore({
       db: "sessions.db",
-      dir: "./", // Almacena la DB de sesiones en la raíz del proyecto
+      dir: env.dataDir, // Fuera del contenedor: ./data:/app/data
     }),
-    secret: process.env.SESSION_SECRET || "un-secreto-muy-secreto-que-deberia-estar-en-env",
+    secret: env.sessionSecret, // Sin fallback: env.js aborta en prod si falta
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
+      maxAge: 1000 * 60 * 60 * 12, // 12h en vez de 7 días
       httpOnly: true,
+      sameSite: "lax",
+      // Sin dominio aún (http interno): false. Tras proxy TLS pon COOKIE_SECURE=1.
+      secure: process.env.COOKIE_SECURE === "1",
     },
   })
 );
@@ -252,6 +279,11 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// Salud ligera para Docker/K8s: no toca la DB pesada como hace "/".
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", env: env.nodeEnv });
+});
+
 // Ruta para evitar el error 404 del favicon en las logs del navegador
 app.get("/favicon.ico", (req, res) => res.status(204).send());
 
@@ -279,9 +311,41 @@ app.use("/images", async (req, res, next) => {
 // Usar el enrutador principal
 app.use("/", routes);
 
+// 404 para API y vistas no encontradas
+app.use((req, res) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "No encontrado." });
+  }
+  res.status(404).send("No encontrado.");
+});
+
+// Handler global: no filtrar stack al cliente en prod
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  if (req.path.startsWith("/api/")) {
+    return res.status(500).json({ error: "Error interno del servidor." });
+  }
+  res.status(500).send("Error interno del servidor.");
+});
+
 const httpServer = http.createServer(app);
 const io = initSocket(httpServer);
 
 httpServer.listen(port, () => {
-  console.log(`Aplicación de recetas escuchando en http://localhost:${port}`);
+  console.log(`Aplicación de recetas escuchando en http://localhost:${port} (${env.nodeEnv})`);
 });
+
+// Cierre graceful para Docker stop/restart
+const shutdown = (signal) => {
+  console.log(`Recibido ${signal}, cerrando...`);
+  httpServer.close(() => {
+    db.close((err) => {
+      if (err) console.error("Error al cerrar SQLite:", err);
+      process.exit(0);
+    });
+  });
+  setTimeout(() => process.exit(0), 10000).unref();
+};
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

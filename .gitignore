@@ -2,20 +2,17 @@
 # La carpeta node_modules se regenera al ejecutar `npm install`
 /node_modules
 
-
+# Datos fuera del contenedor (volúmenes ./data y ./recetas).
+# Son contenido, no código: nunca se suben.
 /recetas
-
-# Archivos de entorno
-# Contienen secretos y configuraciones locales. NUNCA deben subirse.
-.env
-
-# Base de datos
-# Ignoramos los archivos de la base de datos de SQLite para no subir datos de desarrollo.
+/data
 *.db
-sessions.db
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Secretos locales. NUNCA se suben.
+.env
 
 # Dumps de memoria
 # Los genera Node cuando el proceso casca por un fallo nativo. No sirven para

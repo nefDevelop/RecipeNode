@@ -63,6 +63,13 @@
         class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Ajustes</a
       >
+      <% if (user.role === "admin") { %>
+      <a
+        href="/register"
+        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+        >Crear usuario</a
+      >
+      <% } %>
       <a
         href="/api/auth/logout"
         class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
@@ -73,11 +80,6 @@
         href="/login"
         class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
         >Login</a
-      >
-      <a
-        href="/register"
-        class="flex items-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
-        >Registro</a
       >
       <% } %>
     </div>

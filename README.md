@@ -4,7 +4,7 @@
 
 RecipeNode transforma una simple carpeta de archivos Markdown en un potente gestor de recetas con una interfaz web limpia, un planificador de comidas semanal y una lista de la compra inteligente. Es la solución perfecta para quienes aman organizar sus recetas digitalmente, especialmente para usuarios de editores como Obsidian.
 
-## ✨ Características
+## Características
 
 - **Gestión Basada en Archivos:** Las recetas son archivos Markdown (`.md`) fáciles de editar, respaldar y versionar con Git.
 - **Sintaxis de Obsidian:** Soporte nativo para la sintaxis de `![[imagen.jpg]]` y `[[Otra Receta]]`, ideal para usuarios del popular editor de notas.
@@ -16,7 +16,7 @@ RecipeNode transforma una simple carpeta de archivos Markdown en un potente gest
 - **Interfaz Limpia y Adaptable:** Diseño responsive que funciona de maravilla en ordenadores, tabletas y móviles.
 - **Configuración Flexible:** Personaliza la ubicación de tus recursos, como la carpeta de imágenes, directamente desde la configuración de la aplicación.
 
-## 📸 Capturas de Pantalla
+## Capturas de pantalla
 
 ### Vista Principal
 
@@ -40,7 +40,7 @@ RecipeNode transforma una simple carpeta de archivos Markdown en un potente gest
 
 ![Ajustes](assets_readme/settings.png)
 
-## 🏗️ Arquitectura del Proyecto
+## Arquitectura del proyecto
 
 - **Backend:** `Node.js` y `Express.js` forman el núcleo de la aplicación, manejando el enrutamiento, la lógica de negocio y la API REST.
 - **Base de Datos:** Se utiliza `SQLite` para una gestión de datos ligera y sin configuración. Hay dos bases de datos principales:
@@ -50,7 +50,7 @@ RecipeNode transforma una simple carpeta de archivos Markdown en un potente gest
 - **Gestión de Recetas:** Un sistema de vigilancia (`chokidar`) monitoriza la carpeta `recetas/`. Al añadir, modificar o eliminar un archivo `.md`, la aplicación utiliza `front-matter` y `marked` para parsear los metadatos y el contenido, actualizando la base de datos en consecuencia.
 - **Tiempo Real:** `Socket.io` permite la comunicación bidireccional entre el cliente y el servidor, usado para sincronizar la lista de la compra y notificar a los usuarios de cambios en tiempo real.
 
-## 📱 Experiencia Móvil
+## Experiencia móvil
 
 Esto te permite:
 
@@ -58,16 +58,16 @@ Esto te permite:
 - Añadir ingredientes a tu lista de la compra mientras estás en el supermercado.
 - Planificar las comidas de la semana desde cualquier lugar.
 
-## 🚀 Instalación y Uso
+## Instalación y uso
 
 Estas instrucciones te permitirán obtener una copia del proyecto en funcionamiento en tu máquina local para propósitos de desarrollo y pruebas.
 
-### 📋 Prerrequisitos
+### Prerrequisitos
 
 - [Node.js](https://nodejs.org/) (v18.x o superior recomendado)
 - [npm](https://www.npmjs.com/) (normalmente viene con Node.js)
 
-### 🔧 Instalación
+### Instalación
 
 Sigue estos pasos para tener un entorno de desarrollo listo:
 
@@ -93,7 +93,7 @@ Sigue estos pasos para tener un entorno de desarrollo listo:
    npm install
    ```
 
-## 🏃 Uso
+## Uso
 
 Para iniciar la aplicación en modo de desarrollo (con recarga automática):
 
@@ -107,7 +107,28 @@ Para ejecutar la aplicación en producción:
 npm start
 ```
 
-## 📝 Estructura de Recetas Markdown
+## Despliegue en producción (Docker)
+
+```sh
+cp .env.example .env
+# Rellena ADMIN_PASSWORD (>=16) y SESSION_SECRET (>=32) en .env
+docker compose up -d --build
+curl http://localhost:8214/health
+```
+
+* Datos fuera del contenedor: `./data:/app/data` (`database.db`, `sessions.db`) y `./recetas:/app/recetas` (tus `.md`). Para rutas absolutas define `DATA_PATH` y `RECIPES_PATH` en `.env`.
+* Sin `.env` válido la app aborta (fail-fast, sin `admin123`).
+* Solo el admin crea usuarios (`/register` con sesión admin). Sin registro público.
+* Tras proxy TLS con dominio: `TRUST_PROXY=1`, `COOKIE_SECURE=1`, `CORS_ORIGIN=https://tu-dominio` en `.env`.
+
+Backup:
+
+```sh
+sqlite3 data/database.db ".backup 'data/database-$(date +%F).db'"
+tar -czf backup-recetas-$(date +%F).tar.gz recetas/
+```
+
+## Estructura de recetas Markdown
 
 Las recetas se almacenan como archivos Markdown (`.md`) en el directorio `recetas/`. Cada archivo debe comenzar con un bloque de "front-matter" YAML, seguido del contenido de la receta en Markdown.
 
@@ -167,7 +188,7 @@ Después del front-matter, el resto del archivo es el contenido de la receta en 
 2.  Paso dos.
 ```
 
-## 🧪 Ejecutando las Pruebas
+## Pruebas
 
 Para ejecutar el conjunto de pruebas automatizadas:
 
@@ -175,6 +196,6 @@ Para ejecutar el conjunto de pruebas automatizadas:
 npm test
 ```
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está bajo la licencia MIT

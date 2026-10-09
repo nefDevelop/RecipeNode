@@ -3,6 +3,7 @@ const router = express.Router();
 const recipeController = require("../controllers/recipeController");
 const planningController = require("../controllers/planningController");
 const viewController = require("../controllers/viewController");
+const { isAdminView } = require("../middlewares/authMiddleware");
 
 // Ruta para la página principal que muestra la lista o una receta
 router.get("/", recipeController.getHomePage);
@@ -21,8 +22,8 @@ router.get("/shopping-list", (req, res) => {
 // Ruta para la página de planificación
 router.get("/planning", planningController.getPlanningPage);
 
-// Rutas para login y registro
+// Rutas para login y registro (registro solo admin, sin alta pública)
 router.get("/login", viewController.getLoginPage);
-router.get("/register", viewController.getRegisterPage);
+router.get("/register", isAdminView, viewController.getRegisterPage);
 
 module.exports = router;

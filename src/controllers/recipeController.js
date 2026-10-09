@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const env = require("../config/env");
 const marked = require("marked");
 const fm = require("front-matter");
 const db = require("../config/database");
@@ -553,7 +554,7 @@ const createRecipeApi = async (req, res) => {
 
   const slug = slugify(title);
   const filename = `${slug}.md`;
-  const recipesPath = path.join(__dirname, "../../recetas");
+  const recipesPath = env.recipesDir;
   const filePath = path.join(recipesPath, filename);
 
   // Check if file already exists

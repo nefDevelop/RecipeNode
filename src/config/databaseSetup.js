@@ -3,6 +3,12 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 
 function setupDatabase(db, recipesPath) {
+  // Las recetas viven fuera del contenedor (volumen ./recetas:/app/recetas).
+  try {
+    fs.mkdirSync(recipesPath, { recursive: true });
+  } catch (e) {
+    console.error("No se pudo crear la carpeta de recetas:", e.message);
+  }
   db.serialize(() => {
     // 1. Setup unit_settings table
     db.run(`CREATE TABLE IF NOT EXISTS unit_settings (id TEXT PRIMARY KEY, value REAL NOT NULL)`);
@@ -244,7 +250,8 @@ function setupDatabase(db, recipesPath) {
         if (err) return console.error("Error creando la tabla de usuarios:", err);
 
         const saltRounds = 10;
-        const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+        // Sin fallback: env.js ya aborta en producción si falta ADMIN_PASSWORD.
+        const adminPassword = process.env.ADMIN_PASSWORD || "dev-admin-password-cambiar";
         bcrypt.hash(adminPassword, saltRounds, (hashErr, hash) => {
           if (hashErr) return console.error("Error hasheando la contraseña del admin:", hashErr);
 
