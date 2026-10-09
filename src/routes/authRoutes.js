@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const { register, login, logout } = require("../controllers/authController");
+const { isAdmin } = require("../middlewares/authMiddleware");
 
-router.post("/register", register);
+// Solo el admin crea usuarios. Sin registro público.
+router.post("/register", isAdmin, register);
 router.post("/login", login);
 router.get("/logout", logout);
 
