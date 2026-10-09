@@ -20,25 +20,25 @@ RecipeNode transforma una simple carpeta de archivos Markdown en un potente gest
 
 ### Vista Principal
 
-![Vista Principal](assets_readme/main.png)
+![Vista Principal](https://raw.githubusercontent.com/nefDevelop/RecipeNode/main/assets_readme/main.png)
 
 ### Vista de Cuadrícula
 
-![Vista de Cuadrícula](assets_readme/main-grid.png)
+![Vista de Cuadrícula](https://raw.githubusercontent.com/nefDevelop/RecipeNode/main/assets_readme/main-grid.png)
 
 ### Planificador de Comidas
 
-![Planificador](assets_readme/planner.png)
+![Planificador](https://raw.githubusercontent.com/nefDevelop/RecipeNode/main/assets_readme/planner.png)
 
-![Asignar Comidas](assets_readme/assign_meals.png)
+![Asignar Comidas](https://raw.githubusercontent.com/nefDevelop/RecipeNode/main/assets_readme/assign_meals.png)
 
 ### Lista de la Compra
 
-![Lista de la Compra](assets_readme/buy.png)
+![Lista de la Compra](https://raw.githubusercontent.com/nefDevelop/RecipeNode/main/assets_readme/buy.png)
 
 ### Ajustes
 
-![Ajustes](assets_readme/settings.png)
+![Ajustes](https://raw.githubusercontent.com/nefDevelop/RecipeNode/main/assets_readme/settings.png)
 
 ## Arquitectura del proyecto
 
